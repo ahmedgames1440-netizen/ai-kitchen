@@ -68,6 +68,8 @@ const VIP_SVG = {
   fahad: `<svg viewBox="0 0 64 64"><path d="M10 32 Q10 6 32 6 Q54 6 54 32 L54 46 Q54 52 48 52 L16 52 Q10 52 10 46 Z" fill="#c0392b" stroke="#7b241c" stroke-width="2"/><path d="M14 14 L50 30 M14 22 L50 38 M50 14 L14 30 M50 22 L14 38" stroke="#fff" stroke-width="1" opacity=".5"/><rect x="14" y="10" width="36" height="7" rx="3.5" fill="#1a1a1a"/><ellipse cx="32" cy="33" rx="11.5" ry="12" fill="#dba876"/><path d="M23 29 l7 2 M41 29 l-7 2" stroke="#222" stroke-width="2.5"/><ellipse cx="27" cy="33" rx="1.7" ry="2" fill="#222"/><ellipse cx="37" cy="33" rx="1.7" ry="2" fill="#222"/><path d="M22 41 Q27 36 32 40 Q37 36 42 41 Q37 46 32 43 Q27 46 22 41" fill="#1a1a1a"/></svg>`,
   salim: `<svg viewBox="0 0 64 64"><ellipse cx="32" cy="28" rx="12" ry="18" fill="#e6c9a3" stroke="#555" stroke-width="2"/><circle cx="26" cy="28" r="5" fill="none" stroke="#555" stroke-width="2"/><circle cx="38" cy="28" r="5" fill="none" stroke="#555" stroke-width="2"/><path d="M31 28 h2" stroke="#555" stroke-width="2"/><circle cx="26" cy="28" r="1.5" fill="#222"/><circle cx="38" cy="28" r="1.5" fill="#222"/><path d="M28 42 Q32 52 36 42 Q34 44 32 44 Q30 44 28 42" fill="#9a9a9a"/><path d="M24 14 Q22 12 20 14 M40 14 Q42 12 44 14" stroke="#aaa" stroke-width="2" fill="none"/><path d="M16 52 Q32 44 48 52 L48 60 L16 60 Z" fill="#8d7350"/></svg>`,
   samir: `<svg viewBox="0 0 64 64"><path d="M20 16 L44 16 L42 4 L22 4 Z" fill="#b71c1c" stroke="#7f1010" stroke-width="2"/><circle cx="45" cy="6" r="2.5" fill="#5d4037"/><path d="M44 8 L43 15" stroke="#5d4037" stroke-width="1.5"/><ellipse cx="32" cy="30" rx="14" ry="14" fill="#e8b48b" stroke="#555" stroke-width="2"/><path d="M23 27 q3 -2 5 0 M36 27 q3 -2 5 0" stroke="#333" stroke-width="2" fill="none"/><ellipse cx="26" cy="29" rx="1.6" ry="2" fill="#222"/><ellipse cx="38" cy="29" rx="1.6" ry="2" fill="#222"/><path d="M20 37 Q26 32 32 36 Q38 32 44 37 Q38 43 32 39 Q26 43 20 37" fill="#9e9e9e"/><path d="M16 50 Q32 42 48 50 L48 60 L16 60 Z" fill="#fff"/><path d="M20 48 L26 60 M44 48 L38 60" stroke="#8e1c1c" stroke-width="5"/></svg>`,
+  fanni: `<svg viewBox="0 0 64 64"><path d="M14 22 Q14 8 32 8 Q50 8 50 22 Z" fill="#1565c0"/><path d="M20 12 Q32 4 44 12 L44 18 L20 18 Z" fill="#cfd8dc"/><rect x="12" y="20" width="40" height="5" rx="2.5" fill="#0d47a1"/><ellipse cx="32" cy="34" rx="12" ry="12" fill="#eeb98c" stroke="#555" stroke-width="2"/><ellipse cx="27" cy="33" rx="1.7" ry="2" fill="#3a2411"/><ellipse cx="37" cy="33" rx="1.7" ry="2" fill="#3a2411"/><path d="M26 40 Q32 45 38 40" stroke="#7a3b2e" stroke-width="2" fill="none"/><rect x="44" y="22" width="5" height="26" rx="2" fill="#c62828" transform="rotate(28 46 35)"/><rect x="49" y="14" width="9" height="11" rx="2" fill="#9e9e9e" transform="rotate(28 53 19)"/><path d="M16 52 Q32 44 48 52 L48 62 L16 62 Z" fill="#1976d2"/></svg>`,
+  edward: `<svg viewBox="0 0 64 64"><ellipse cx="32" cy="28" rx="13" ry="13" fill="#f2cba6" stroke="#666" stroke-width="2"/><path d="M18 24 Q18 15 27 15 M46 24 Q46 15 37 15" stroke="#eceff1" stroke-width="6" fill="none"/><path d="M22 20 q4 -2 8 0 M34 20 q4 -2 8 0" stroke="#eceff1" stroke-width="3" fill="none"/><ellipse cx="27" cy="27" rx="1.8" ry="2.2" fill="#4e342e"/><ellipse cx="38" cy="27" rx="1.8" ry="2.2" fill="#4e342e"/><path d="M20 35 Q26 30 32 34 Q38 30 44 35 Q38 41 32 37 Q26 41 20 35" fill="#fafafa"/><path d="M27 40 Q32 48 37 40 Q34 42 32 42 Q30 42 27 40" fill="#fafafa"/><path d="M14 52 Q32 44 50 52 L50 62 L14 62 Z" fill="#8d6e63"/><path d="M26 50 L32 62 L38 50" fill="#546e7a"/><rect x="30" y="48" width="4" height="10" fill="#5d1a12"/></svg>`,
 };
 
 const VIPS = [
@@ -95,6 +97,18 @@ const VIPS = [
       { t: "ولا يهمك يا عم، طلبك محفوظ عندي 📝", eff: 20 },
       { t: "هذي ثالث مرة تسأل! 😑", eff: -15 },
       { t: "اطلب من جديد ولا عليك", eff: 8 } ] }] },
+  { id: "fanni", name: "أبو شاكر الفني", label: "🔧 فني", patience: 26000, drain: 1.0, tip: 1.1, ratingW: 1, orders: [1, 2],
+    intro: "🔧 أبو شاكر الفني وصل — إذا رضي يصلّح معداتك ببلاش!",
+    chat: [{ msg: "أشوف مطبخك يحتاج صيانة… أسويها لك مجاناً إذا الأكل عجبني 😉", replies: [
+      { t: "أبشر! أكلنا يستاهل أفضل معدات 💪", eff: 20 },
+      { t: "معداتنا جديدة ما تحتاج أحد", eff: -8 },
+      { t: "وكم بتاخذ لو ما عجبك؟ 😅", eff: 5 } ] }] },
+  { id: "edward", name: "الخواجة إدوارد", label: "🧐 سائح", patience: 19000, drain: 1.1, tip: 2.5, ratingW: 2, orders: [1, 2],
+    intro: "🧐 سائح أجنبي وصل — يدفع بسخاء ويكتب مراجعات مشهورة!",
+    chat: [{ msg: "Excuse me… هذي أول شاورما لي بحياتي! 🤩", replies: [
+      { t: "Welcome! بتدمن عليها من أول قضمة 😄", eff: 20 },
+      { t: "أول مرة؟! وين عايش أنت؟ 😅", eff: -10 },
+      { t: "خذ معها بطاطس، هدية مني 🎁", eff: 15 } ] }] },
   { id: "samir", name: "أبو سمير", label: "🎩 تاجر", patience: 24000, drain: 1.0, tip: 2.0, ratingW: 2, orders: [3, 4],
     intro: "🎩 أبو سمير التاجر هنا — يدفع ضعف السعر!",
     chat: [{ msg: "عندي صفقة: أكل ممتاز اليوم، وأنا زبونك الدائم 🤝", replies: [
@@ -304,6 +318,7 @@ function activeMenu() {
 function cookTime(dish) {
   let t = dish.cook * Math.pow(0.88, state.upgrades.grill || 0);
   if (day && day.combo >= 5) t *= 0.8; // وضع النار 🔥
+  if (day && day.fanniBoost) t *= 0.8; // صيانة أبو شاكر 🔧
   return t;
 }
 function traySize() { return 4 + (state.upgrades.tray || 0); }
@@ -346,6 +361,7 @@ function freshDay() {
     endless: false, goalBonus: 0,
     inspectionAt: -1, inspectionDone: false, fined: 0,
     expenses: 0,             // مصاريف المواد الخام
+    fanniBoost: false,       // صيانة أبو شاكر الفني
   };
 }
 
@@ -538,6 +554,15 @@ function completeOrder(c) {
   if (c.vip === "khalil" && ratio > 0.6) {
     day.spawnIn = 500;
     toast("🧒 خليل راح يجيب ربعه — زباين جايين!");
+  }
+  if (c.vip === "fanni" && ratio > 0.5 && !day.fanniBoost) {
+    day.fanniBoost = true;
+    toast("🔧 أبو شاكر صلّح معداتك مجاناً — طبخ أسرع 20% لبقية اليوم!");
+    sfx.levelup();
+  }
+  if (c.vip === "edward" && ratio > 0.5) {
+    state.rating = clamp(state.rating + (5 - state.rating) * 0.2, 1, 5);
+    toast("🧐 الخواجة إدوارد نشر مراجعة 5 نجوم عن مطعمك!");
   }
 
   // التقييم

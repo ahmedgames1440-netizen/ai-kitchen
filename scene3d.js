@@ -104,6 +104,28 @@ window.S3D = (() => {
       }
     });
   }
+  /* نقشة الشماغ الأحمر (كروس-هاتش مثل الصور المرجعية) */
+  let shemaghTex = null;
+  function getShemaghTexture() {
+    if (!shemaghTex) {
+      shemaghTex = canvasTexture(128, 128, (g, w, h) => {
+        g.fillStyle = "#f7f1ea"; g.fillRect(0, 0, w, h);
+        g.strokeStyle = "#c0392b"; g.lineWidth = 2.5;
+        for (let i = -h; i < w + h; i += 13) {
+          g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke();
+          g.beginPath(); g.moveTo(i + h, 0); g.lineTo(i, h); g.stroke();
+        }
+        g.strokeStyle = "rgba(192,57,43,.45)"; g.lineWidth = 1;
+        for (let i = -h; i < w + h; i += 6.5) {
+          g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke();
+        }
+      });
+      shemaghTex.wrapS = shemaghTex.wrapT = THREE.RepeatWrapping;
+      shemaghTex.repeat.set(2, 2);
+    }
+    return shemaghTex;
+  }
+
   function menuBoardTexture() {
     return canvasTexture(256, 320, (g, w, h) => {
       g.fillStyle = "#241505"; g.fillRect(0, 0, w, h);
@@ -128,6 +150,8 @@ window.S3D = (() => {
       female ? rnd([0x1a1a1a, 0x241b3a, 0x3d1626, 0x14251c]) : // عباءات
       vip === "khalil" ? 0x6d4c2f :
       vip === "salim"  ? 0x8d7350 :
+      vip === "fanni"  ? 0x1976d2 : // أفرول الفني الأزرق
+      vip === "edward" ? 0x8d6e63 : // جاكيت تويد
       vip ? 0xf5f5f5 : rnd(THOBES);
 
     // الجسم (ثوب / عباءة)
@@ -172,7 +196,7 @@ window.S3D = (() => {
 
     // ===== الوجه: ملامح واضحة =====
     const darkSkin = new THREE.Color(skin).multiplyScalar(0.82).getHex();
-    const hairColor = (vip === "yousef" || vip === "salim" || vip === "samir") ? 0x9e9e9e : 0x3a2a1a;
+    const hairColor = (vip === "yousef" || vip === "salim" || vip === "samir" || vip === "edward") ? 0xd7d7d7 : 0x3a2a1a;
     // عيون كرتونية: بياض + بؤبؤ + لمعة (المنقبات: العيون فوق فتحة النقاب)
     const eyeZ = female ? 0.57 : 0.40; // عيون المنقبات بارزة أمام الحجاب
     for (const sx of [-0.19, 0.19]) {
@@ -180,8 +204,13 @@ window.S3D = (() => {
       white.position.set(sx, 2.24, eyeZ);
       white.scale.z = female ? 0.4 : 0.55;
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), mat(0x21150d));
-      pupil.position.set(sx, 2.24, eyeZ + 0.075);
+      // قزحية ملونة (بني/أخضر/عسلي مثل الصور) + بؤبؤ أسود
+      const irisCol = c._iris || (c._iris = Math.random() < 0.2 ? 0x2e7d32 : (Math.random() < 0.35 ? 0x8d6e63 : 0x4e342e));
+      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), mat(irisCol));
+      iris.position.set(sx, 2.24, eyeZ + 0.07);
+      g.add(iris);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), mat(0x0d0704));
+      pupil.position.set(sx, 2.24, eyeZ + 0.11);
       g.add(pupil);
       const shine = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6),
         new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x999999 }));
@@ -196,7 +225,7 @@ window.S3D = (() => {
       }
       // حواجب (الفهد له حواجبه الغاضبة الخاصة، والمنقبات وجههن مغطى)
       if (vip !== "fahad" && !female) {
-        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.045, 0.05), mat(hairColor));
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.05), mat(hairColor));
         brow.position.set(sx, 2.42, 0.42);
         brow.rotation.z = sx < 0 ? 0.12 : -0.12;
         g.add(brow);
@@ -237,24 +266,38 @@ window.S3D = (() => {
       }
     };
 
-    // غطاء الرأس
-    const addGhutra = (color, agal = true) => {
-      const gh = new THREE.Mesh(new THREE.SphereGeometry(0.56, 16, 12), mat(color));
+    // غطاء الرأس (مطابق للصور: شماغ منقوش متدلٍ على الصدر + عقال مزدوج)
+    const addGhutra = (color, agal = true, pattern = false) => {
+      const clothMat = () => pattern
+        ? new THREE.MeshStandardMaterial({ map: getShemaghTexture(), roughness: 0.85, side: THREE.DoubleSide })
+        : new THREE.MeshStandardMaterial({ color, roughness: 0.85, side: THREE.DoubleSide });
+      const gh = new THREE.Mesh(new THREE.SphereGeometry(0.56, 16, 12), clothMat());
       gh.position.y = 2.32;
       gh.scale.set(1, 0.78, 1);
       g.add(gh);
-      // أطراف الغترة (تغطي الخلف والجوانب فقط — الوجه مكشوف)
+      // أطراف تغطي الخلف والجوانب وتنسدل أطول (الوجه مكشوف)
       const flap = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.56, 0.64, 0.6, 12, 1, true, Math.PI * 0.3, Math.PI * 1.4),
-        new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide })
+        new THREE.CylinderGeometry(0.56, 0.7, 0.75, 12, 1, true, Math.PI * 0.3, Math.PI * 1.4),
+        clothMat()
       );
-      flap.position.y = 2.1;
+      flap.position.y = 2.02;
       g.add(flap);
+      // طرفان متدليان على الصدر مثل الصور المرجعية
+      for (const side of [-1, 1]) {
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.75, 0.07), clothMat());
+        tail.position.set(side * 0.33, 1.55, 0.34);
+        tail.rotation.z = side * 0.14;
+        tail.rotation.x = -0.1;
+        g.add(tail);
+      }
+      // عقال مزدوج (حلقتان فوق بعض)
       if (agal) {
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.06, 8, 20), mat(0x1a1a1a));
-        ring.rotation.x = Math.PI / 2;
-        ring.position.y = 2.52;
-        g.add(ring);
+        for (const ay of [2.5, 2.58]) {
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.045, 8, 20), mat(0x141414));
+          ring.rotation.x = Math.PI / 2;
+          ring.position.y = ay;
+          g.add(ring);
+        }
       }
     };
 
@@ -275,7 +318,7 @@ window.S3D = (() => {
       g.add(strip);
     } else if (vip === "inspector") {
       addEars();
-      addGhutra(0xc0392b); // شماغ رسمي
+      addGhutra(0xc0392b, true, true); // شماغ رسمي منقوش
       // نظارة رسمية
       for (const sx of [-0.18, 0.18]) {
         const lens = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 8, 16), mat(0x263238));
@@ -301,7 +344,7 @@ window.S3D = (() => {
       beard.position.set(0, 1.66, 0.3);
       g.add(beard);
     } else if (vip === "fahad") {
-      addGhutra(0xc0392b);
+      addGhutra(0xc0392b, true, true);
       // شارب أسود كبير + حواجب غاضبة
       const mst = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.13, 0.1), mat(0x1a1a1a));
       mst.position.set(0, 1.99, 0.45);
@@ -342,19 +385,110 @@ window.S3D = (() => {
     } else if (vip === "khalil") {
       // طفل أصلع — بدون غطاء رأس (فمه من أفواه المزاج)
       addEars();
+    } else if (vip === "fanni") {
+      // الفني: كاب أزرق بمقدمة رمادية + أفرول وقميص أبيض + مفتاح ربط أحمر (مثل الصورة)
+      addEars();
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.54, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x1565c0));
+      cap.position.y = 2.34;
+      g.add(cap);
+      const capTop = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xcfd8dc));
+      capTop.position.y = 2.44;
+      g.add(capTop);
+      const brim = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.05, 0.34), mat(0x1565c0));
+      brim.position.set(0, 2.4, 0.5);
+      brim.rotation.x = -0.12;
+      g.add(brim);
+      // صدر القميص الأبيض + حمالات الأفرول
+      const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.58, 0.62, 12), mat(0xf5f5f5));
+      chest.position.y = 1.56;
+      g.add(chest);
+      for (const side of [-1, 1]) {
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.55, 0.06), mat(0x0d47a1));
+        strap.position.set(side * 0.22, 1.62, 0.44);
+        strap.rotation.x = -0.12;
+        g.add(strap);
+      }
+      // مفتاح الربط الأحمر على كتفه
+      const wHandle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.72, 0.07), mat(0xc62828));
+      wHandle.position.set(0.72, 1.35, 0.12);
+      wHandle.rotation.z = 0.5;
+      g.add(wHandle);
+      const wHead = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.09),
+        new THREE.MeshStandardMaterial({ color: 0x9e9e9e, roughness: 0.3, metalness: 0.7 }));
+      wHead.position.set(0.9, 1.68, 0.12);
+      wHead.rotation.z = 0.5;
+      g.add(wHead);
+      // شعر بني تحت الكاب
+      const hair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.1), mat(0x4e342e));
+      hair.position.set(0, 2.3, -0.42);
+      g.add(hair);
+    } else if (vip === "edward") {
+      // الخواجة: شعر أبيض جانبي + شارب ولحية بيضاء + فست وربطة + عصا (مثل الصورة)
+      addEars();
+      for (const sx of [-0.44, 0.44]) {
+        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 7), mat(0xeceff1));
+        hair.position.set(sx, 2.34, -0.05);
+        hair.scale.set(0.7, 1, 1.1);
+        g.add(hair);
+      }
+      const backHair = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xeceff1));
+      backHair.rotation.x = Math.PI * 0.55;
+      backHair.position.set(0, 2.28, -0.25);
+      g.add(backHair);
+      // شارب أبيض ضخم + لحية قصيرة
+      for (const side of [-1, 1]) {
+        const mst = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 7), mat(0xfafafa));
+        mst.position.set(side * 0.13, 1.99, 0.44);
+        mst.scale.set(1.3, 0.6, 0.7);
+        g.add(mst);
+      }
+      const beard = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.35, 8), mat(0xfafafa));
+      beard.rotation.x = Math.PI;
+      beard.position.set(0, 1.73, 0.3);
+      g.add(beard);
+      // فست رمادي + ربطة عنق + ياقة
+      const vest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.72, 0.14), mat(0x546e7a));
+      vest.position.set(0, 1.42, 0.36);
+      g.add(vest);
+      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.1), mat(0xffffff));
+      collar.position.set(0, 1.8, 0.4);
+      g.add(collar);
+      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.42, 0.06), mat(0x5d1a12));
+      tie.position.set(0, 1.58, 0.45);
+      g.add(tie);
+      // عصا خشبية
+      const cane = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.15, 8), mat(0x5d4037));
+      cane.position.set(0.8, 0.58, 0.2);
+      g.add(cane);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat(0x3e2723));
+      knob.position.set(0.8, 1.18, 0.2);
+      g.add(knob);
     } else {
-      // زبون عادي: غطاء عشوائي
+      // زبون عادي: غترة بيضاء أو شماغ منقوش (مثل الصور المرجعية)
       const style = Math.random();
-      if (style < 0.4) addGhutra(0xffffff);
-      else if (style < 0.65) addGhutra(0xc0392b);
-      else if (style < 0.8) {
-        addEars();
-        const fez = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.45, 12), mat(0xb71c1c));
-        fez.position.y = 2.75;
-        g.add(fez);
-      } else addEars(); // بدون غطاء
-      if (Math.random() < 0.35) {
-        const mst = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.11, 0.09), mat(0x3a2a1a));
+      if (style < 0.42) addGhutra(0xffffff);
+      else if (style < 0.8) addGhutra(0xc0392b, true, true);
+      else { addEars(); } // بدون غطاء
+      // لحية عشوائية: سكسوكة سوداء / لحية كاملة / حليق
+      const beardCol = rnd([0x141414, 0x2d1e12, 0x3a2a1a]);
+      const bStyle = Math.random();
+      if (bStyle < 0.4) {
+        // سكسوكة + شنب (مثل صورة الشماغ الوردي)
+        const goat = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 8), mat(beardCol));
+        goat.rotation.x = Math.PI;
+        goat.position.set(0, 1.74, 0.34);
+        g.add(goat);
+        const mst = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.09, 0.08), mat(beardCol));
+        mst.position.set(0, 1.99, 0.45);
+        g.add(mst);
+      } else if (bStyle < 0.72) {
+        // لحية كاملة تحيط بالفك (مثل صورة العيون الخضراء)
+        const jaw = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.11, 8, 16, Math.PI), mat(beardCol));
+        jaw.rotation.z = Math.PI;
+        jaw.position.set(0, 2.06, 0.28);
+        jaw.scale.z = 0.6;
+        g.add(jaw);
+        const mst = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.1, 0.08), mat(beardCol));
         mst.position.set(0, 1.99, 0.45);
         g.add(mst);
       }
