@@ -39,14 +39,15 @@ const sfx = {
 };
 
 /* ---------- الأطباق الأساسية ---------- */
+/* لكل صنف تكلفة مواد خام (خبز، مايونيز، كاتشب…) تُخصم عند بدء الطبخ */
 const BASE_DISHES = [
-  { id: "shawarma", emoji: "🌯", name: "شاورما",  price: 8,  cook: 3500 },
-  { id: "fries",    emoji: "🍟", name: "بطاطس",   price: 5,  cook: 3000 },
-  { id: "drink",    emoji: "🥤", name: "مشروب",   price: 3,  cook: 900  },
+  { id: "shawarma", emoji: "🌯", name: "شاورما",  price: 8,  cook: 3500, cost: 3, mats: "خبز صاج + دجاج + ثومية" },
+  { id: "fries",    emoji: "🍟", name: "بطاطس",   price: 5,  cook: 3000, cost: 2, mats: "بطاطس + زيت + كاتشب" },
+  { id: "drink",    emoji: "🥤", name: "مشروب",   price: 3,  cook: 900,  cost: 1, mats: "عبوة + ثلج" },
 ];
 const UNLOCK_DISHES = {
-  falafel: { id: "falafel", emoji: "🧆", name: "فلافل", price: 6,  cook: 2800 },
-  burger:  { id: "burger",  emoji: "🍔", name: "برجر",  price: 10, cook: 4200 },
+  falafel: { id: "falafel", emoji: "🧆", name: "فلافل", price: 6,  cook: 2800, cost: 2, mats: "حمص + بقدونس + زيت" },
+  burger:  { id: "burger",  emoji: "🍔", name: "برجر",  price: 10, cook: 4200, cost: 4, mats: "خبز + لحم + جبن + مايونيز" },
 };
 
 /* ---------- أنواع الزبائن ---------- */
@@ -173,19 +174,21 @@ function aiGenerateDish() {
     ingredients: ings,
     price: rint(11, 18),
     cook: rint(3200, 5200),
+    cost: rint(4, 7),
+    mats: "مكونات فاخرة مستوردة",
     ai: true,
   };
 }
 
-/* ---------- التطويرات (السعر يعكس الفائدة الفعلية) ---------- */
+/* ---------- التطويرات: مستويات متصاعدة — البداية ~300 والسعر يقفز مع كل مستوى ---------- */
 const UPGRADES = [
-  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => 60 + l * 75 },
-  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى (قيمة عالية)", max: 5, cost: l => 100 + l * 130 },
-  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى (يضاعف دخلك)", max: 5, cost: l => 120 + l * 150 },
-  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية (طبخ متوازٍ أكثر)", max: 3, cost: l => 140 + l * 170 },
-  { id: "falafel", emoji: "🧆", name: "فتح: فلافل", desc: "صنف جديد بالقائمة (6 💵)", max: 1, cost: () => 120 },
-  { id: "burger",  emoji: "🍔", name: "فتح: برجر", desc: "صنف جديد بالقائمة (10 💵)", max: 1, cost: () => 240 },
-  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "روبوت يطبخ صنفاً مطلوباً كل 12 ثانية — أقوى تطوير باللعبة", max: 1, cost: () => 550 },
+  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => Math.round(300 * Math.pow(1.5, l)) },
+  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى", max: 5, cost: l => Math.round(320 * Math.pow(1.6, l)) },
+  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => Math.round(340 * Math.pow(1.7, l)) },
+  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية لكل مستوى", max: 3, cost: l => Math.round(380 * Math.pow(1.8, l)) },
+  { id: "falafel", emoji: "🧆", name: "فتح صنف: فلافل", desc: "إضافة صنف جديد للمطعم استثمار مكلف (يبيع بـ6 💵)", max: 1, cost: () => 400 },
+  { id: "burger",  emoji: "🍔", name: "فتح صنف: برجر", desc: "الصنف الأغلى بالقائمة (يبيع بـ10 💵)", max: 1, cost: () => 700 },
+  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(600 * Math.pow(2, l)) },
 ];
 
 /* ---------- الأحداث اليومية ---------- */
@@ -199,11 +202,11 @@ const DAY_EVENTS = [
 
 /* ---------- المهمات الجانبية اليومية ---------- */
 const QUESTS = [
-  { id: "fresh5", name: "سلّم 5 أصناف طازجة ✨", check: d => d.freshServes >= 5, reward: { gold: 4 } },
-  { id: "perfect3", name: "3 تسليمات مثالية 🏆", check: d => d.perfect >= 3, reward: { gold: 3 } },
-  { id: "combo4", name: "وصل كومبو ×4 🔥", check: d => d.maxCombo >= 4, reward: { money: 60 } },
-  { id: "noangry", name: "يوم بلا زعل (3+ زباين) 😇", check: d => d.angry === 0 && d.served >= 3, reward: { gold: 5 } },
-  { id: "chat2", name: "ردّان موفقان بالمحادثة 💬", check: d => d.chatGood >= 2, reward: { money: 40 } },
+  { id: "fresh5", name: "سلّم 5 أصناف طازجة ✨", check: d => d.freshServes >= 5, reward: { gold: 2 } },
+  { id: "perfect3", name: "3 تسليمات مثالية 🏆", check: d => d.perfect >= 3, reward: { gold: 2 } },
+  { id: "combo4", name: "وصل كومبو ×4 🔥", check: d => d.maxCombo >= 4, reward: { money: 80 } },
+  { id: "noangry", name: "يوم بلا زعل (3+ زباين) 😇", check: d => d.angry === 0 && d.served >= 3, reward: { gold: 3 } },
+  { id: "chat2", name: "ردّان موفقان بالمحادثة 💬", check: d => d.chatGood >= 2, reward: { money: 60 } },
 ];
 
 /* ---------- المستويات والألقاب ---------- */
@@ -235,21 +238,27 @@ function checkAchievements() {
   }
 }
 
-/* ---------- المزايا الذهبية (تشترى بالذهب فقط) ---------- */
+/* ---------- المزايا الذهبية: مستويات بالذهب النادر ---------- */
 const PERKS = [
-  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", desc: "الأصناف تبقى طازجة ✨ 10 ثوانٍ بدل 5", cost: 15 },
-  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", desc: "القهوة العربية جاهزة كل 12 ثانية بدل 25", cost: 10 },
-  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", desc: "الشخصيات المميزة تزورك أكثر (حتى 3 باليوم)", cost: 12 },
-  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", desc: "غرامات وزارة التجارة تنخفض للنصف", cost: 8 },
-  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", desc: "+15 ثانية إضافية لكل يوم عمل", cost: 20 },
+  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", max: 2, cost: l => 15 + l * 15,
+    desc: l => `الطازج ✨ يدوم ${(5 + (l + 1) * 3.5).toFixed(1)} ثانية (حالياً: ${(5 + l * 3.5).toFixed(1)})` },
+  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", max: 2, cost: l => 12 + l * 12,
+    desc: l => `القهوة كل ${(25 - (l + 1) * 6.5).toFixed(1)} ثانية (حالياً: ${(25 - l * 6.5).toFixed(1)})` },
+  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", max: 2, cost: l => 15 + l * 15,
+    desc: () => "الشخصيات المميزة تزورك أكثر ولمرات أكثر باليوم" },
+  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", max: 2, cost: l => 10 + l * 10,
+    desc: l => `غرامات الوزارة −${(l + 1) * 30}% (حالياً: −${l * 30}%)` },
+  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", max: 3, cost: l => 15 + l * 15,
+    desc: l => `+${(l + 1) * 10} ثانية لكل يوم (حالياً: +${l * 10})` },
 ];
-const FRESH_MS = () => (state.perks && state.perks.freshPlus) ? 10000 : 5000;
+const perkLv = (id) => (state.perks && state.perks[id]) || 0;
+const FRESH_MS = () => 5000 + perkLv("freshPlus") * 3500;
 
 /* ---------- ثيمات الديكور ---------- */
 const THEME_DEFS = [
   { id: "classic", name: "🏠 كلاسيكي دافئ", cost: 0 },
-  { id: "neon", name: "🌌 نيون ليلي", cost: 150 },
-  { id: "desert", name: "🏜️ صحراوي تراثي", cost: 150 },
+  { id: "neon", name: "🌌 نيون ليلي", cost: 450 },
+  { id: "desert", name: "🏜️ صحراوي تراثي", cost: 450 },
 ];
 
 /* ---------- حالة اللعبة ---------- */
@@ -258,7 +267,7 @@ let state = null;
 
 function freshState() {
   return {
-    money: 0, gold: 5, day: 1, rating: 5.0, sound: true, music: true,
+    money: 60, gold: 2, day: 1, rating: 5.0, sound: true, music: true, // رأس مال بسيط للمواد الخام
     xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
     complaints: 0, violations: 0, perks: {},
     records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
@@ -273,7 +282,14 @@ function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) { state = Object.assign(freshState(), JSON.parse(raw)); return; }
+    if (raw) {
+      state = Object.assign(freshState(), JSON.parse(raw));
+      // ترحيل: المزايا القديمة كانت true/false وصارت مستويات
+      for (const k of Object.keys(state.perks || {})) {
+        if (state.perks[k] === true) state.perks[k] = 1;
+      }
+      return;
+    }
   } catch (e) {}
   state = freshState();
 }
@@ -302,7 +318,7 @@ let lastTick = 0;
 function freshDay() {
   return {
     running: false,
-    timeLeft: Math.min(60000 + state.day * 12000, 150000) + ((state.perks && state.perks.extraTime) ? 15000 : 0),
+    timeLeft: Math.min(60000 + state.day * 12000, 150000) + perkLv("extraTime") * 10000,
     customers: [],           // الزبائن الحاليين (حد أقصى 4)
     tray: [],                // أصناف جاهزة { dish }
     cooking: [],             // { dish, elapsed, total, stationId }
@@ -324,11 +340,12 @@ function freshDay() {
     vipCount: 0, vipsSeen: [], vipServed: 0, vipAngry: 0,
     freshServes: 0,          // أصناف سُلّمت وهي طازجة
     // أنظمة تحديث 5
-    totalTime: Math.min(60000 + state.day * 12000, 150000) + ((state.perks && state.perks.extraTime) ? 15000 : 0),
+    totalTime: Math.min(60000 + state.day * 12000, 150000) + perkLv("extraTime") * 10000,
     event: null, quest: null, questDone: false,
     coffeeCd: 0, robotIn: 12000,
     endless: false, goalBonus: 0,
     inspectionAt: -1, inspectionDone: false, fined: 0,
+    expenses: 0,             // مصاريف المواد الخام
   };
 }
 
@@ -339,8 +356,8 @@ let customerSeq = 0;
 function spawnCustomer() {
   if (day.customers.length >= 4) return;
   // فرصة ظهور شخصية مميزة (السمعة الذهبية 👑 ترفع الفرصة والحد)
-  const vipMax = state.perks.vipMagnet ? 3 : 2;
-  const vipChance = state.perks.vipMagnet ? 0.32 : 0.22;
+  const vipMax = 2 + (perkLv("vipMagnet") > 1 ? 1 : 0);
+  const vipChance = 0.22 + perkLv("vipMagnet") * 0.06;
   if (state.day >= 2 && day.vipCount < vipMax && !day.customers.some(c => c.isVip) && Math.random() < vipChance) {
     const pool = VIPS.filter(v => !day.vipsSeen.includes(v.id));
     if (pool.length) { spawnVip(rand(pool)); return; }
@@ -418,13 +435,13 @@ function runInspection() {
     const valid = hasComplaints && Math.random() < 0.7;
     if (valid) {
       let fine = 40 + state.day * 10;
-      if (state.perks.insurance) fine = Math.round(fine / 2);
+      if (perkLv("insurance")) fine = Math.round(fine * (1 - perkLv("insurance") * 0.3));
       fine = Math.min(fine, state.money);
       state.money -= fine;
       state.violations++;
       state.rating = clamp(state.rating - 0.3, 1, 5);
       day.fined += fine;
-      toast(`❌ ثبتت شكوى العميل! غرامة ${fine} 💵 + مخالفة رقم ${state.violations}${state.perks.insurance ? " (🛡️ التأمين خفّض الغرامة للنص)" : ""}`);
+      toast(`❌ ثبتت شكوى العميل! غرامة ${fine} 💵 + مخالفة رقم ${state.violations}${perkLv("insurance") ? " (🛡️ التأمين خفّض الغرامة)" : ""}`);
       sfx.wrong();
     } else {
       state.rating = clamp(state.rating + 0.15, 1, 5);
@@ -496,13 +513,19 @@ function completeOrder(c) {
   day.patienceSum += ratio;
   c.order.forEach(o => { day.soldCount[o.dish.id] = (o.dish.id in day.soldCount ? day.soldCount[o.dish.id] : 0) + 1; });
 
-  // ذهب للتسليم المثالي (المفتش يعطي 3)
+  // الذهب نادر: يحتاج تسليماً شبه فوري (صبر 85%+)، والزبون العادي ما يضمن العطاء
   const comboTxt = day.combo >= 2 ? ` 🔥x${day.combo}` : "";
-  if (ratio > 0.75) {
-    const g = c.vip === "fahad" ? 3 : (c.type.key === "critic" ? 2 : 1);
-    state.gold += g; day.goldEarned += g; day.perfect++;
-    sfx.coin();
-    floatScore(c.el, `+${total} 💵 +${g} 🪙${comboTxt}`);
+  if (ratio > 0.85) {
+    day.perfect++;
+    const generous = c.type.ratingW >= 2 || Math.random() < 0.4; // الناقد/المفتش الجودة يقدرون، والعادي 40% بس
+    const g = generous ? (c.vip === "fahad" ? 2 : 1) : 0;
+    if (g > 0) {
+      state.gold += g; day.goldEarned += g;
+      sfx.coin();
+      floatScore(c.el, `+${total} 💵 +${g} 🪙${comboTxt}`);
+    } else {
+      floatScore(c.el, `+${total} 💵 🌟${comboTxt}`);
+    }
   } else {
     floatScore(c.el, `+${total} 💵${comboTxt}`);
   }
@@ -574,13 +597,28 @@ function removeCustomer(c, happy) {
 /* ============================================================
    الطبخ والصينية
    ============================================================ */
+/* خصم المواد الخام (خبز، مايونيز، كاتشب…) — تُستهلك لحظة بدء الطبخ */
+function payMaterials(dish) {
+  const matCost = dish.cost || 2;
+  if (state.money < matCost) {
+    toast(`🧾 ما عندك فلوس للمواد الخام! (${dish.name} يحتاج ${matCost} 💵)`);
+    sfx.wrong();
+    return false;
+  }
+  state.money -= matCost;
+  day.expenses += matCost;
+  return true;
+}
+
 function startCooking(dish) {
   if (!day.running) return;
   const capacity = traySize() - day.tray.length - day.cooking.length;
   if (capacity <= 0) { toast("🍽️ الصينية ممتلئة! سلّم الطلبات أولاً"); sfx.wrong(); return; }
+  if (!payMaterials(dish)) return;
   day.cooking.push({ dish, elapsed: 0, total: cookTime(dish) });
   sfx.cook();
   renderCounter();
+  renderTopbar();
 }
 
 function tickCooking(dt) {
@@ -621,7 +659,7 @@ function answerChat(reply) {
   if (reply.eff >= 15) {
     day.chatGood++;
     toast("💬 عجبه ردك! ارتفعت معنوياته 🎉");
-    if (c.type.key === "rich" && Math.random() < 0.5) { state.gold++; day.goldEarned++; sfx.coin(); toast("💎 الزبون الغني أعطاك 🪙 ذهب!"); }
+    if (c.type.key === "rich" && Math.random() < 0.25) { state.gold++; day.goldEarned++; sfx.coin(); toast("💎 الزبون الغني أعطاك 🪙 ذهب!"); }
   } else if (reply.eff < 0) {
     day.chatBad++;
     toast("💬 ما عجبه الرد… انخفض صبره 😬");
@@ -668,6 +706,11 @@ function startDay(endless = false) {
   if (!endless && state.day >= 2 && Math.random() < 0.6) day.event = rand(DAY_EVENTS);
   day.quest = rand(QUESTS);
   day.running = true;
+  // قرض طوارئ: بدون فلوس ما تقدر تشتري مواد خام أصلاً
+  if (state.money < 10) {
+    state.money += 50;
+    setTimeout(() => toast("🏦 البنك أعطاك قرض طوارئ +50 💵 — لا تفلّس مرة ثانية!"), 1200);
+  }
   document.body.classList.remove("rush", "fire");
   if (S3D.active) {
     if (S3D.clear) S3D.clear();
@@ -753,16 +796,16 @@ function gameLoop(now) {
   cbtn.disabled = day.coffeeCd > 0;
   cbtn.textContent = day.coffeeCd > 0 ? Math.ceil(day.coffeeCd / 1000) : "☕";
 
-  // المساعد الآلي يطبخ ما يحتاجه الزباين
+  // المساعد الآلي يطبخ ما يحتاجه الزباين (أسرع مع كل مستوى، ويدفع مواده مثل الجميع)
   if (state.upgrades.robot) {
     day.robotIn -= dt;
     if (day.robotIn <= 0) {
-      day.robotIn = 12000;
+      day.robotIn = 16000 - state.upgrades.robot * 4000; // م1: 12ث، م2: 8ث، م3: 4ث
       const needed = [];
       for (const c of day.customers) for (const o of c.order) if (!o.done) needed.push(o.dish);
       const avail = needed.filter(d =>
         !day.tray.some(t => t.dish.id === d.id) && !day.cooking.some(k => k.dish.id === d.id));
-      if (avail.length && traySize() - day.tray.length - day.cooking.length > 0) {
+      if (avail.length && traySize() - day.tray.length - day.cooking.length > 0 && payMaterials(avail[0])) {
         day.cooking.push({ dish: avail[0], elapsed: 0, total: cookTime(avail[0]) });
         if (S3D.active && S3D.robotPing) S3D.robotPing();
         toast("🤖 المساعد الآلي بدأ يطبخ " + avail[0].name);
@@ -805,13 +848,13 @@ function endDay() {
   document.body.classList.remove("rush", "fire");
   if (window.GameAudio) GameAudio.stop();
   closeChat();
-  // مكافأة الهدف اليومي
-  day.goalMet = !day.endless && day.earned >= day.goal;
+  // مكافأة الهدف اليومي (تُحسب على صافي الربح بعد خصم المواد الخام)
+  day.goalMet = !day.endless && (day.earned - day.expenses) >= day.goal;
   if (day.goalMet) {
     day.goalBonus = Math.round(day.earned * 0.2);
     state.money += day.goalBonus;
-    state.gold += 3;
-    day.goldEarned += 3;
+    state.gold += 2;
+    day.goldEarned += 2;
   }
   // المهمة الجانبية
   if (day.quest && day.quest.check(day)) {
@@ -853,9 +896,10 @@ function showReport() {
     ${day.endless ? `♾️ <b>التحدي اللانهائي انتهى!</b> نتيجتك: <b>${day.earned}</b> 💵 ${day.earned >= state.records.endlessBest ? "🏆 رقم قياسي جديد!" : `(رقمك القياسي: ${state.records.endlessBest})`}` : `📅 اليوم <b>${state.day}</b> انتهى!`}<br>
     ${day.event ? `${day.event.name} — ${day.event.desc}<br>` : ""}
     ${day.quest ? `📌 المهمة: ${day.quest.name} ${day.questDone ? `✅ <b>+${day.quest.reward.gold ? day.quest.reward.gold + " 🪙" : day.quest.reward.money + " 💵"}</b>` : "❌"}<br>` : ""}
-    ${day.endless ? "" : `🎯 الهدف اليومي: <b>${day.earned}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +3 🪙</b>` : "❌ ما تحقق"}<br>`}
+    ${day.endless ? "" : `🎯 الهدف اليومي (صافي): <b>${day.earned - day.expenses}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +2 🪙</b>` : "❌ ما تحقق"}<br>`}
     ✅ زباين راضين: <b>${day.served}</b> &nbsp;|&nbsp; 💢 زباين زعلانين: <b>${day.angry}</b><br>
-    💵 أرباح اليوم: <b>${day.earned}</b> &nbsp;|&nbsp; 🪙 ذهب: <b>+${day.goldEarned}</b><br>
+    💵 الإيرادات: <b>${day.earned}</b> &nbsp;|&nbsp; 🧾 مصاريف المواد الخام: <b style="color:#ff9f43">-${day.expenses}</b><br>
+    📊 صافي الربح: <b style="color:${day.earned - day.expenses >= 0 ? "#2ecc71" : "#ff6b6b"}">${day.earned - day.expenses}</b> &nbsp;|&nbsp; 🪙 ذهب: <b>+${day.goldEarned}</b><br>
     ${day.fined ? `🏛️ غرامة وزارة التجارة: <b style="color:#ff6b6b">-${day.fined} 💵</b> (مخالفات المطعم: ${state.violations})<br>` : ""}
     ${state.complaints > 0 ? `⚠️ شكاوى معلّقة ضدك: <b>${state.complaints}</b> — توقّع تفتيشاً مفاجئاً بكرة!<br>` : ""}
     🔥 أعلى كومبو: <b>x${day.maxCombo}</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
@@ -873,8 +917,8 @@ function showReport() {
 /* ---------- عجلة الحظ ---------- */
 function spinWheel() {
   const prizes = [
-    { t: "💵 +80 فلوس", f: () => state.money += 80 },
-    { t: "🪙 +5 ذهب", f: () => state.gold += 5 },
+    { t: "💵 +120 فلوس", f: () => state.money += 120 },
+    { t: "🪙 +3 ذهب", f: () => state.gold += 3 },
     { t: "📈 +120 خبرة", f: () => state.xp += 120 },
     { t: "🤖 طبق AI مجاني", f: () => state.freeDish = (state.freeDish || 0) + 1 },
   ];
@@ -917,6 +961,12 @@ function aiAnalyze() {
     tips.push(`📊 لاحظت أن أكثر من يزعل عندك: ${names[worstType[0]]}. أعطهم أولوية أعلى في التسليم.`);
   }
 
+  // تحليل مالي: المصاريف مقابل الإيرادات
+  if (day.served > 0 && day.expenses > day.earned * 0.45) {
+    tips.push(`🧾 مصاريف موادك عالية (${day.expenses} من ${day.earned}) — لا تطبخ إلا المطلوب فعلاً، وكل صنف بالسلة المهملات خسارة صافية.`);
+  } else if (day.served >= 4 && day.expenses < day.earned * 0.25) {
+    tips.push("📊 هوامش ربحك ممتازة — إدارة مواد خام محترفة!");
+  }
   if (day.vipAngry >= 1) tips.push("💔 خسرت شخصية مميزة اليوم — الشخصيات (شيخ يوسف، أبو سمير…) تأثيرها على التقييم والأرباح مضاعف، خلّهم أولويتك.");
   if (day.maxCombo >= 5) tips.push(`🔥 كومبو x${day.maxCombo} رهيب! التسليم المتتالي السريع ضاعف أرباحك.`);
   else if (day.served >= 4 && day.maxCombo <= 2) tips.push("🔥 كومبوك ضعيف — سلّم بسرعة وبدون أخطاء عشان يرتفع المضاعف حتى ×1.8.");
@@ -983,25 +1033,27 @@ function renderShop() {
     list.appendChild(row);
   }
 
-  // المزايا الذهبية
+  // المزايا الذهبية (مستويات بالذهب النادر)
   const plist = $("perks-list");
   plist.innerHTML = "";
   for (const p of PERKS) {
-    const owned = !!state.perks[p.id];
+    const lv = perkLv(p.id);
+    const maxed = lv >= p.max;
+    const cost = maxed ? 0 : p.cost(lv);
     const row = document.createElement("div");
     row.className = "upgrade-row";
     row.innerHTML = `<span class="u-emoji">${p.emoji}</span>
-      <span class="u-info"><span class="u-name">${p.name} ${owned ? "✅" : ""}</span><br><span class="u-desc">${p.desc}</span></span>`;
+      <span class="u-info"><span class="u-name">${p.name} (${lv}/${p.max})</span><br><span class="u-desc">${maxed ? "وصلت أعلى مستوى ✅" : p.desc(lv)}</span></span>`;
     const btn = document.createElement("button");
     btn.className = "u-buy";
-    btn.textContent = owned ? "✅ مفعّلة" : `🪙 ${p.cost}`;
-    btn.disabled = owned || state.gold < p.cost;
+    btn.textContent = maxed ? "✅ مكتمل" : `🪙 ${cost}`;
+    btn.disabled = maxed || state.gold < cost;
     btn.onclick = () => {
-      if (owned || state.gold < p.cost) return;
-      state.gold -= p.cost;
-      state.perks[p.id] = true;
+      if (maxed || state.gold < cost) return;
+      state.gold -= cost;
+      state.perks[p.id] = lv + 1;
       sfx.levelup();
-      toast(`⭐ ميزة دائمة جديدة: ${p.emoji} ${p.name}!`);
+      toast(`⭐ ${p.emoji} ${p.name} — المستوى ${lv + 1}!`);
       save();
       renderShop();
     };
@@ -1047,27 +1099,33 @@ function renderShop() {
     row.innerHTML = `
       <span class="m-emoji">${d.emoji}</span>
       <span class="m-info"><span class="m-name">${d.name} ${d.ai ? "🤖" : ""}</span><br>
-      <span class="m-desc">💵 ${d.price} — ⏱️ ${(d.cook / 1000).toFixed(1)} ث${d.desc ? "<br>" + d.desc : ""}</span></span>
+      <span class="m-desc">يبيع 💵 ${d.price} — مواده 🧾 ${d.cost || 2} (${d.mats || "مكونات أساسية"}) — ⏱️ ${(d.cook / 1000).toFixed(1)} ث${d.desc ? "<br>" + d.desc : ""}</span></span>
     `;
     ml.appendChild(row);
   }
 
-  $("btn-ai-dish").disabled = state.gold < 15 && !(state.freeDish > 0);
-  $("btn-ai-dish").textContent = state.freeDish > 0 ? "🎡 مجاني — ابتكر طبق جديد" : "🪙 15 — ابتكر طبق جديد";
+  const cst = aiDishCost();
+  $("btn-ai-dish").disabled = (state.gold < cst.gold || state.money < cst.money) && !(state.freeDish > 0);
+  $("btn-ai-dish").textContent = state.freeDish > 0 ? "🎡 مجاني — ابتكر طبق جديد" : `💵 ${cst.money} + 🪙 ${cst.gold} — ابتكر طبق`;
   $("ai-dish-result").classList.add("hidden");
   pendingDish = null;
 }
 
+/* تكلفة ابتكار طبق جديد ترتفع مع كل طبق تملكه — الصنف الجديد استثمار حقيقي */
+function aiDishCost() { return { money: 500 + state.aiDishes.length * 250, gold: 10 }; }
+
 function aiDishFlow(regenerate) {
   if (!regenerate) {
+    const cst = aiDishCost();
     if (state.freeDish > 0) {
       state.freeDish--;
       toast("🎡 استخدمت طبقك المجاني من عجلة الحظ!");
-    } else if (state.gold < 15) {
-      toast("🪙 تحتاج 15 ذهب — اكسبها من التسليم المثالي!");
+    } else if (state.gold < cst.gold || state.money < cst.money) {
+      toast(`🧾 ابتكار طبق يحتاج ${cst.money} 💵 + ${cst.gold} 🪙`);
       return;
     } else {
-      state.gold -= 15;
+      state.gold -= cst.gold;
+      state.money -= cst.money;
     }
   }
   pendingDish = aiGenerateDish();
@@ -1098,7 +1156,7 @@ function renderTopbar() {
   $("stat-rating").textContent = `⭐ ${state.rating.toFixed(1)}`;
   $("stat-time").textContent = `⏰ ${Math.max(0, Math.ceil(day ? day.timeLeft / 1000 : 0))}`;
   $("stat-day").textContent = `📅 ${state.day}`;
-  $("stat-goal").textContent = `🎯 ${day ? day.earned : 0}/${day ? day.goal : 0}`;
+  $("stat-goal").textContent = `🎯 ${day ? day.earned - day.expenses : 0}/${day ? day.goal : 0}`;
   const combo = $("stat-combo");
   if (day && day.combo >= 2) { combo.textContent = `🔥x${day.combo}`; combo.classList.remove("hidden"); }
   else combo.classList.add("hidden");
@@ -1256,7 +1314,7 @@ function renderCounter() {
     b.innerHTML = `
       ${icon ? `<img class="s-img" src="${icon}" alt="${d.name}">` : `<span class="s-emoji">${d.emoji}</span>`}
       <span class="s-name">${d.shortName || d.name}</span>
-      <span class="s-price">💵 ${d.price}</span>
+      <span class="s-price">💵 ${d.price} | مواد 🧾 ${d.cost || 2}</span>
       <div class="cook-fill"></div>
     `;
     b.onclick = () => startCooking(d);
@@ -1359,7 +1417,7 @@ function bindEvents() {
     if (!day.running || day.coffeeCd > 0 || !day.customers.length) return;
     const c = day.customers.reduce((a, b) => (a.patience / a.maxPatience < b.patience / b.maxPatience ? a : b));
     c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * 0.35);
-    day.coffeeCd = state.perks.coffeePro ? 12000 : 25000;
+    day.coffeeCd = 25000 - perkLv("coffeePro") * 6500;
     toast(`☕ قدمت قهوة عربية لـ${c.name} — انبسط وهدأ!`);
     sfx.serve();
   };
@@ -1394,7 +1452,7 @@ function bindEvents() {
     const item = day.tray.splice(day.selectedTray, 1)[0];
     day.selectedTray = -1;
     sfx.wrong();
-    toast(`🗑️ رميت ${item.dish.name}`);
+    toast(`🗑️ رميت ${item.dish.name} — وراحت عليك مواده (${item.dish.cost || 2} 💵)!`);
     renderTray(); renderCustomers();
   };
 
