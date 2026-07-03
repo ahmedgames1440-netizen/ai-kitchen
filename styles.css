@@ -39,6 +39,15 @@ html, body {
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
 /* ===== اللوقو ===== */
+.logo-img {
+  width: min(62vw, 250px);
+  display: block;
+  margin: 0 auto 10px;
+  border-radius: 18%;
+  box-shadow: 0 12px 40px rgba(255, 159, 67, .35), 0 4px 14px rgba(0,0,0,.5);
+  animation: logofloat 3.5s ease-in-out infinite;
+}
+@keyframes logofloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.015); } }
 .logo { width: 100%; max-width: 340px; margin: 0 auto; display: block; }
 .logo-ar { font-family: "Cairo", Arial; font-size: 44px; font-weight: 900; }
 .logo-en { font-family: Arial; font-size: 19px; font-weight: bold; letter-spacing: 3px; }
@@ -161,6 +170,25 @@ body.rush #stat-time { background: var(--red); color: #fff; animation: combopuls
   color: var(--accent2);
   margin: 8px 0;
 }
+
+/* البريميوم */
+.iap-row { border: 1px solid rgba(255, 209, 102, .45); background: linear-gradient(135deg, #3d2c14, #372a5c); }
+.iap-buy { background: linear-gradient(180deg, #b9f6ca, #2ecc71); color: #0b3d1e; font-size: 12px; }
+.ad-row { border: 1px solid rgba(108, 92, 231, .6); background: linear-gradient(135deg, #241b4e, #372a5c); }
+.ad-box { text-align: center; }
+.ad-label {
+  display: inline-block;
+  background: #ffd166;
+  color: #3a2200;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.ad-emoji { font-size: 44px; animation: bob 1.2s infinite; }
+.ad-text { color: var(--muted); font-size: 13px; margin: 10px 0; }
+.ad-timer { font-weight: 900; color: var(--accent2); font-size: 16px; }
 
 /* الإنجازات */
 .ach-row {

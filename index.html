@@ -24,7 +24,8 @@
 <div id="screen-menu" class="screen active">
   <div class="menu-box">
     <!-- اللوقو -->
-    <svg class="logo" viewBox="0 0 340 230" role="img" aria-label="مطعم المستقبل - AI Kitchen">
+    <img class="logo-img" src="logo.png" alt="مطعم المستقبل - AI Kitchen">
+    <svg class="logo hidden" viewBox="0 0 340 230" role="img" aria-label="مطعم المستقبل - AI Kitchen">
       <defs>
         <linearGradient id="lgGold" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#ffd166"/><stop offset="1" stop-color="#ff9f43"/>
@@ -130,6 +131,7 @@
     </div>
     <button id="btn-wheel" class="big-btn gold hidden">🎡 أدر عجلة الحظ!</button>
     <div id="wheel-result" class="wheel-result hidden"></div>
+    <button id="btn-ad-double" class="big-btn gold hidden">🎬 شاهد إعلاناً وضاعف أرباح اليوم!</button>
     <button id="btn-report-shop" class="big-btn">🛒 المتجر</button>
     <button id="btn-next-day" class="big-btn secondary">☀️ اليوم التالي</button>
   </div>
@@ -143,6 +145,9 @@
 
     <div class="shop-section-title">⚙️ المعدات والديكور</div>
     <div id="upgrades-list"></div>
+
+    <div class="shop-section-title">💎 البريميوم — فلوس حقيقية وإعلانات</div>
+    <div id="iap-list"></div>
 
     <div class="shop-section-title">⭐ مزايا ذهبية — تشترى بالذهب 🪙 فقط</div>
     <div id="perks-list"></div>
@@ -189,6 +194,8 @@
       <p>🤖 <b>المساعد الآلي</b> (من المتجر): روبوت يطبخ لك صنفاً مطلوباً كل 12 ثانية.</p>
       <p>🔥 <b>وضع النار:</b> كومبو ×5 أو أكثر = طبخ أسرع 20%!</p>
       <p>♾️ <b>التحدي اللانهائي</b> (بعد اليوم 7): بدون وقت — اصمد حتى 5 زباين زعلانين وسجّل رقماً قياسياً.</p>
+      <p>🗺️ <b>خريطة المراحل:</b> كل يوم = مرحلة أصعب (وقت أطول وزباين أسرع). يوم 2: الشخصيات المميزة والتفتيش — يوم 3: ساعة الذروة — يوم 6: يفتح المساعد الآلي — يوم 7: التحدي اللانهائي — يوم 10: الفرن المزدوج. ومستواك (1-40) يفتح النافورة الذاتية (م5) واللوحة الذهبية (م8).</p>
+      <p>💎 <b>البريميوم:</b> عناصر بفلوس حقيقية (تجريبية بالويب، حقيقية في نسخة المتاجر) + مشاهدة إعلانات لمكافآت فورية ومضاعفة أرباح اليوم.</p>
       <p>💬 أحياناً زبون يرسل لك رسالة — اختر الرد المناسب وترتفع معنوياته!</p>
       <p>🪙 الذهب تكسبه من التسليم المثالي (صبر شبه كامل) — استخدمه لابتكار أطباق بالذكاء الاصطناعي.</p>
       <p>📊 نهاية كل يوم: تقرير ذكي يحلل أداءك ويعطيك نصائح.</p>
@@ -205,6 +212,29 @@
     <h2 style="margin-top:18px">📈 أرقامك القياسية</h2>
     <div id="records-box"></div>
     <button id="btn-ach-back" class="big-btn">⬅️ رجوع</button>
+  </div>
+</div>
+
+<!-- ======== نافذة تأكيد الشراء (IAP) ======== -->
+<div id="iap-modal" class="modal hidden">
+  <div class="modal-box">
+    <h3>🛒 تأكيد الشراء</h3>
+    <div id="iap-name" style="text-align:center;font-weight:bold;margin-bottom:8px"></div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px">
+      ⚠️ وضع تجريبي — في نسخة App Store / Google Play يتم الدفع الحقيقي عبر المتجر
+    </div>
+    <button id="btn-iap-confirm" class="big-btn gold">✅ تأكيد الشراء (تجريبي)</button>
+    <button id="btn-iap-cancel" class="big-btn secondary">✖️ إلغاء</button>
+  </div>
+</div>
+
+<!-- ======== نافذة الإعلان التجريبي ======== -->
+<div id="ad-modal" class="modal hidden">
+  <div class="modal-box ad-box">
+    <div class="ad-label">إعلان</div>
+    <div class="ad-emoji">🎬🍔🥤</div>
+    <div class="ad-text">هنا يظهر إعلان فيديو حقيقي (AdMob) في نسخة المتاجر</div>
+    <div class="ad-timer">تبقى <span id="ad-count">5</span> ثوانٍ…</div>
   </div>
 </div>
 

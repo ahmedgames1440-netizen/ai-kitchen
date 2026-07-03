@@ -202,8 +202,22 @@ const UPGRADES = [
   { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية لكل مستوى", max: 3, cost: l => Math.round(380 * Math.pow(1.8, l)) },
   { id: "falafel", emoji: "🧆", name: "فتح صنف: فلافل", desc: "إضافة صنف جديد للمطعم استثمار مكلف (يبيع بـ6 💵)", max: 1, cost: () => 400 },
   { id: "burger",  emoji: "🍔", name: "فتح صنف: برجر", desc: "الصنف الأغلى بالقائمة (يبيع بـ10 💵)", max: 1, cost: () => 700 },
-  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(600 * Math.pow(2, l)) },
+  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(600 * Math.pow(2, l)), req: { day: 6 } },
+  /* عناصر فاخرة — غالية ومقفلة بشروط صعبة */
+  { id: "soda", emoji: "🥤", name: "نافورة المشروبات الذاتية", desc: "المشروبات تجهز فورياً بدون انتظار!", max: 1, cost: () => 2200, req: { level: 5 } },
+  { id: "doubleOven", emoji: "♨️", name: "الفرن المزدوج الاحترافي", desc: "25% فرصة يطلع صنفان من كل طبخة — الثاني ببلاش!", max: 1, cost: () => 3500, req: { day: 10 } },
+  { id: "goldenSign", emoji: "🏅", name: "اللوحة الذهبية المرموقة", desc: "سمعة محصّنة: تقييمك لا ينزل أبداً تحت 3.0", max: 1, cost: () => 4200, req: { level: 8 } },
 ];
+function reqMet(u) {
+  if (!u.req) return true;
+  if (u.req.level && playerLevel() < u.req.level) return false;
+  if (u.req.day && state.day < u.req.day) return false;
+  return true;
+}
+function reqLabel(u) {
+  if (u.req.level) return `🔒 يتطلب مستوى ${u.req.level} (أنت ${playerLevel()})`;
+  return `🔒 يتطلب الوصول لليوم ${u.req.day} (أنت باليوم ${state.day})`;
+}
 
 /* ---------- الأحداث اليومية ---------- */
 const DAY_EVENTS = [
@@ -273,7 +287,86 @@ const THEME_DEFS = [
   { id: "classic", name: "🏠 كلاسيكي دافئ", cost: 0 },
   { id: "neon", name: "🌌 نيون ليلي", cost: 450 },
   { id: "desert", name: "🏜️ صحراوي تراثي", cost: 450 },
+  { id: "royal", name: "👑 القصر الملكي", cost: 0, vipOnly: true },
 ];
+
+/* ============================================================
+   البريميوم: شراء بفلوس حقيقية (IAP) + إعلانات مكافئة
+   ملاحظة تقنية: في نسخة المتاجر تُستبدل simulateIAP/simulateAd
+   بمكتبات الدفع الحقيقية (StoreKit / Google Play Billing / AdMob)
+   ============================================================ */
+const IAP_PRODUCTS = [
+  { id: "vip", emoji: "👑", name: "عضوية VIP الذهبية", price: "49.99 ر.س", once: true,
+    desc: "للأبد: خبرة ×2، بقشيش +10%، إعفاء من أول مخالفة كل يوم، وثيم القصر الملكي الحصري" },
+  { id: "money1", emoji: "💵", name: "حزمة فلوس", price: "9.99 ر.س",
+    desc: "+1200 فلوس فوراً", grant: () => { state.money += 1200; } },
+  { id: "money2", emoji: "💰", name: "خزنة الفلوس الكبيرة", price: "39.99 ر.س",
+    desc: "+6500 فلوس فوراً (أفضل قيمة)", grant: () => { state.money += 6500; } },
+  { id: "gold1", emoji: "🪙", name: "كيس ذهب", price: "14.99 ر.س",
+    desc: "+25 ذهب فوراً", grant: () => { state.gold += 25; } },
+  { id: "gold2", emoji: "🏆", name: "صندوق الذهب الملكي", price: "49.99 ر.س",
+    desc: "+110 ذهب فوراً (أفضل قيمة)", grant: () => { state.gold += 110; } },
+];
+
+const AD_COOLDOWN = 180000; // 3 دقائق بين الإعلانات
+function adReady() { return Date.now() >= (state.adCdUntil || 0); }
+
+/* إعلان تجريبي — 5 ثوانٍ عد تنازلي (يُستبدل بـAdMob في نسخة المتاجر) */
+function simulateAd(onDone) {
+  const modal = $("ad-modal");
+  const cnt = $("ad-count");
+  modal.classList.remove("hidden");
+  let left = 5;
+  cnt.textContent = left;
+  const iv = setInterval(() => {
+    left--;
+    cnt.textContent = left;
+    if (left <= 0) {
+      clearInterval(iv);
+      modal.classList.add("hidden");
+      onDone();
+    }
+  }, 1000);
+}
+
+function watchShopAd() {
+  if (!adReady()) {
+    toast(`🎬 الإعلان التالي بعد ${Math.ceil(((state.adCdUntil || 0) - Date.now()) / 1000)} ثانية`);
+    return;
+  }
+  simulateAd(() => {
+    state.adCdUntil = Date.now() + AD_COOLDOWN;
+    state.adToggle = !state.adToggle;
+    if (state.adToggle) { state.money += 60; toast("🎬 مكافأة الإعلان: +60 💵!"); }
+    else { state.gold += 1; toast("🎬 مكافأة الإعلان: +1 🪙!"); }
+    sfx.coin();
+    save();
+    renderShop();
+  });
+}
+
+/* شراء IAP (وضع تجريبي على الويب) */
+let pendingIAP = null;
+function buyIAP(p) {
+  pendingIAP = p;
+  $("iap-name").textContent = `${p.emoji} ${p.name} — ${p.price}`;
+  $("iap-modal").classList.remove("hidden");
+}
+function confirmIAP() {
+  const p = pendingIAP;
+  if (!p) return;
+  $("iap-modal").classList.add("hidden");
+  // في نسخة المتاجر: هنا يُستدعى الدفع الحقيقي وننتظر الإيصال
+  if (p.once) state.iap[p.id] = true;
+  if (p.grant) p.grant();
+  if (p.id === "vip" && !state.themesOwned.includes("royal")) state.themesOwned.push("royal");
+  sfx.levelup();
+  toast(`👑 تم الشراء (تجريبي): ${p.name}!`);
+  save();
+  renderShop();
+  pendingIAP = null;
+}
+const isVIP = () => !!(state.iap && state.iap.vip);
 
 /* ---------- حالة اللعبة ---------- */
 const SAVE_KEY = "ai_kitchen_save_v1";
@@ -284,6 +377,7 @@ function freshState() {
     money: 60, gold: 2, day: 1, rating: 5.0, sound: true, music: true, // رأس مال بسيط للمواد الخام
     xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
     complaints: 0, violations: 0, perks: {},
+    iap: {}, adCdUntil: 0, adToggle: false,
     records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
     theme: "classic", themesOwned: ["classic"],
     upgrades: { grill: 0, tray: 0, decor: 0, fame: 0, falafel: 0, burger: 0, robot: 0 },
@@ -316,6 +410,7 @@ function activeMenu() {
   return menu.concat(state.aiDishes);
 }
 function cookTime(dish) {
+  if (dish.id === "drink" && state.upgrades.soda) return 200; // نافورة ذاتية 🥤
   let t = dish.cook * Math.pow(0.88, state.upgrades.grill || 0);
   if (day && day.combo >= 5) t *= 0.8; // وضع النار 🔥
   if (day && day.fanniBoost) t *= 0.8; // صيانة أبو شاكر 🔧
@@ -323,7 +418,11 @@ function cookTime(dish) {
 }
 function traySize() { return 4 + (state.upgrades.tray || 0); }
 function patienceMult() { return 1 + (state.upgrades.decor || 0) * 0.12; }
-function tipMult() { return (1 + (state.upgrades.fame || 0) * 0.10) * (1 + Math.min(playerLevel() - 1, 10) * 0.02); }
+function tipMult() {
+  return (1 + (state.upgrades.fame || 0) * 0.10)
+       * (1 + Math.min(playerLevel() - 1, 10) * 0.02)
+       * (isVIP() ? 1.1 : 1); // 👑 عضوية VIP
+}
 
 /* ---------- حالة اليوم الجاري ---------- */
 let day = null;
@@ -362,6 +461,8 @@ function freshDay() {
     inspectionAt: -1, inspectionDone: false, fined: 0,
     expenses: 0,             // مصاريف المواد الخام
     fanniBoost: false,       // صيانة أبو شاكر الفني
+    vipWaiverUsed: false,    // إعفاء مخالفة VIP اليومي
+    adDoubled: false,        // مضاعفة أرباح اليوم بإعلان
   };
 }
 
@@ -448,7 +549,13 @@ function runInspection() {
   setTimeout(() => {
     if (!day.running || !day.customers.includes(insp)) return;
     const hasComplaints = state.complaints > 0;
-    const valid = hasComplaints && Math.random() < 0.7;
+    let valid = hasComplaints && Math.random() < 0.7;
+    // 👑 عضوية VIP تسقط أول مخالفة كل يوم
+    if (valid && isVIP() && !day.vipWaiverUsed) {
+      day.vipWaiverUsed = true;
+      valid = false;
+      toast("👑 عضوية VIP الذهبية أسقطت المخالفة — محاميك تكفّل بالموضوع!");
+    }
     if (valid) {
       let fine = 40 + state.day * 10;
       if (perkLv("insurance")) fine = Math.round(fine * (1 - perkLv("insurance") * 0.3));
@@ -570,9 +677,9 @@ function completeOrder(c) {
   const w = 0.09 * c.type.ratingW;
   state.rating = clamp(state.rating + (target - state.rating) * w, 1, 5);
 
-  // خبرة ومستويات
+  // خبرة ومستويات (VIP يضاعفها 👑)
   const lvlBefore = playerLevel();
-  state.xp += 10 + day.combo * 2 + (c.isVip ? 10 : 0);
+  state.xp += (10 + day.combo * 2 + (c.isVip ? 10 : 0)) * (isVIP() ? 2 : 1);
   if (playerLevel() > lvlBefore) {
     toast(`⬆️ مستوى ${playerLevel()}: أنت الآن "${playerTitle()}"! (+2% بقشيش)`);
     sfx.levelup();
@@ -652,7 +759,13 @@ function tickCooking(dt) {
     c.elapsed += dt;
     if (c.elapsed >= c.total) {
       day.cooking.splice(i, 1);
-      day.tray.push({ dish: c.dish, readyAt: performance.now() }); // طازج لمدة 5 ثوانٍ
+      day.tray.push({ dish: c.dish, readyAt: performance.now() });
+      // الفرن المزدوج: 25% صنف إضافي مجاني (بدون مواد)
+      if (state.upgrades.doubleOven && Math.random() < 0.25 &&
+          day.tray.length + day.cooking.length < traySize()) {
+        day.tray.push({ dish: c.dish, readyAt: performance.now() });
+        toast("♨️ الفرن المزدوج أخرج صنفاً إضافياً ببلاش!");
+      }
       sfx.ready();
       renderTray();
     }
@@ -932,10 +1045,11 @@ function showReport() {
     ${best ? `🥇 الأكثر مبيعاً: <b>${best.emoji} ${best.shortName || best.name}</b> (${bestN})` : "🥇 ما انباع شي اليوم 😅"}
   `;
   $("ai-analysis").innerHTML = aiAnalyze().map(t => `<div class="tip">${t}</div>`).join("");
-  // عجلة الحظ تظهر عند تحقيق الهدف
+  // عجلة الحظ تظهر عند تحقيق الهدف + إعلان مضاعفة الأرباح
   $("btn-wheel").classList.toggle("hidden", !day.goalMet);
   $("btn-wheel").disabled = false;
   $("wheel-result").classList.add("hidden");
+  $("btn-ad-double").classList.toggle("hidden", day.adDoubled || (day.earned - day.expenses) <= 0);
   showScreen("screen-report");
 }
 
@@ -1037,16 +1151,17 @@ function renderShop() {
     row.className = "upgrade-row";
     const maxed = lvl >= u.max;
     const cost = maxed ? 0 : u.cost(lvl);
+    const unlocked = reqMet(u);
     row.innerHTML = `
-      <span class="u-emoji">${u.emoji}</span>
-      <span class="u-info"><span class="u-name">${u.name} ${u.max > 1 ? `(${lvl}/${u.max})` : lvl ? "✅" : ""}</span><br><span class="u-desc">${u.desc}</span></span>
+      <span class="u-emoji">${unlocked ? u.emoji : "🔒"}</span>
+      <span class="u-info"><span class="u-name">${u.name} ${u.max > 1 ? `(${lvl}/${u.max})` : lvl ? "✅" : ""}</span><br><span class="u-desc">${u.desc}${!unlocked ? `<br><b style="color:#ff9f43">${reqLabel(u)}</b>` : ""}</span></span>
     `;
     const btn = document.createElement("button");
     btn.className = "u-buy";
-    btn.textContent = maxed ? "✅ مكتمل" : `💵 ${cost}`;
-    btn.disabled = maxed || state.money < cost;
+    btn.textContent = maxed ? "✅ مكتمل" : !unlocked ? "🔒" : `💵 ${cost}`;
+    btn.disabled = maxed || !unlocked || state.money < cost;
     btn.onclick = () => {
-      if (state.money < cost) return;
+      if (state.money < cost || !unlocked) return;
       state.money -= cost;
       state.upgrades[u.id] = (state.upgrades[u.id] || 0) + 1;
       sfx.levelup();
@@ -1086,18 +1201,50 @@ function renderShop() {
     plist.appendChild(row);
   }
 
+  // البريميوم: منتجات بفلوس حقيقية + إعلان مكافئ
+  const iapList = $("iap-list");
+  iapList.innerHTML = "";
+  // صف الإعلان المكافئ
+  const adRow = document.createElement("div");
+  adRow.className = "upgrade-row ad-row";
+  const adOk = adReady();
+  adRow.innerHTML = `<span class="u-emoji">🎬</span>
+    <span class="u-info"><span class="u-name">شاهد إعلاناً واكسب!</span><br><span class="u-desc">مكافأة فورية: +60 💵 أو +1 🪙 (كل 3 دقائق)</span></span>`;
+  const adBtn = document.createElement("button");
+  adBtn.className = "u-buy";
+  adBtn.textContent = adOk ? "▶️ شاهد" : `⏳ ${Math.ceil(((state.adCdUntil || 0) - Date.now()) / 1000)}ث`;
+  adBtn.disabled = !adOk;
+  adBtn.onclick = watchShopAd;
+  adRow.appendChild(adBtn);
+  iapList.appendChild(adRow);
+  for (const p of IAP_PRODUCTS) {
+    const owned = p.once && state.iap[p.id];
+    const row = document.createElement("div");
+    row.className = "upgrade-row iap-row";
+    row.innerHTML = `<span class="u-emoji">${p.emoji}</span>
+      <span class="u-info"><span class="u-name">${p.name} ${owned ? "✅" : ""}</span><br><span class="u-desc">${p.desc}</span></span>`;
+    const btn = document.createElement("button");
+    btn.className = "u-buy iap-buy";
+    btn.textContent = owned ? "✅ مملوكة" : p.price;
+    btn.disabled = !!owned;
+    btn.onclick = () => buyIAP(p);
+    row.appendChild(btn);
+    iapList.appendChild(row);
+  }
+
   // ثيمات الديكور
   for (const t of THEME_DEFS) {
     const owned = state.themesOwned.includes(t.id);
     const active = state.theme === t.id;
+    const vipLocked = t.vipOnly && !isVIP() && !owned;
     const row = document.createElement("div");
     row.className = "upgrade-row";
-    row.innerHTML = `<span class="u-emoji">🎨</span>
-      <span class="u-info"><span class="u-name">${t.name}</span><br><span class="u-desc">ثيم ديكور ثلاثي الأبعاد للمطعم</span></span>`;
+    row.innerHTML = `<span class="u-emoji">${vipLocked ? "🔒" : "🎨"}</span>
+      <span class="u-info"><span class="u-name">${t.name}</span><br><span class="u-desc">${t.vipOnly ? "ثيم حصري لأعضاء 👑 VIP الذهبية" : "ثيم ديكور ثلاثي الأبعاد للمطعم"}</span></span>`;
     const btn = document.createElement("button");
     btn.className = "u-buy";
-    btn.textContent = active ? "✓ مفعّل" : owned ? "فعّل" : `💵 ${t.cost}`;
-    btn.disabled = active || (!owned && state.money < t.cost);
+    btn.textContent = vipLocked ? "👑 VIP" : active ? "✓ مفعّل" : owned ? "فعّل" : `💵 ${t.cost}`;
+    btn.disabled = vipLocked || active || (!owned && state.money < t.cost);
     btn.onclick = () => {
       if (!owned) {
         if (state.money < t.cost) return;
@@ -1438,6 +1585,20 @@ function bindEvents() {
   $("btn-achievements").onclick = () => { renderAchievements(); showScreen("screen-achievements"); };
   $("btn-ach-back").onclick = () => { renderMenuScreen(); showScreen("screen-menu"); };
   $("btn-wheel").onclick = spinWheel;
+  $("btn-iap-confirm").onclick = confirmIAP;
+  $("btn-iap-cancel").onclick = () => { $("iap-modal").classList.add("hidden"); pendingIAP = null; };
+  $("btn-ad-double").onclick = () => {
+    if (day.adDoubled) return;
+    simulateAd(() => {
+      day.adDoubled = true;
+      const bonus = Math.max(0, day.earned - day.expenses);
+      state.money += bonus;
+      toast(`🎬 تضاعفت أرباح اليوم: +${bonus} 💵!`);
+      sfx.coin();
+      $("btn-ad-double").classList.add("hidden");
+      save();
+    });
+  };
   $("btn-coffee").onclick = () => {
     if (!day.running || day.coffeeCd > 0 || !day.customers.length) return;
     const c = day.customers.reduce((a, b) => (a.patience / a.maxPatience < b.patience / b.maxPatience ? a : b));
