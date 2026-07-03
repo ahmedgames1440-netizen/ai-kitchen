@@ -951,6 +951,9 @@ function gameLoop(now) {
     }
   }
 
+  // اللوحة الذهبية 🏅: التقييم لا ينزل تحت 3.0
+  if (state.upgrades.goldenSign && state.rating < 3) state.rating = 3;
+
   // وضع النار + أزيز الطبخ + إيقاع الذروة + ساعة الحائط
   document.body.classList.toggle("fire", day.combo >= 5);
   if (window.GameAudio) {
