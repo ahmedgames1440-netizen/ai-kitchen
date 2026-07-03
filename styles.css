@@ -17,7 +17,7 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
   background: linear-gradient(160deg, var(--bg1), var(--bg2));
   color: var(--text);
   user-select: none;
@@ -38,7 +38,7 @@ html, body {
 .menu-box { text-align: center; padding: 24px; max-width: 420px; width: 100%; }
 .logo-emoji { font-size: 64px; margin-bottom: 8px; animation: bob 2.5s ease-in-out infinite; }
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-h1 { font-size: 34px; color: var(--accent2); text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+h1 { font-size: 34px; font-weight: 900; color: var(--accent2); text-shadow: 0 3px 0 rgba(0,0,0,.35); }
 .subtitle { color: var(--muted); margin: 6px 0 24px; font-size: 15px; }
 .menu-stats { margin-top: 20px; color: var(--muted); font-size: 14px; line-height: 1.9; }
 
@@ -137,7 +137,8 @@ body.rush #stat-time { background: var(--red); color: #fff; animation: combopuls
 .ov3d.servable { border-color: var(--green); box-shadow: 0 0 12px rgba(46,204,113,.55); }
 .ov3d .ov-name { font-size: 11px; font-weight: bold; white-space: nowrap; }
 .ov3d .ov-type { color: var(--muted); font-weight: normal; font-size: 10px; }
-.ov3d .order-bubble { font-size: 17px; padding: 2px 5px; min-height: 24px; }
+.ov3d .order-bubble { font-size: 17px; padding: 2px 5px; min-height: 24px; align-items: center; }
+.ov3d .order-bubble img { width: 24px; height: 24px; display: block; }
 .ov3d .patience-bar { width: 100%; height: 6px; }
 .customer {
   flex: 1;
@@ -215,6 +216,17 @@ body.rush #stat-time { background: var(--red); color: #fff; animation: combopuls
   font-size: 30px;
   border: 3px dashed rgba(255,255,255,.15);
   cursor: pointer;
+  position: relative;
+}
+.tray-slot img { width: 42px; height: 42px; pointer-events: none; }
+.tray-slot.fresh { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,209,102,.55); }
+.tray-slot.fresh::after {
+  content: "✨";
+  position: absolute;
+  top: -9px;
+  left: -7px;
+  font-size: 14px;
+  animation: bob 1s infinite;
 }
 .tray-slot.filled { border-style: solid; border-color: var(--accent); background: var(--card2); }
 .tray-slot.selected { border-color: var(--green); box-shadow: 0 0 10px rgba(46,204,113,.6); transform: scale(1.08); }
@@ -251,6 +263,7 @@ body.rush #stat-time { background: var(--red); color: #fff; animation: combopuls
 }
 .station:active { transform: scale(.96); }
 .station .s-emoji { font-size: 32px; display: block; }
+.station .s-img { width: 46px; height: 46px; display: block; margin: 0 auto; pointer-events: none; }
 .station .s-name { font-size: 12px; font-weight: bold; display: block; margin-top: 2px; }
 .station .s-price { font-size: 11px; color: var(--muted); display: block; }
 .station .cook-fill {

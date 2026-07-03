@@ -248,6 +248,7 @@ function freshDay() {
     goalMet: false,
     rushAt: -1, rushLeft: 0, rushDone: false, // ساعة الذروة
     vipCount: 0, vipsSeen: [], vipServed: 0, vipAngry: 0,
+    freshServes: 0,          // أصناف سُلّمت وهي طازجة
   };
 }
 
@@ -329,6 +330,13 @@ function serveTrayItem(c) {
   day.tray.splice(idx, 1);
   day.selectedTray = -1;
   sfx.serve();
+  // مكافأة الصنف الطازج: يرفع صبر الزبون
+  if (item.readyAt && performance.now() - item.readyAt < 5000) {
+    c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * 0.06);
+    day.freshServes++;
+    floatScore(c.el, "✨ طازج!");
+  }
+  if (S3D.active && S3D.flyDish) S3D.flyDish(item.dish, c.uid);
   if (customerRemaining(c).length === 0) completeOrder(c);
   renderTray(); renderCustomers();
 }
@@ -421,7 +429,7 @@ function tickCooking(dt) {
     c.elapsed += dt;
     if (c.elapsed >= c.total) {
       day.cooking.splice(i, 1);
-      day.tray.push({ dish: c.dish });
+      day.tray.push({ dish: c.dish, readyAt: performance.now() }); // طازج لمدة 5 ثوانٍ
       sfx.ready();
       renderTray();
     }
@@ -565,6 +573,7 @@ function gameLoop(now) {
   }
 
   tickCooking(dt);
+  updateFreshness();
   renderTopbar();
 
   // نهاية اليوم: انتهى الوقت وما بقي زبائن
@@ -645,6 +654,8 @@ function aiAnalyze() {
   if (!day.goalMet && day.earned > 0) tips.push(`🎯 نقصك ${day.goal - day.earned} 💵 عن الهدف — الهدف المحقق يعطيك +20% مكافأة و3 ذهب.`);
   if (day.wrongServes >= 3) tips.push(`🎯 سلّمت ${day.wrongServes} أصناف خاطئة — تأكد من فقاعة الطلب قبل التسليم، الناقد يعاقبك عليها أكثر.`);
   if (day.perfect >= 3) tips.push(`🪙 ممتاز! ${day.perfect} تسليمات مثالية جابت لك ذهب. الذهب يفتح لك أطباق الذكاء الاصطناعي.`);
+  if (day.freshServes >= 5) tips.push(`✨ سلّمت ${day.freshServes} أصناف وهي طازجة — الزباين يحسون بالفرق والصبر يرتفع!`);
+  else if (day.served >= 4 && day.freshServes === 0) tips.push("✨ ولا صنف انسلّم طازج — الصنف أول 5 ثوانٍ من جهوزيته يعطي الزبون دفعة صبر، لا تخزّن بالصينية.");
   if (day.chatBad > day.chatGood) tips.push("💬 ردودك على الزباين تحتاج لباقة أكثر — الرد الحلو يرفع صبرهم مجاناً!");
   else if (day.chatGood >= 2) tips.push("💬 ردودك على الزباين ممتازة، كسبت ولاءهم!");
 
@@ -806,7 +817,10 @@ function renderCustomers3D() {
     ov.classList.toggle("vip", !!c.isVip);
     ov.innerHTML = `
       <div class="ov-name">${c.chatPending ? "💬 " : ""}${c.name} <span class="ov-type">${c.type.label}</span> <span class="ov-mood"></span></div>
-      <div class="order-bubble">${c.order.map(o => `<span class="oitem ${o.done ? "done" : ""}">${o.dish.emoji}</span>`).join("")}</div>
+      <div class="order-bubble">${c.order.map(o => {
+        const ic = S3D.dishIcon ? S3D.dishIcon(o.dish) : null;
+        return `<span class="oitem ${o.done ? "done" : ""}">${ic ? `<img src="${ic}" alt="${o.dish.name}">` : o.dish.emoji}</span>`;
+      }).join("")}</div>
       <div class="patience-bar"><div class="patience-fill" style="width:${(c.patience / c.maxPatience) * 100}%"></div></div>
     `;
     ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
@@ -858,7 +872,10 @@ function renderTray() {
     if (item) {
       slot.classList.add("filled");
       if (i === day.selectedTray) slot.classList.add("selected");
-      slot.textContent = item.dish.emoji;
+      if (item.readyAt && performance.now() - item.readyAt < 5000) slot.classList.add("fresh");
+      const icon = S3D.active && S3D.dishIcon ? S3D.dishIcon(item.dish) : null;
+      if (icon) slot.innerHTML = `<img src="${icon}" alt="${item.dish.name}">`;
+      else slot.textContent = item.dish.emoji;
       slot.onclick = () => {
         day.selectedTray = day.selectedTray === i ? -1 : i;
         renderTray(); renderCustomers();
@@ -875,14 +892,24 @@ function renderCounter() {
     const b = document.createElement("button");
     b.className = "station";
     b.id = "station-" + d.id;
+    const icon = S3D.active && S3D.dishIcon ? S3D.dishIcon(d) : null;
     b.innerHTML = `
-      <span class="s-emoji">${d.emoji}</span>
+      ${icon ? `<img class="s-img" src="${icon}" alt="${d.name}">` : `<span class="s-emoji">${d.emoji}</span>`}
       <span class="s-name">${d.shortName || d.name}</span>
       <span class="s-price">💵 ${d.price}</span>
       <div class="cook-fill"></div>
     `;
     b.onclick = () => startCooking(d);
     area.appendChild(b);
+  }
+}
+
+/* انتهاء صلاحية "الطازج" على أصناف الصينية */
+function updateFreshness() {
+  const slots = $("tray-slots").children;
+  for (let i = 0; i < slots.length; i++) {
+    const item = day.tray[i];
+    slots[i].classList.toggle("fresh", !!(item && item.readyAt && performance.now() - item.readyAt < 5000));
   }
 }
 
