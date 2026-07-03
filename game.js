@@ -56,8 +56,9 @@ const CUSTOMER_TYPES = {
   rich:   { key: "rich",   label: "💎 غني",    patience: 22000, drain: 1.0, tip: 2.2, ratingW: 1 },
   critic: { key: "critic", label: "🧐 ناقد",   patience: 20000, drain: 1.1, tip: 1.2, ratingW: 2 },
 };
-const FACES = ["😀","😄","🙂","😎","🤓","😊","🧔","👳","👴","👧","👦","👵","🧕","👨‍🦱","👩","🧑‍🦰"];
-const NAMES = ["أبو فهد","أم سعد","خالد","نورة","سلطان","العنود","ماجد","حصة","بندر","لطيفة","تركي","الجوهرة","فيصل","دانة","ناصر","موضي"];
+const FACES_M = ["😀","😄","🙂","😎","🤓","😊","🧔","👳","👴","👦","👨‍🦱"];
+const MALE_NAMES = ["أبو فهد","خالد","سلطان","ماجد","بندر","تركي","فيصل","ناصر"];
+const FEMALE_NAMES = ["أم سعد","نورة","العنود","حصة","لطيفة","الجوهرة","دانة","موضي"];
 
 /* ---------- الشخصيات المميزة (VIP) — رسوم كرتونية ---------- */
 const VIP_SVG = {
@@ -176,15 +177,15 @@ function aiGenerateDish() {
   };
 }
 
-/* ---------- التطويرات ---------- */
+/* ---------- التطويرات (السعر يعكس الفائدة الفعلية) ---------- */
 const UPGRADES = [
-  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى", max: 5, cost: l => 60 + l * 70 },
-  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان في الصينية", max: 3, cost: l => 80 + l * 100 },
-  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => 70 + l * 80 },
-  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => 90 + l * 90 },
+  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => 60 + l * 75 },
+  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى (قيمة عالية)", max: 5, cost: l => 100 + l * 130 },
+  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى (يضاعف دخلك)", max: 5, cost: l => 120 + l * 150 },
+  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية (طبخ متوازٍ أكثر)", max: 3, cost: l => 140 + l * 170 },
   { id: "falafel", emoji: "🧆", name: "فتح: فلافل", desc: "صنف جديد بالقائمة (6 💵)", max: 1, cost: () => 120 },
-  { id: "burger",  emoji: "🍔", name: "فتح: برجر", desc: "صنف جديد بالقائمة (10 💵)", max: 1, cost: () => 200 },
-  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "روبوت على الكاونتر يطبخ صنفاً مطلوباً كل 12 ثانية", max: 1, cost: () => 350 },
+  { id: "burger",  emoji: "🍔", name: "فتح: برجر", desc: "صنف جديد بالقائمة (10 💵)", max: 1, cost: () => 240 },
+  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "روبوت يطبخ صنفاً مطلوباً كل 12 ثانية — أقوى تطوير باللعبة", max: 1, cost: () => 550 },
 ];
 
 /* ---------- الأحداث اليومية ---------- */
@@ -234,6 +235,16 @@ function checkAchievements() {
   }
 }
 
+/* ---------- المزايا الذهبية (تشترى بالذهب فقط) ---------- */
+const PERKS = [
+  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", desc: "الأصناف تبقى طازجة ✨ 10 ثوانٍ بدل 5", cost: 15 },
+  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", desc: "القهوة العربية جاهزة كل 12 ثانية بدل 25", cost: 10 },
+  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", desc: "الشخصيات المميزة تزورك أكثر (حتى 3 باليوم)", cost: 12 },
+  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", desc: "غرامات وزارة التجارة تنخفض للنصف", cost: 8 },
+  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", desc: "+15 ثانية إضافية لكل يوم عمل", cost: 20 },
+];
+const FRESH_MS = () => (state.perks && state.perks.freshPlus) ? 10000 : 5000;
+
 /* ---------- ثيمات الديكور ---------- */
 const THEME_DEFS = [
   { id: "classic", name: "🏠 كلاسيكي دافئ", cost: 0 },
@@ -249,6 +260,7 @@ function freshState() {
   return {
     money: 0, gold: 5, day: 1, rating: 5.0, sound: true, music: true,
     xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
+    complaints: 0, violations: 0, perks: {},
     records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
     theme: "classic", themesOwned: ["classic"],
     upgrades: { grill: 0, tray: 0, decor: 0, fame: 0, falafel: 0, burger: 0, robot: 0 },
@@ -290,7 +302,7 @@ let lastTick = 0;
 function freshDay() {
   return {
     running: false,
-    timeLeft: Math.min(60000 + state.day * 12000, 150000),
+    timeLeft: Math.min(60000 + state.day * 12000, 150000) + ((state.perks && state.perks.extraTime) ? 15000 : 0),
     customers: [],           // الزبائن الحاليين (حد أقصى 4)
     tray: [],                // أصناف جاهزة { dish }
     cooking: [],             // { dish, elapsed, total, stationId }
@@ -312,10 +324,11 @@ function freshDay() {
     vipCount: 0, vipsSeen: [], vipServed: 0, vipAngry: 0,
     freshServes: 0,          // أصناف سُلّمت وهي طازجة
     // أنظمة تحديث 5
-    totalTime: Math.min(60000 + state.day * 12000, 150000),
+    totalTime: Math.min(60000 + state.day * 12000, 150000) + ((state.perks && state.perks.extraTime) ? 15000 : 0),
     event: null, quest: null, questDone: false,
     coffeeCd: 0, robotIn: 12000,
     endless: false, goalBonus: 0,
+    inspectionAt: -1, inspectionDone: false, fined: 0,
   };
 }
 
@@ -325,8 +338,10 @@ function freshDay() {
 let customerSeq = 0;
 function spawnCustomer() {
   if (day.customers.length >= 4) return;
-  // فرصة ظهور شخصية مميزة (من اليوم الثاني، بحد أقصى 2 باليوم، وحدة وحدة)
-  if (state.day >= 2 && day.vipCount < 2 && !day.customers.some(c => c.isVip) && Math.random() < 0.22) {
+  // فرصة ظهور شخصية مميزة (السمعة الذهبية 👑 ترفع الفرصة والحد)
+  const vipMax = state.perks.vipMagnet ? 3 : 2;
+  const vipChance = state.perks.vipMagnet ? 0.32 : 0.22;
+  if (state.day >= 2 && day.vipCount < vipMax && !day.customers.some(c => c.isVip) && Math.random() < vipChance) {
     const pool = VIPS.filter(v => !day.vipsSeen.includes(v.id));
     if (pool.length) { spawnVip(rand(pool)); return; }
   }
@@ -341,9 +356,13 @@ function spawnCustomer() {
   const order = [];
   for (let i = 0; i < count; i++) order.push(rand(menu));
   const maxP = type.patience * patienceMult() * ((day.event && day.event.patMult) || 1);
+  const female = Math.random() < 0.4;
   const c = {
     uid: ++customerSeq,
-    name: rand(NAMES), face: rand(FACES), type,
+    gender: female ? "f" : "m",
+    scaleVar: 0.94 + Math.random() * 0.12,
+    name: female ? rand(FEMALE_NAMES) : rand(MALE_NAMES),
+    face: female ? "🧕" : rand(FACES_M), type,
     order: order.map(d => ({ dish: d, done: false })),
     patience: maxP, maxPatience: maxP,
     el: null, chatPending: false,
@@ -379,7 +398,48 @@ function spawnVip(v) {
 
 function customerRemaining(c) { return c.order.filter(o => !o.done); }
 
+/* ---------- تفتيش وزارة التجارة ---------- */
+function runInspection() {
+  sfx.angry();
+  toast("🚨 زيارة مفاجئة من وزارة التجارة!");
+  const insp = {
+    uid: ++customerSeq,
+    name: "مفتش الوزارة", face: "🕵️", gender: "m",
+    vip: "inspector", isInspector: true, isVip: false,
+    type: { key: "inspector", label: "🏛️ وزارة التجارة", drain: 0, tip: 0, ratingW: 0, patience: 1 },
+    order: [], patience: 1, maxPatience: 1,
+    el: null, chatPending: false,
+  };
+  day.customers.push(insp);
+  renderCustomers();
+  setTimeout(() => {
+    if (!day.running || !day.customers.includes(insp)) return;
+    const hasComplaints = state.complaints > 0;
+    const valid = hasComplaints && Math.random() < 0.7;
+    if (valid) {
+      let fine = 40 + state.day * 10;
+      if (state.perks.insurance) fine = Math.round(fine / 2);
+      fine = Math.min(fine, state.money);
+      state.money -= fine;
+      state.violations++;
+      state.rating = clamp(state.rating - 0.3, 1, 5);
+      day.fined += fine;
+      toast(`❌ ثبتت شكوى العميل! غرامة ${fine} 💵 + مخالفة رقم ${state.violations}${state.perks.insurance ? " (🛡️ التأمين خفّض الغرامة للنص)" : ""}`);
+      sfx.wrong();
+    } else {
+      state.rating = clamp(state.rating + 0.15, 1, 5);
+      toast(hasComplaints ? "✅ الشكوى ما ثبتت — سجلّك سليم والتقييم ارتفع!" : "✅ تفتيش روتيني: المطعم ممتاز! التقييم ارتفع");
+      sfx.levelup();
+    }
+    state.complaints = 0;
+    removeCustomer(insp, !valid);
+    renderTopbar();
+    save();
+  }, 6000);
+}
+
 function serveTrayItem(c) {
+  if (c.isInspector) { toast("🏛️ هذا مفتش الوزارة، مو زبون! خله يفتش براحته 😅"); return; }
   let idx = day.selectedTray;
   // تسليم بلمسة واحدة: بدون تحديد، نختار تلقائياً أول صنف بالصينية يناسب طلبه
   if (idx < 0 || !day.tray[idx]) {
@@ -403,7 +463,7 @@ function serveTrayItem(c) {
   day.selectedTray = -1;
   sfx.serve();
   // مكافأة الصنف الطازج: يرفع صبر الزبون (تتضاعف بالحملة الصحية)
-  if (item.readyAt && performance.now() - item.readyAt < 5000) {
+  if (item.readyAt && performance.now() - item.readyAt < FRESH_MS()) {
     const boost = 0.06 * ((day.event && day.event.freshX2) ? 2 : 1);
     c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * boost);
     day.freshServes++;
@@ -480,8 +540,15 @@ function completeOrder(c) {
 }
 
 function customerAngryLeave(c) {
+  if (c.isInspector) return;
   day.angry++;
   day.combo = 0;
+  // شكوى لوزارة التجارة (الناقد شبه مؤكد يشتكي)
+  const complainChance = c.type.key === "critic" ? 0.9 : 0.35;
+  if (Math.random() < complainChance) {
+    state.complaints++;
+    setTimeout(() => toast(`😠 ${c.name} رفع شكوى لوزارة التجارة!`), 900);
+  }
   // التحدي اللانهائي: الخسارة عند 5
   if (day.endless && day.angry >= 5 && day.running) {
     toast("💀 انتهى التحدي — 5 زباين زعلوا!");
@@ -534,8 +601,9 @@ function tickCooking(dt) {
    المحادثة الذكية
    ============================================================ */
 function maybeStartChat() {
-  if (day.chat || day.customers.length === 0) return;
-  const c = rand(day.customers);
+  const pool = day.customers.filter(c => !c.isInspector);
+  if (day.chat || pool.length === 0) return;
+  const c = rand(pool);
   const events = c.vipChat || CHAT_EVENTS[c.type.key];
   if (!events) return;
   const ev = rand(events);
@@ -608,6 +676,10 @@ function startDay(endless = false) {
   }
   if (window.GameAudio) { GameAudio.setEnabled(state.music); GameAudio.start(); }
   if (day.event) setTimeout(() => toast(`${day.event.name} — ${day.event.desc}`), 700);
+  // زيارة مفاجئة من وزارة التجارة: شبه مؤكدة إذا فيه شكاوى، ونادرة بدونها
+  if (!endless && (state.complaints > 0 ? Math.random() < 0.75 : Math.random() < 0.08)) {
+    day.inspectionAt = day.timeLeft * (0.3 + Math.random() * 0.4);
+  }
   if (endless) setTimeout(() => toast("♾️ التحدي اللانهائي: اصمد! تخسر عند 5 زباين زعلانين"), 700);
   showScreen("screen-game");
   renderCounter(); renderTray(); renderCustomers(); renderTopbar();
@@ -624,8 +696,15 @@ function gameLoop(now) {
   day.spawnIn -= dt;
   day.chatIn -= dt;
 
+  // زيارة مفتش وزارة التجارة
+  if (day.inspectionAt > 0 && !day.inspectionDone && day.timeLeft <= day.inspectionAt) {
+    if (day.customers.length >= 4) day.inspectionAt -= 4000; // أجّل حتى يفضى مكان
+    else { day.inspectionDone = true; runInspection(); }
+  }
+
   // نزول صبر الزبائن
   for (const c of [...day.customers]) {
+    if (c.isInspector) continue;
     c.patience -= dt * c.type.drain;
     // العم سالم ينسى ويغيّر طلبه مرة واحدة
     if (c.vip === "salim" && !c.swapped && c.patience < c.maxPatience * 0.55) {
@@ -777,6 +856,8 @@ function showReport() {
     ${day.endless ? "" : `🎯 الهدف اليومي: <b>${day.earned}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +3 🪙</b>` : "❌ ما تحقق"}<br>`}
     ✅ زباين راضين: <b>${day.served}</b> &nbsp;|&nbsp; 💢 زباين زعلانين: <b>${day.angry}</b><br>
     💵 أرباح اليوم: <b>${day.earned}</b> &nbsp;|&nbsp; 🪙 ذهب: <b>+${day.goldEarned}</b><br>
+    ${day.fined ? `🏛️ غرامة وزارة التجارة: <b style="color:#ff6b6b">-${day.fined} 💵</b> (مخالفات المطعم: ${state.violations})<br>` : ""}
+    ${state.complaints > 0 ? `⚠️ شكاوى معلّقة ضدك: <b>${state.complaints}</b> — توقّع تفتيشاً مفاجئاً بكرة!<br>` : ""}
     🔥 أعلى كومبو: <b>x${day.maxCombo}</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
     🌟 متوسط رضا التسليم: <b>${avgP}%</b>${day.vipServed + day.vipAngry > 0 ? ` &nbsp;|&nbsp; ⭐ شخصيات مميزة: <b>${day.vipServed} راضي / ${day.vipAngry} زعلان</b>` : ""}<br>
     ${best ? `🥇 الأكثر مبيعاً: <b>${best.emoji} ${best.shortName || best.name}</b> (${bestN})` : "🥇 ما انباع شي اليوم 😅"}
@@ -900,6 +981,32 @@ function renderShop() {
     };
     row.appendChild(btn);
     list.appendChild(row);
+  }
+
+  // المزايا الذهبية
+  const plist = $("perks-list");
+  plist.innerHTML = "";
+  for (const p of PERKS) {
+    const owned = !!state.perks[p.id];
+    const row = document.createElement("div");
+    row.className = "upgrade-row";
+    row.innerHTML = `<span class="u-emoji">${p.emoji}</span>
+      <span class="u-info"><span class="u-name">${p.name} ${owned ? "✅" : ""}</span><br><span class="u-desc">${p.desc}</span></span>`;
+    const btn = document.createElement("button");
+    btn.className = "u-buy";
+    btn.textContent = owned ? "✅ مفعّلة" : `🪙 ${p.cost}`;
+    btn.disabled = owned || state.gold < p.cost;
+    btn.onclick = () => {
+      if (owned || state.gold < p.cost) return;
+      state.gold -= p.cost;
+      state.perks[p.id] = true;
+      sfx.levelup();
+      toast(`⭐ ميزة دائمة جديدة: ${p.emoji} ${p.name}!`);
+      save();
+      renderShop();
+    };
+    row.appendChild(btn);
+    plist.appendChild(row);
   }
 
   // ثيمات الديكور
@@ -1049,6 +1156,15 @@ function renderCustomers3D() {
   for (const c of day.customers) {
     const ov = S3D.getOverlay(c);
     if (!ov) continue;
+    if (c.isInspector) {
+      ov.classList.add("inspector");
+      ov.innerHTML = `
+        <div class="ov-name">🕵️ ${c.name}</div>
+        <div class="order-bubble" style="font-size:12px;font-weight:bold">📋 تفتيش مفاجئ!</div>`;
+      ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
+      c.el = ov;
+      continue;
+    }
     ov.classList.toggle("servable",
       !!(selected && c.order.some(o => !o.done && o.dish.id === day.tray[day.selectedTray].dish.id)));
     ov.classList.toggle("vip", !!c.isVip);
@@ -1074,7 +1190,7 @@ function moodFace(c) {
 
 function updatePatienceBars() {
   for (const c of day.customers) {
-    if (!c.el) continue;
+    if (!c.el || c.isInspector) continue;
     const r = clamp(c.patience / c.maxPatience, 0, 1);
     const fill = c.el.querySelector(".patience-fill");
     if (fill) {
@@ -1116,7 +1232,7 @@ function renderTray() {
     if (item) {
       slot.classList.add("filled");
       if (i === day.selectedTray) slot.classList.add("selected");
-      if (item.readyAt && performance.now() - item.readyAt < 5000) slot.classList.add("fresh");
+      if (item.readyAt && performance.now() - item.readyAt < FRESH_MS()) slot.classList.add("fresh");
       const icon = S3D.active && S3D.dishIcon ? S3D.dishIcon(item.dish) : null;
       if (icon) slot.innerHTML = `<img src="${icon}" alt="${item.dish.name}">`;
       else slot.textContent = item.dish.emoji;
@@ -1153,7 +1269,7 @@ function updateFreshness() {
   const slots = $("tray-slots").children;
   for (let i = 0; i < slots.length; i++) {
     const item = day.tray[i];
-    slots[i].classList.toggle("fresh", !!(item && item.readyAt && performance.now() - item.readyAt < 5000));
+    slots[i].classList.toggle("fresh", !!(item && item.readyAt && performance.now() - item.readyAt < FRESH_MS()));
   }
 }
 
@@ -1228,6 +1344,7 @@ function renderAchievements() {
     🔥 أعلى كومبو وصلته: <b>x${state.records.maxCombo}</b><br>
     ♾️ رقم التحدي اللانهائي: <b>${state.records.endlessBest}</b><br>
     📈 المستوى: <b>${playerLevel()}</b> — "${playerTitle()}"<br>
+    🏛️ مخالفات وزارة التجارة: <b>${state.violations}</b><br>
     ✅ إجمالي الزباين الراضين: <b>${state.totals.served}</b> &nbsp;|&nbsp; 💰 إجمالي الأرباح: <b>${state.totals.earned}</b>`;
 }
 
@@ -1242,7 +1359,7 @@ function bindEvents() {
     if (!day.running || day.coffeeCd > 0 || !day.customers.length) return;
     const c = day.customers.reduce((a, b) => (a.patience / a.maxPatience < b.patience / b.maxPatience ? a : b));
     c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * 0.35);
-    day.coffeeCd = 25000;
+    day.coffeeCd = state.perks.coffeePro ? 12000 : 25000;
     toast(`☕ قدمت قهوة عربية لـ${c.name} — انبسط وهدأ!`);
     sfx.serve();
   };
@@ -1281,6 +1398,7 @@ function bindEvents() {
     renderTray(); renderCustomers();
   };
 
+  $("chat-close").onclick = () => closeChat();
   $("btn-settings").onclick = () => $("settings-modal").classList.remove("hidden");
   $("btn-close-settings").onclick = () => $("settings-modal").classList.add("hidden");
   $("btn-sound").onclick = () => {

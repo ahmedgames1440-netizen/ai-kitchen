@@ -228,8 +228,17 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 .ov3d.servable { border-color: var(--green); box-shadow: 0 0 12px rgba(46,204,113,.55); }
 .ov3d .ov-name { font-size: 11px; font-weight: bold; white-space: nowrap; }
 .ov3d .ov-type { color: var(--muted); font-weight: normal; font-size: 10px; }
-.ov3d .order-bubble { font-size: 17px; padding: 2px 5px; min-height: 24px; align-items: center; }
-.ov3d .order-bubble img { width: 24px; height: 24px; display: block; }
+.ov3d .order-bubble { font-size: 17px; padding: 3px 6px; min-height: 32px; align-items: center; border: 2px solid #ddd; }
+.ov3d .order-bubble img {
+  width: 32px; height: 32px;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.45)) saturate(1.25) contrast(1.1);
+}
+.ov3d.inspector {
+  border-color: #ff6b6b;
+  background: rgba(80,10,10,.85);
+  animation: combopulse 1s infinite;
+}
 .ov3d .patience-bar { width: 100%; height: 6px; }
 .customer {
   flex: 1;
@@ -367,31 +376,45 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 .station.cooking { outline: 2px solid var(--accent); }
 .station.disabled { opacity: .4; }
 
-/* ===== لوحة المحادثة ===== */
+/* ===== لوحة المحادثة (مدمجة بالزاوية — ما تغطي الكاونتر ولا الزباين) ===== */
 #chat-panel {
   position: fixed;
-  bottom: 130px;
-  right: 10px;
-  left: 10px;
-  background: #fff;
+  top: 96px;
+  left: 8px;
+  width: min(46%, 260px);
+  background: rgba(255,255,255,.96);
   color: #222;
-  border-radius: 18px;
-  padding: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  border-radius: 14px;
+  padding: 8px 10px;
+  padding-top: 12px;
+  box-shadow: 0 6px 22px rgba(0,0,0,.45);
   z-index: 50;
   animation: walkin .3s;
 }
-#chat-msg { font-size: 15px; font-weight: bold; margin-bottom: 10px; }
-#chat-replies { display: flex; flex-direction: column; gap: 6px; }
+#chat-close {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  border: none;
+  background: #eee;
+  border-radius: 8px;
+  width: 22px; height: 22px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #666;
+}
+#chat-msg { font-size: 12.5px; font-weight: bold; margin-bottom: 6px; line-height: 1.5; }
+#chat-replies { display: flex; flex-direction: column; gap: 4px; }
 .chat-reply {
   background: #f0e6ff;
   border: 2px solid #c9b3f5;
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   text-align: right;
+  line-height: 1.4;
 }
 .chat-reply:active { background: #e0d0ff; }
 

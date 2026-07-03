@@ -122,16 +122,28 @@ window.S3D = (() => {
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const skin = rnd(SKINS);
     const vip = c.vip || null;
+    const female = c.gender === "f" && !vip;
 
     const bodyColor =
+      female ? rnd([0x1a1a1a, 0x241b3a, 0x3d1626, 0x14251c]) : // عباءات
       vip === "khalil" ? 0x6d4c2f :
       vip === "salim"  ? 0x8d7350 :
       vip ? 0xf5f5f5 : rnd(THOBES);
 
-    // الجسم (ثوب)
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 1.9, 12), mat(bodyColor));
+    // الجسم (ثوب / عباءة)
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(female ? 0.4 : 0.45, female ? 0.8 : 0.85, 1.9, 12), mat(bodyColor));
     body.position.y = 0.95;
     g.add(body);
+
+    // رقبة وأكتاف — قوام أقرب للواقع
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 10), mat(female ? bodyColor : skin));
+    neck.position.y = 1.92;
+    g.add(neck);
+    for (const side of [-1, 1]) {
+      const sh = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), mat(bodyColor));
+      sh.position.set(side * 0.4, 1.76, 0.02);
+      g.add(sh);
+    }
 
     // ذراعان بكفوف — تعطي واقعية كبيرة للقوام
     for (const side of [-1, 1]) {
@@ -161,35 +173,45 @@ window.S3D = (() => {
     // ===== الوجه: ملامح واضحة =====
     const darkSkin = new THREE.Color(skin).multiplyScalar(0.82).getHex();
     const hairColor = (vip === "yousef" || vip === "salim" || vip === "samir") ? 0x9e9e9e : 0x3a2a1a;
-    // عيون كرتونية: بياض + بؤبؤ + لمعة
+    // عيون كرتونية: بياض + بؤبؤ + لمعة (المنقبات: العيون فوق فتحة النقاب)
+    const eyeZ = female ? 0.57 : 0.40; // عيون المنقبات بارزة أمام الحجاب
     for (const sx of [-0.19, 0.19]) {
       const white = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), mat(0xffffff));
-      white.position.set(sx, 2.24, 0.40);
-      white.scale.z = 0.55;
+      white.position.set(sx, 2.24, eyeZ);
+      white.scale.z = female ? 0.4 : 0.55;
       g.add(white);
       const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), mat(0x21150d));
-      pupil.position.set(sx, 2.24, 0.475);
+      pupil.position.set(sx, 2.24, eyeZ + 0.075);
       g.add(pupil);
       const shine = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6),
         new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x999999 }));
-      shine.position.set(sx + 0.03, 2.27, 0.5);
+      shine.position.set(sx + 0.03, 2.27, eyeZ + 0.1);
       g.add(shine);
-      // حواجب (الفهد له حواجبه الغاضبة الخاصة)
-      if (vip !== "fahad") {
+      // رموش للمنقبات
+      if (female) {
+        const lash = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.03), mat(0x1a1a1a));
+        lash.position.set(sx, 2.32, eyeZ + 0.06);
+        lash.rotation.z = sx < 0 ? 0.1 : -0.1;
+        g.add(lash);
+      }
+      // حواجب (الفهد له حواجبه الغاضبة الخاصة، والمنقبات وجههن مغطى)
+      if (vip !== "fahad" && !female) {
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.045, 0.05), mat(hairColor));
         brow.position.set(sx, 2.42, 0.42);
         brow.rotation.z = sx < 0 ? 0.12 : -0.12;
         g.add(brow);
       }
     }
-    // أنف
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(darkSkin));
-    nose.position.set(0, 2.12, 0.48);
-    nose.scale.set(0.9, 1.15, 0.9);
-    g.add(nose);
-    // فم يتغير مع المزاج (مبتسم / محايد / عابس) — لحية شيخ يوسف تغطي فمه
+    // أنف (مغطى عند المنقبات)
+    if (!female) {
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(darkSkin));
+      nose.position.set(0, 2.12, 0.48);
+      nose.scale.set(0.9, 1.15, 0.9);
+      g.add(nose);
+    }
+    // فم يتغير مع المزاج (مبتسم / محايد / عابس) — لحية الشيخ والنقاب يغطيانه
     let mouths = null;
-    if (vip !== "yousef") {
+    if (vip !== "yousef" && !female) {
       const my = (vip === "fahad" || vip === "samir") ? 1.83 : 1.93; // تحت الشنب
       const mz = 0.46;
       const mMat = mat(0x7a3b2e);
@@ -236,7 +258,42 @@ window.S3D = (() => {
       }
     };
 
-    if (vip === "yousef") {
+    if (female) {
+      // حجاب كامل + نقاب: تظهر العيون فقط، مع غطاء يتدلى على الكتفين
+      const hijab = new THREE.Mesh(new THREE.SphereGeometry(0.57, 16, 14), mat(bodyColor));
+      hijab.position.y = 2.18;
+      g.add(hijab);
+      const veil = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.78, 1.05, 12, 1, true),
+        new THREE.MeshStandardMaterial({ color: bodyColor, side: THREE.DoubleSide, roughness: 0.85 })
+      );
+      veil.position.y = 1.72;
+      g.add(veil);
+      // فتحة العيون (البرقع) — بارزة قدام سطح الحجاب
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.1), mat(skin));
+      strip.position.set(0, 2.25, 0.54);
+      g.add(strip);
+    } else if (vip === "inspector") {
+      addEars();
+      addGhutra(0xc0392b); // شماغ رسمي
+      // نظارة رسمية
+      for (const sx of [-0.18, 0.18]) {
+        const lens = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 8, 16), mat(0x263238));
+        lens.position.set(sx, 2.24, 0.46);
+        g.add(lens);
+      }
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.028, 0.028), mat(0x263238));
+      bridge.position.set(0, 2.24, 0.47);
+      g.add(bridge);
+      // حقيبة رسمية بيده
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.3, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.4 }));
+      bag.position.set(0.78, 0.72, 0.14);
+      g.add(bag);
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 12, Math.PI), mat(0x2a1a12));
+      handle.position.set(0.78, 0.88, 0.14);
+      g.add(handle);
+    } else if (vip === "yousef") {
       addGhutra(0xffffff);
       // لحية طويلة بيضاء
       const beard = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.95, 10), mat(0xfafafa));
@@ -421,15 +478,15 @@ window.S3D = (() => {
     try {
       if (!iconRenderer) {
         iconRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-        iconRenderer.setSize(128, 128);
+        iconRenderer.setSize(192, 192);
         iconScene = new THREE.Scene();
         iconScene.add(new THREE.HemisphereLight(0xffffff, 0x555577, 1.35));
         const d = new THREE.DirectionalLight(0xffffff, 0.9);
         d.position.set(2, 4, 3);
         iconScene.add(d);
         iconCam = new THREE.PerspectiveCamera(35, 1, 0.1, 10);
-        iconCam.position.set(0.85, 1.05, 1.55);
-        iconCam.lookAt(0, 0.27, 0);
+        iconCam.position.set(0.72, 0.9, 1.3); // أقرب = أيقونة أكبر وأوضح
+        iconCam.lookAt(0, 0.26, 0);
       }
       const model = makeDishModel(key);
       iconScene.add(model);
@@ -723,6 +780,10 @@ window.S3D = (() => {
       let e = chars.get(c.uid);
       if (!e) {
         const built = makeCharacter(c);
+        if (c.scaleVar && !c.vip) {
+          built.group.scale.multiplyScalar(c.scaleVar);
+          built.height *= c.scaleVar;
+        }
         e = { ...built, t: Math.random() * 6, entering: 1, leaving: 0, ov: null, cust: c };
         e.group.position.set(-slotSpread - 6, 0, 0);
         scene.add(e.group);
