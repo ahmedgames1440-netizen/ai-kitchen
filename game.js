@@ -57,6 +57,48 @@ const CUSTOMER_TYPES = {
 const FACES = ["😀","😄","🙂","😎","🤓","😊","🧔","👳","👴","👧","👦","👵","🧕","👨‍🦱","👩","🧑‍🦰"];
 const NAMES = ["أبو فهد","أم سعد","خالد","نورة","سلطان","العنود","ماجد","حصة","بندر","لطيفة","تركي","الجوهرة","فيصل","دانة","ناصر","موضي"];
 
+/* ---------- الشخصيات المميزة (VIP) — رسوم كرتونية ---------- */
+const VIP_SVG = {
+  yousef: `<svg viewBox="0 0 64 64"><path d="M10 30 Q10 6 32 6 Q54 6 54 30 L54 42 Q54 48 48 48 L16 48 Q10 48 10 42 Z" fill="#f5f5f5" stroke="#444" stroke-width="2"/><rect x="14" y="12" width="36" height="7" rx="3.5" fill="#222"/><ellipse cx="32" cy="31" rx="12" ry="12" fill="#eeb98c"/><path d="M21 36 Q19 60 32 61 Q45 60 43 36 Q38 42 32 42 Q26 42 21 36" fill="#fafafa" stroke="#ccc" stroke-width="1.5"/><path d="M25 28 q2.5 3 5 0 M34 28 q2.5 3 5 0" stroke="#333" stroke-width="2" fill="none"/><ellipse cx="32" cy="34" rx="2" ry="2.5" fill="#d99a7a"/></svg>`,
+  khalil: `<svg viewBox="0 0 64 64"><circle cx="32" cy="26" r="16" fill="#f2c49b" stroke="#444" stroke-width="2"/><circle cx="26" cy="25" r="4" fill="#fff" stroke="#333"/><circle cx="38" cy="25" r="4" fill="#fff" stroke="#333"/><circle cx="26" cy="26" r="1.8" fill="#222"/><circle cx="38" cy="26" r="1.8" fill="#222"/><path d="M25 34 Q32 41 39 34" fill="#fff" stroke="#333" stroke-width="2"/><circle cx="32" cy="30" r="1.5" fill="#e8967a"/><path d="M18 44 Q32 38 46 44 L46 58 L18 58 Z" fill="#6d4c2f"/></svg>`,
+  fahad: `<svg viewBox="0 0 64 64"><path d="M10 32 Q10 6 32 6 Q54 6 54 32 L54 46 Q54 52 48 52 L16 52 Q10 52 10 46 Z" fill="#c0392b" stroke="#7b241c" stroke-width="2"/><path d="M14 14 L50 30 M14 22 L50 38 M50 14 L14 30 M50 22 L14 38" stroke="#fff" stroke-width="1" opacity=".5"/><rect x="14" y="10" width="36" height="7" rx="3.5" fill="#1a1a1a"/><ellipse cx="32" cy="33" rx="11.5" ry="12" fill="#dba876"/><path d="M23 29 l7 2 M41 29 l-7 2" stroke="#222" stroke-width="2.5"/><ellipse cx="27" cy="33" rx="1.7" ry="2" fill="#222"/><ellipse cx="37" cy="33" rx="1.7" ry="2" fill="#222"/><path d="M22 41 Q27 36 32 40 Q37 36 42 41 Q37 46 32 43 Q27 46 22 41" fill="#1a1a1a"/></svg>`,
+  salim: `<svg viewBox="0 0 64 64"><ellipse cx="32" cy="28" rx="12" ry="18" fill="#e6c9a3" stroke="#555" stroke-width="2"/><circle cx="26" cy="28" r="5" fill="none" stroke="#555" stroke-width="2"/><circle cx="38" cy="28" r="5" fill="none" stroke="#555" stroke-width="2"/><path d="M31 28 h2" stroke="#555" stroke-width="2"/><circle cx="26" cy="28" r="1.5" fill="#222"/><circle cx="38" cy="28" r="1.5" fill="#222"/><path d="M28 42 Q32 52 36 42 Q34 44 32 44 Q30 44 28 42" fill="#9a9a9a"/><path d="M24 14 Q22 12 20 14 M40 14 Q42 12 44 14" stroke="#aaa" stroke-width="2" fill="none"/><path d="M16 52 Q32 44 48 52 L48 60 L16 60 Z" fill="#8d7350"/></svg>`,
+  samir: `<svg viewBox="0 0 64 64"><path d="M20 16 L44 16 L42 4 L22 4 Z" fill="#b71c1c" stroke="#7f1010" stroke-width="2"/><circle cx="45" cy="6" r="2.5" fill="#5d4037"/><path d="M44 8 L43 15" stroke="#5d4037" stroke-width="1.5"/><ellipse cx="32" cy="30" rx="14" ry="14" fill="#e8b48b" stroke="#555" stroke-width="2"/><path d="M23 27 q3 -2 5 0 M36 27 q3 -2 5 0" stroke="#333" stroke-width="2" fill="none"/><ellipse cx="26" cy="29" rx="1.6" ry="2" fill="#222"/><ellipse cx="38" cy="29" rx="1.6" ry="2" fill="#222"/><path d="M20 37 Q26 32 32 36 Q38 32 44 37 Q38 43 32 39 Q26 43 20 37" fill="#9e9e9e"/><path d="M16 50 Q32 42 48 50 L48 60 L16 60 Z" fill="#fff"/><path d="M20 48 L26 60 M44 48 L38 60" stroke="#8e1c1c" stroke-width="5"/></svg>`,
+};
+
+const VIPS = [
+  { id: "yousef", name: "شيخ يوسف", label: "📿 حكيم", patience: 38000, drain: 0.8, tip: 1.3, ratingW: 3, orders: [1, 2],
+    intro: "📿 شيخ يوسف شرّف المطعم! رضاه بركة على تقييمك",
+    chat: [{ msg: "يا ولدي، البركة في البكور… والأكل الزين 😌", replies: [
+      { t: "حياك الله يا شيخ، طلبك على عيني 🙏", eff: 20 },
+      { t: "البركة في السرعة يا شيخ 😅", eff: 5 },
+      { t: "المهم الحساب قبل الدعاء 😬", eff: -15 } ] }] },
+  { id: "khalil", name: "خليل", label: "🧒 طفل", patience: 20000, drain: 1.1, tip: 0.6, ratingW: 1, orders: [1, 1],
+    intro: "🧒 خليل جاء! إذا رضي بسرعة بيجيب ربعه معه",
+    chat: [{ msg: "عمو! تخليني أشوف كيف تسوون الشاورما؟ 🤩", replies: [
+      { t: "تعال شوف يا بطل، بس من ورا الكاونتر 😄", eff: 20 },
+      { t: "المطبخ مو مكان أطفال", eff: -12 },
+      { t: "إذا خلصت أكلك أوريك 😉", eff: 12 } ] }] },
+  { id: "fahad", name: "أحمد الفهد", label: "🕵️ مفتش", patience: 22000, drain: 1.2, tip: 1.4, ratingW: 3, orders: [2, 3],
+    intro: "🕵️ أحمد الفهد مفتش الجودة وصل… لا تعطيه أي غلط!",
+    chat: [{ msg: "أنا أقيّم المطاعم رسمياً… وعيني ما تفوّت شي 🧐", replies: [
+      { t: "أهلاً بالخبير! جودتنا بتتكلم عنا 👨‍🍳", eff: 20 },
+      { t: "التقييمات ما تهمنا صراحة", eff: -18 },
+      { t: "خذ راحتك، بس البقشيش يفرق 😅", eff: -8 } ] }] },
+  { id: "salim", name: "العم سالم", label: "👓 نسّاي", patience: 34000, drain: 0.9, tip: 1.0, ratingW: 1, orders: [1, 2],
+    intro: "👓 العم سالم وصل… ترى ينسى ويغيّر طلبه!",
+    chat: [{ msg: "أممم… وش كنت طالب؟ ذكرني الله يذكرك بالخير 😅", replies: [
+      { t: "ولا يهمك يا عم، طلبك محفوظ عندي 📝", eff: 20 },
+      { t: "هذي ثالث مرة تسأل! 😑", eff: -15 },
+      { t: "اطلب من جديد ولا عليك", eff: 8 } ] }] },
+  { id: "samir", name: "أبو سمير", label: "🎩 تاجر", patience: 24000, drain: 1.0, tip: 2.0, ratingW: 2, orders: [3, 4],
+    intro: "🎩 أبو سمير التاجر هنا — يدفع ضعف السعر!",
+    chat: [{ msg: "عندي صفقة: أكل ممتاز اليوم، وأنا زبونك الدائم 🤝", replies: [
+      { t: "اتفقنا! وأول وجبة VIP عليّ أنا 🎉", eff: 22 },
+      { t: "كل الزباين عندي سواء", eff: -5 },
+      { t: "الدائم يحتاج خصم دائم؟ نتفاهم 😏", eff: 10 } ] }] },
+];
+
 /* ---------- رسائل المحادثة الذكية ---------- */
 const CHAT_EVENTS = {
   hasty: [
@@ -198,6 +240,12 @@ function freshDay() {
     soldCount: {},           // dishId -> عدد
     angryTypes: {},          // type -> عدد
     patienceSum: 0,
+    // أنظمة جديدة
+    combo: 0, maxCombo: 0,                 // سلسلة التسليم المتتالي
+    goal: 40 + state.day * 25,             // الهدف اليومي
+    goalMet: false,
+    rushAt: -1, rushLeft: 0, rushDone: false, // ساعة الذروة
+    vipCount: 0, vipsSeen: [], vipServed: 0, vipAngry: 0,
   };
 }
 
@@ -207,7 +255,11 @@ function freshDay() {
 let customerSeq = 0;
 function spawnCustomer() {
   if (day.customers.length >= 4) return;
-  const typeKeys = Object.keys(CUSTOMER_TYPES);
+  // فرصة ظهور شخصية مميزة (من اليوم الثاني، بحد أقصى 2 باليوم، وحدة وحدة)
+  if (state.day >= 2 && day.vipCount < 2 && !day.customers.some(c => c.isVip) && Math.random() < 0.22) {
+    const pool = VIPS.filter(v => !day.vipsSeen.includes(v.id));
+    if (pool.length) { spawnVip(rand(pool)); return; }
+  }
   // الناقد والغني أندر
   const weighted = ["hasty","hasty","calm","calm","calm","rich","critic"];
   const type = CUSTOMER_TYPES[state.day < 2 ? rand(["calm","hasty"]) : rand(weighted)];
@@ -227,23 +279,52 @@ function spawnCustomer() {
   renderCustomers();
 }
 
+function spawnVip(v) {
+  const menu = activeMenu();
+  const count = clamp(rint(v.orders[0], v.orders[1]), 1, Math.max(2, menu.length));
+  const order = [];
+  for (let i = 0; i < count; i++) order.push(rand(menu));
+  const maxP = v.patience * patienceMult();
+  const c = {
+    uid: ++customerSeq,
+    name: v.name, face: "", svg: VIP_SVG[v.id],
+    type: { key: "vip_" + v.id, label: v.label, patience: v.patience, drain: v.drain, tip: v.tip, ratingW: v.ratingW },
+    isVip: true, vip: v.id, vipChat: v.chat,
+    order: order.map(d => ({ dish: d, done: false })),
+    patience: maxP, maxPatience: maxP,
+    el: null, chatPending: false, swapped: false,
+  };
+  day.customers.push(c);
+  day.vipCount++;
+  day.vipsSeen.push(v.id);
+  toast(v.intro);
+  sfx.chat();
+  renderCustomers();
+}
+
 function customerRemaining(c) { return c.order.filter(o => !o.done); }
 
 function serveTrayItem(c) {
-  if (day.selectedTray < 0 || !day.tray[day.selectedTray]) { toast("👆 اختر صنف من الصينية أولاً"); return; }
-  const item = day.tray[day.selectedTray];
+  let idx = day.selectedTray;
+  // تسليم بلمسة واحدة: بدون تحديد، نختار تلقائياً أول صنف بالصينية يناسب طلبه
+  if (idx < 0 || !day.tray[idx]) {
+    idx = day.tray.findIndex(t => c.order.some(o => !o.done && o.dish.id === t.dish.id));
+    if (idx < 0) { toast(day.tray.length ? "🤔 ما في صنف بالصينية يناسب طلبه" : "👨‍🍳 اطبخ من الكاونتر أولاً"); return; }
+  }
+  const item = day.tray[idx];
   const slot = c.order.find(o => !o.done && o.dish.id === item.dish.id);
   if (!slot) {
-    // تسليم خاطئ
-    const pen = c.type.key === "critic" ? 0.25 : 0.15;
+    // تسليم خاطئ (حدد صنفاً غلط بنفسه) — يكسر الكومبو
+    const pen = c.type.ratingW >= 2 ? 0.25 : 0.15;
     c.patience = Math.max(0, c.patience - c.maxPatience * pen);
     day.wrongServes++;
+    day.combo = 0;
     sfx.wrong();
-    toast(`❌ ${c.name} ما طلب ${item.dish.name}!`);
+    toast(`❌ ${c.name} ما طلب ${item.dish.name}! (انكسر الكومبو)`);
     return;
   }
   slot.done = true;
-  day.tray.splice(day.selectedTray, 1);
+  day.tray.splice(idx, 1);
   day.selectedTray = -1;
   sfx.serve();
   if (customerRemaining(c).length === 0) completeOrder(c);
@@ -252,23 +333,46 @@ function serveTrayItem(c) {
 
 function completeOrder(c) {
   const ratio = clamp(c.patience / c.maxPatience, 0, 1);
-  const base = c.order.reduce((s, o) => s + o.dish.price, 0);
+  let base = c.order.reduce((s, o) => s + o.dish.price, 0);
+  if (c.vip === "samir") base *= 2; // التاجر يدفع الضعف
   const tip = Math.round(base * ratio * (c.type.tip - 0.4) * tipMult());
-  const total = base + Math.max(0, tip);
+  let total = base + Math.max(0, tip);
+  if (day.rushLeft > 0) total = Math.round(total * 1.5); // ساعة الذروة
+
+  // الكومبو: تسليم متتالي بنصف صبر أو أكثر يرفع المضاعف
+  if (ratio >= 0.5) day.combo++; else day.combo = 1;
+  day.maxCombo = Math.max(day.maxCombo, day.combo);
+  const comboMult = 1 + Math.min(day.combo - 1, 10) * 0.08;
+  total = Math.round(total * comboMult);
+
   state.money += total;
   day.earned += total;
   day.served++;
+  if (c.isVip) day.vipServed++;
   day.patienceSum += ratio;
-  c.order.forEach(o => { day.soldCount[o.dish.id] = (day.soldCount[o.dish.id] || 0) + 1; });
-  // ذهب للتسليم المثالي
+  c.order.forEach(o => { day.soldCount[o.dish.id] = (o.dish.id in day.soldCount ? day.soldCount[o.dish.id] : 0) + 1; });
+
+  // ذهب للتسليم المثالي (المفتش يعطي 3)
+  const comboTxt = day.combo >= 2 ? ` 🔥x${day.combo}` : "";
   if (ratio > 0.75) {
-    const g = c.type.key === "critic" ? 2 : 1;
+    const g = c.vip === "fahad" ? 3 : (c.type.key === "critic" ? 2 : 1);
     state.gold += g; day.goldEarned += g; day.perfect++;
     sfx.coin();
-    floatScore(c.el, `+${total} 💵 +${g} 🪙`);
+    floatScore(c.el, `+${total} 💵 +${g} 🪙${comboTxt}`);
   } else {
-    floatScore(c.el, `+${total} 💵`);
+    floatScore(c.el, `+${total} 💵${comboTxt}`);
   }
+
+  // قدرات الشخصيات المميزة
+  if (c.vip === "yousef" && ratio > 0.4) {
+    state.rating = clamp(state.rating + (5 - state.rating) * 0.3, 1, 5);
+    toast("📿 شيخ يوسف دعا لمطعمك — التقييم ارتفع!");
+  }
+  if (c.vip === "khalil" && ratio > 0.6) {
+    day.spawnIn = 500;
+    toast("🧒 خليل راح يجيب ربعه — زباين جايين!");
+  }
+
   // التقييم
   const target = 3 + 2.2 * ratio;
   const w = 0.09 * c.type.ratingW;
@@ -279,6 +383,8 @@ function completeOrder(c) {
 
 function customerAngryLeave(c) {
   day.angry++;
+  day.combo = 0;
+  if (c.isVip) { day.vipAngry++; toast(`💔 خسرت ${c.name} — الشخصيات المميزة تأثيرها كبير!`); }
   day.angryTypes[c.type.key] = (day.angryTypes[c.type.key] || 0) + 1;
   const w = 0.13 * c.type.ratingW;
   state.rating = clamp(state.rating + (1 - state.rating) * w, 1, 5);
@@ -329,7 +435,7 @@ function tickCooking(dt) {
 function maybeStartChat() {
   if (day.chat || day.customers.length === 0) return;
   const c = rand(day.customers);
-  const events = CHAT_EVENTS[c.type.key];
+  const events = c.vipChat || CHAT_EVENTS[c.type.key];
   if (!events) return;
   const ev = rand(events);
   day.chat = { customer: c, ev, timeLeft: 8000 };
@@ -368,7 +474,7 @@ function renderChat() {
   const panel = $("chat-panel");
   if (!day.chat) { panel.classList.add("hidden"); return; }
   const { customer: c, ev } = day.chat;
-  $("chat-msg").textContent = `${c.face} ${c.name}: ${ev.msg}`;
+  $("chat-msg").textContent = `${c.isVip ? c.type.label.split(" ")[0] : c.face} ${c.name}: ${ev.msg}`;
   const box = $("chat-replies");
   box.innerHTML = "";
   ev.replies.forEach(r => {
@@ -386,7 +492,9 @@ function renderChat() {
    ============================================================ */
 function startDay() {
   day = freshDay();
+  day.rushAt = day.timeLeft * (0.4 + Math.random() * 0.25); // نقطة انطلاق ساعة الذروة
   day.running = true;
+  document.body.classList.remove("rush");
   showScreen("screen-game");
   renderCounter(); renderTray(); renderCustomers(); renderTopbar();
   lastTick = performance.now();
@@ -405,14 +513,43 @@ function gameLoop(now) {
   // نزول صبر الزبائن
   for (const c of [...day.customers]) {
     c.patience -= dt * c.type.drain;
+    // العم سالم ينسى ويغيّر طلبه مرة واحدة
+    if (c.vip === "salim" && !c.swapped && c.patience < c.maxPatience * 0.55) {
+      c.swapped = true;
+      const undone = c.order.filter(o => !o.done);
+      const others = activeMenu().filter(d => undone.length && d.id !== undone[0].dish.id);
+      if (undone.length && others.length) {
+        rand(undone).dish = rand(others);
+        toast("👓 العم سالم نسي وغيّر طلبه!");
+        sfx.chat();
+        renderCustomers();
+      }
+    }
     if (c.patience <= 0) customerAngryLeave(c);
   }
   updatePatienceBars();
 
+  // ساعة الذروة (من اليوم الثالث، مرة باليوم)
+  if (state.day >= 3 && !day.rushDone && day.rushAt > 0 && day.timeLeft <= day.rushAt) {
+    day.rushDone = true;
+    day.rushLeft = 15000;
+    document.body.classList.add("rush");
+    toast("🔥 ساعة الذروة! زباين أكثر وأرباح ×1.5 لمدة 15 ثانية!");
+    sfx.levelup();
+  }
+  if (day.rushLeft > 0) {
+    day.rushLeft -= dt;
+    if (day.rushLeft <= 0) {
+      document.body.classList.remove("rush");
+      toast("✅ ساعة الذروة انتهت — أحسنت الصمود!");
+    }
+  }
+
   // زبون جديد
   if (day.spawnIn <= 0 && day.timeLeft > 8000) {
     spawnCustomer();
-    const base = Math.max(6500 - state.day * 300, 3200);
+    let base = Math.max(6500 - state.day * 300, 3200);
+    if (day.rushLeft > 0) base *= 0.45;
     day.spawnIn = rint(base * 0.8, base * 1.3);
   }
 
@@ -437,7 +574,16 @@ function gameLoop(now) {
 function endDay() {
   day.running = false;
   cancelAnimationFrame(loopTimer);
+  document.body.classList.remove("rush");
   closeChat();
+  // مكافأة الهدف اليومي
+  day.goalMet = day.earned >= day.goal;
+  if (day.goalMet) {
+    day.goalBonus = Math.round(day.earned * 0.2);
+    state.money += day.goalBonus;
+    state.gold += 3;
+    day.goldEarned += 3;
+  }
   state.totals.served += day.served;
   state.totals.angry += day.angry;
   state.totals.earned += day.earned;
@@ -463,9 +609,11 @@ function showReport() {
   const avgP = day.served ? Math.round((day.patienceSum / day.served) * 100) : 0;
   $("report-stats").innerHTML = `
     📅 اليوم <b>${state.day}</b> انتهى!<br>
+    🎯 الهدف اليومي: <b>${day.earned}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +3 🪙</b>` : "❌ ما تحقق"}<br>
     ✅ زباين راضين: <b>${day.served}</b> &nbsp;|&nbsp; 💢 زباين زعلانين: <b>${day.angry}</b><br>
     💵 أرباح اليوم: <b>${day.earned}</b> &nbsp;|&nbsp; 🪙 ذهب: <b>+${day.goldEarned}</b><br>
-    🌟 متوسط رضا التسليم: <b>${avgP}%</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
+    🔥 أعلى كومبو: <b>x${day.maxCombo}</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
+    🌟 متوسط رضا التسليم: <b>${avgP}%</b>${day.vipServed + day.vipAngry > 0 ? ` &nbsp;|&nbsp; ⭐ شخصيات مميزة: <b>${day.vipServed} راضي / ${day.vipAngry} زعلان</b>` : ""}<br>
     ${best ? `🥇 الأكثر مبيعاً: <b>${best.emoji} ${best.shortName || best.name}</b> (${bestN})` : "🥇 ما انباع شي اليوم 😅"}
   `;
   $("ai-analysis").innerHTML = aiAnalyze().map(t => `<div class="tip">${t}</div>`).join("");
@@ -490,6 +638,10 @@ function aiAnalyze() {
     tips.push(`📊 لاحظت أن أكثر من يزعل عندك: ${names[worstType[0]]}. أعطهم أولوية أعلى في التسليم.`);
   }
 
+  if (day.vipAngry >= 1) tips.push("💔 خسرت شخصية مميزة اليوم — الشخصيات (شيخ يوسف، أبو سمير…) تأثيرها على التقييم والأرباح مضاعف، خلّهم أولويتك.");
+  if (day.maxCombo >= 5) tips.push(`🔥 كومبو x${day.maxCombo} رهيب! التسليم المتتالي السريع ضاعف أرباحك.`);
+  else if (day.served >= 4 && day.maxCombo <= 2) tips.push("🔥 كومبوك ضعيف — سلّم بسرعة وبدون أخطاء عشان يرتفع المضاعف حتى ×1.8.");
+  if (!day.goalMet && day.earned > 0) tips.push(`🎯 نقصك ${day.goal - day.earned} 💵 عن الهدف — الهدف المحقق يعطيك +20% مكافأة و3 ذهب.`);
   if (day.wrongServes >= 3) tips.push(`🎯 سلّمت ${day.wrongServes} أصناف خاطئة — تأكد من فقاعة الطلب قبل التسليم، الناقد يعاقبك عليها أكثر.`);
   if (day.perfect >= 3) tips.push(`🪙 ممتاز! ${day.perfect} تسليمات مثالية جابت لك ذهب. الذهب يفتح لك أطباق الذكاء الاصطناعي.`);
   if (day.chatBad > day.chatGood) tips.push("💬 ردودك على الزباين تحتاج لباقة أكثر — الرد الحلو يرفع صبرهم مجاناً!");
@@ -602,6 +754,10 @@ function renderTopbar() {
   $("stat-rating").textContent = `⭐ ${state.rating.toFixed(1)}`;
   $("stat-time").textContent = `⏰ ${Math.max(0, Math.ceil(day ? day.timeLeft / 1000 : 0))}`;
   $("stat-day").textContent = `📅 ${state.day}`;
+  $("stat-goal").textContent = `🎯 ${day ? day.earned : 0}/${day ? day.goal : 0}`;
+  const combo = $("stat-combo");
+  if (day && day.combo >= 2) { combo.textContent = `🔥x${day.combo}`; combo.classList.remove("hidden"); }
+  else combo.classList.add("hidden");
 }
 function flashStat(id) {
   const el = $(id);
@@ -620,9 +776,11 @@ function renderCustomers() {
     if (selected && c.order.some(o => !o.done && o.dish.id === day.tray[day.selectedTray].dish.id)) {
       div.classList.add("servable");
     }
+    if (c.isVip) div.classList.add("vip");
     div.innerHTML = `
       ${c.chatPending ? '<span class="chat-hint">💬</span>' : ""}
-      <span class="face">${moodFace(c)}</span>
+      <span class="face">${c.isVip ? c.svg : moodFace(c)}</span>
+      ${c.isVip ? '<span class="mood-badge"></span>' : ""}
       <span class="cname">${c.name}</span>
       <span class="ctype">${c.type.label}</span>
       <div class="order-bubble">${c.order.map(o => `<span class="oitem ${o.done ? "done" : ""}">${o.dish.emoji}</span>`).join("")}</div>
@@ -651,7 +809,15 @@ function updatePatienceBars() {
       fill.style.width = (r * 100) + "%";
       fill.style.background = r > 0.5 ? "var(--green)" : r > 0.25 ? "var(--accent)" : "var(--red)";
     }
-    if (face) face.textContent = moodFace(c);
+    if (c.isVip) {
+      const badge = c.el.querySelector(".mood-badge");
+      if (badge) {
+        const r2 = c.patience / c.maxPatience;
+        badge.textContent = r2 > 0.6 ? "" : (r2 > 0.3 ? "😕" : "😡");
+      }
+    } else if (face) {
+      face.textContent = moodFace(c);
+    }
   }
 }
 
@@ -773,6 +939,15 @@ function bindEvents() {
     sfx.levelup();
     save();
     renderShop();
+  };
+
+  $("tray-trash").onclick = () => {
+    if (day.selectedTray < 0 || !day.tray[day.selectedTray]) { toast("👆 حدد صنفاً من الصينية عشان ترميه"); return; }
+    const item = day.tray.splice(day.selectedTray, 1)[0];
+    day.selectedTray = -1;
+    sfx.wrong();
+    toast(`🗑️ رميت ${item.dish.name}`);
+    renderTray(); renderCustomers();
   };
 
   $("btn-settings").onclick = () => $("settings-modal").classList.remove("hidden");

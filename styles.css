@@ -81,6 +81,12 @@ h1 { font-size: 34px; color: var(--accent2); text-shadow: 0 3px 0 rgba(0,0,0,.35
 .stat { background: rgba(255,255,255,.08); padding: 4px 8px; border-radius: 10px; white-space: nowrap; }
 .stat.flash { animation: statflash .5s; }
 @keyframes statflash { 0% { background: var(--green); } 100% { background: rgba(255,255,255,.08); } }
+.stat.combo { background: linear-gradient(90deg, #b33939, #cd6133); color: #ffe9a8; animation: combopulse 1s infinite; }
+@keyframes combopulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+/* ساعة الذروة */
+body.rush #topbar { background: linear-gradient(90deg, rgba(140,20,20,.85), rgba(70,10,10,.85)); }
+body.rush #stat-time { background: var(--red); color: #fff; animation: combopulse .6s infinite; }
 
 /* ===== منطقة الزبائن ===== */
 #customers-area {
@@ -135,6 +141,19 @@ h1 { font-size: 34px; color: var(--accent2); text-shadow: 0 3px 0 rgba(0,0,0,.35
   animation: bob 1s infinite;
 }
 
+/* الشخصيات المميزة */
+.customer.vip {
+  background: linear-gradient(160deg, #4a3a1e, #372a5c);
+  border-color: var(--accent2);
+  box-shadow: 0 0 14px rgba(255, 209, 102, .35);
+}
+.customer.vip.servable { border-color: var(--green); box-shadow: 0 0 12px rgba(46,204,113,.5); }
+.customer .face svg { width: 46px; height: 46px; display: block; }
+.customer .mood-badge {
+  position: absolute; top: 4px; right: 4px;
+  font-size: 16px;
+}
+
 /* ===== الصينية ===== */
 #tray-area {
   display: flex;
@@ -158,6 +177,13 @@ h1 { font-size: 34px; color: var(--accent2); text-shadow: 0 3px 0 rgba(0,0,0,.35
 }
 .tray-slot.filled { border-style: solid; border-color: var(--accent); background: var(--card2); }
 .tray-slot.selected { border-color: var(--green); box-shadow: 0 0 10px rgba(46,204,113,.6); transform: scale(1.08); }
+.tray-slot.trash {
+  width: 44px; height: 44px;
+  font-size: 22px;
+  border-color: rgba(255,107,107,.45);
+  flex-shrink: 0;
+}
+.tray-slot.trash:active { transform: scale(.92); background: rgba(255,107,107,.2); }
 
 /* ===== الكاونتر ===== */
 #counter-area {
