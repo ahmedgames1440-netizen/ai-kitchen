@@ -19,11 +19,102 @@ window.S3D = (() => {
     onCustomerClick: null,   // تحدد من game.js
   };
 
-  /* ---------- مواد وألوان ---------- */
+  /* ---------- مواد وألوان (PBR واقعية) ---------- */
   const SKINS = [0xeeb98c, 0xdba876, 0xf2c49b, 0xc98e63];
   const THOBES = [0xf5f5f5, 0xdfe6e9, 0xcfd8dc, 0x90a4ae, 0x6d4c2f, 0x4e6e5d];
   const mat = (color, emissive = 0x000000) =>
-    new THREE.MeshLambertMaterial({ color, emissive });
+    new THREE.MeshStandardMaterial({ color, emissive, roughness: 0.72, metalness: 0.04 });
+
+  /* تكستر مرسوم على كانفس */
+  function canvasTexture(w, h, draw) {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    draw(c.getContext("2d"), w, h);
+    const t = new THREE.CanvasTexture(c);
+    if ("colorSpace" in t) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+  function woodTexture() {
+    return canvasTexture(512, 512, (g, w, h) => {
+      g.fillStyle = "#7a5230"; g.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 64) { // ألواح
+        g.fillStyle = `rgb(${105 + Math.random() * 25},${68 + Math.random() * 18},${38 + Math.random() * 12})`;
+        g.fillRect(0, y, w, 62);
+        g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(0, y + 62, w, 2);
+        for (let i = 0; i < 26; i++) { // عروق الخشب
+          g.strokeStyle = `rgba(60,35,15,${0.08 + Math.random() * 0.12})`;
+          g.lineWidth = 1 + Math.random() * 2;
+          g.beginPath();
+          const yy = y + 6 + Math.random() * 52;
+          g.moveTo(0, yy);
+          g.bezierCurveTo(w * 0.3, yy + (Math.random() * 14 - 7), w * 0.7, yy + (Math.random() * 14 - 7), w, yy);
+          g.stroke();
+        }
+      }
+    });
+  }
+  function wallTexture() {
+    return canvasTexture(512, 256, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h);
+      gr.addColorStop(0, "#332553"); gr.addColorStop(1, "#241a40");
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 900; i++) { // خشونة الجبس
+        g.fillStyle = `rgba(255,255,255,${Math.random() * 0.03})`;
+        g.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+      }
+      g.fillStyle = "rgba(0,0,0,.3)"; g.fillRect(0, h - 26, w, 26); // إزار سفلي
+    });
+  }
+  function signTexture() {
+    return canvasTexture(1024, 256, (g, w, h) => {
+      g.fillStyle = "#12081f"; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#ff9f43"; g.lineWidth = 8;
+      g.strokeRect(14, 14, w - 28, h - 28);
+      g.textAlign = "center";
+      g.shadowColor = "#ff9f43"; g.shadowBlur = 34;
+      g.fillStyle = "#ffd166";
+      g.font = "900 96px Cairo, Arial";
+      g.fillText("مطعم المستقبل", w / 2, 118);
+      g.shadowColor = "#6c5ce7"; g.shadowBlur = 24;
+      g.fillStyle = "#a29bfe";
+      g.font = "700 52px Arial";
+      g.fillText("A I   K I T C H E N", w / 2, 200);
+    });
+  }
+  function windowTexture() {
+    return canvasTexture(256, 256, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h);
+      gr.addColorStop(0, "#0d1440"); gr.addColorStop(1, "#251a4d");
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 40; i++) { // نجوم
+        g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.7})`;
+        g.fillRect(Math.random() * w, Math.random() * h * 0.5, 2, 2);
+      }
+      g.fillStyle = "#ffe9a8"; // هلال
+      g.beginPath(); g.arc(200, 48, 22, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#0d1440";
+      g.beginPath(); g.arc(210, 42, 20, 0, Math.PI * 2); g.fill();
+      for (let b = 0; b < 7; b++) { // أبراج المدينة
+        const bw = 22 + Math.random() * 26, bh = 60 + Math.random() * 90, bx = b * 36;
+        g.fillStyle = "#1a0f33";
+        g.fillRect(bx, h - bh, bw, bh);
+        for (let wy = h - bh + 8; wy < h - 8; wy += 14)
+          for (let wx = bx + 4; wx < bx + bw - 6; wx += 10)
+            if (Math.random() < 0.5) { g.fillStyle = "#ffd166"; g.fillRect(wx, wy, 5, 7); }
+      }
+    });
+  }
+  function menuBoardTexture() {
+    return canvasTexture(256, 320, (g, w, h) => {
+      g.fillStyle = "#241505"; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#8d6e63"; g.lineWidth = 10; g.strokeRect(8, 8, w - 16, h - 16);
+      g.textAlign = "center"; g.fillStyle = "#ffd166";
+      g.font = "900 34px Cairo, Arial"; g.fillText("المنيو", w / 2, 52);
+      g.font = "700 22px Cairo, Arial"; g.fillStyle = "#f5e6c8";
+      const items = ["شاورما ٨", "بطاطس ٥", "مشروب ٣", "فلافل ٦", "برجر ١٠", "طبق الشيف الآلي ؟"];
+      items.forEach((s, i) => g.fillText(s, w / 2, 100 + i * 36));
+    });
+  }
 
   /* ---------- بناء شخصية كرتونية ---------- */
   function makeCharacter(c) {
@@ -41,6 +132,17 @@ window.S3D = (() => {
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 1.9, 12), mat(bodyColor));
     body.position.y = 0.95;
     g.add(body);
+
+    // ذراعان بكفوف — تعطي واقعية كبيرة للقوام
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.85, 8), mat(bodyColor));
+      arm.position.set(side * 0.58, 1.35, 0.05);
+      arm.rotation.z = side * 0.32;
+      g.add(arm);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 7), mat(skin));
+      hand.position.set(side * 0.72, 0.95, 0.08);
+      g.add(hand);
+    }
 
     // سترة أبو سمير الحمراء
     if (vip === "samir") {
@@ -211,6 +313,7 @@ window.S3D = (() => {
     g.add(shadow);
 
     if (vip === "khalil") g.scale.setScalar(0.72);
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
     const height = (vip === "khalil" ? 0.72 : 1) * (vip === "salim" ? 3.1 : 2.95);
     return { group: g, head, headMat, height, mouths };
   }
@@ -351,47 +454,108 @@ window.S3D = (() => {
     flying.push({ m, t: 0, from: m.position.clone(), toE: e });
   };
 
-  /* ---------- ديكور المطعم ---------- */
+  /* ---------- ديكور المطعم (واقعي) ---------- */
+  let floorMat = null, wallMat = null, clockHands = null, steam = [], robot = null;
+
   function buildRoom() {
-    // أرضية خشبية
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(34, 16), mat(0x6d4c33));
+    // أرضية خشبية بتكستر حقيقي
+    const woodTex = woodTexture();
+    woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
+    woodTex.repeat.set(4, 2);
+    floorMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.55, metalness: 0.08 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(34, 16), floorMat);
     floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
     scene.add(floor);
-    // خطوط بلاط خفيفة
-    for (let i = -4; i <= 4; i++) {
-      const line = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.01, 16), mat(0x5d3f28));
-      line.position.set(i * 2.2, 0.01, 0);
-      scene.add(line);
-    }
-    // جدار خلفي
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(34, 10), mat(0x2a1e4a));
+
+    // جدار خلفي بتكستر جبس
+    wallMat = new THREE.MeshStandardMaterial({ map: wallTexture(), roughness: 0.9 });
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(34, 10), wallMat);
     wall.position.set(0, 5, -3.2);
+    wall.receiveShadow = true;
     scene.add(wall);
-    // لوحة نيون
-    const sign = new THREE.Mesh(new THREE.BoxGeometry(6.5, 1, 0.15),
-      new THREE.MeshLambertMaterial({ color: 0xff9f43, emissive: 0xcc6f1e }));
-    sign.position.set(0, 5.6, -3.1);
+
+    // لوحة نيون بنص عربي حقيقي
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.9),
+      new THREE.MeshBasicMaterial({ map: signTexture() }));
+    sign.position.set(0, 5.7, -3.05);
     scene.add(sign);
-    for (const sx of [-6.5, 6.5]) {
-      const win = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.2, 0.1),
-        new THREE.MeshLambertMaterial({ color: 0x6c5ce7, emissive: 0x4a3db8 }));
-      win.position.set(sx, 4.4, -3.1);
+    const signGlow = new THREE.PointLight(0xff9f43, 1.6, 9);
+    signGlow.position.set(0, 5.6, -2.2);
+    scene.add(signGlow);
+
+    // نوافذ تطل على مدينة المستقبل ليلاً
+    const winTex = windowTexture();
+    for (const sx of [-6.8, 6.8]) {
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(2.9, 2.5, 0.12), mat(0x3a2a5a));
+      frame.position.set(sx, 4.4, -3.12);
+      scene.add(frame);
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.2),
+        new THREE.MeshBasicMaterial({ map: winTex }));
+      win.position.set(sx, 4.4, -3.05);
       scene.add(win);
     }
-    // كاونتر أمامي منخفض
+
+    // لوحة منيو معلقة
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 2.4),
+      new THREE.MeshStandardMaterial({ map: menuBoardTexture(), roughness: 0.85 }));
+    board.position.set(-4.2, 4.6, -3.05);
+    scene.add(board);
+
+    // ساعة حائط تعكس وقت اليوم
+    const clock = new THREE.Group();
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.07, 10, 24), mat(0x8d6e63));
+    clock.add(rim);
+    const face = new THREE.Mesh(new THREE.CircleGeometry(0.52, 24), mat(0xf5f0e6));
+    face.position.z = -0.02;
+    clock.add(face);
+    const hHand = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.02), mat(0x222222));
+    hHand.position.y = 0.12;
+    const hPivot = new THREE.Group(); hPivot.add(hHand); hPivot.position.z = 0.03;
+    const mHand = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.42, 0.02), mat(0xc0392b));
+    mHand.position.y = 0.18;
+    const mPivot = new THREE.Group(); mPivot.add(mHand); mPivot.position.z = 0.04;
+    clock.add(hPivot); clock.add(mPivot);
+    clock.position.set(4.2, 5.2, -3.05);
+    scene.add(clock);
+    clockHands = { hPivot, mPivot };
+
+    // كاونتر رخامي على قاعدة خشبية
     const counter = new THREE.Mesh(new THREE.BoxGeometry(16, 0.9, 1.1), mat(0x4e342e));
     counter.position.set(0, 0.45, 2.6);
+    counter.castShadow = true; counter.receiveShadow = true;
     scene.add(counter);
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(16.3, 0.13, 1.3), mat(0x8d6e63));
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(16.3, 0.13, 1.3),
+      new THREE.MeshStandardMaterial({ color: 0xd7ccc8, roughness: 0.25, metalness: 0.15 }));
     slab.position.set(0, 0.96, 2.6);
+    slab.receiveShadow = true;
     scene.add(slab);
-    // سيخ شاورما ديكوري
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 8), mat(0xbdbdbd));
+
+    // سيخ شاورما دوار + بخار
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 8),
+      new THREE.MeshStandardMaterial({ color: 0xbdbdbd, roughness: 0.3, metalness: 0.8 }));
     pole.position.set(6.4, 1.9, 0.6);
     scene.add(pole);
-    spitMeat = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.7, 1.5, 10), mat(0xa9743f, 0x341f0d));
+    spitMeat = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.7, 1.5, 12), mat(0xa9743f, 0x2a1808));
     spitMeat.position.set(6.4, 2.0, 0.6);
+    spitMeat.castShadow = true;
     scene.add(spitMeat);
+    // جسيمات البخار
+    const steamTex = canvasTexture(64, 64, (g) => {
+      const gr = g.createRadialGradient(32, 32, 4, 32, 32, 30);
+      gr.addColorStop(0, "rgba(255,255,255,.65)");
+      gr.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    });
+    for (let i = 0; i < 7; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, transparent: true, opacity: 0 }));
+      sp.scale.setScalar(0.5);
+      sp.position.set(6.4, 2.9, 0.6);
+      sp.userData.phase = i / 7;
+      scene.add(sp);
+      steam.push(sp);
+    }
+
     // أصناف معروضة على الكاونتر
     const displays = [["burger", -4.4], ["fries", -5.6], ["drink", -6.7]];
     for (const [k, x] of displays) {
@@ -399,19 +563,88 @@ window.S3D = (() => {
       m.scale.setScalar(1.15);
       m.position.set(x, 1.03, 2.5);
       m.rotation.y = Math.random() * Math.PI;
+      m.traverse(o => { if (o.isMesh) o.castShadow = true; });
       scene.add(m);
     }
-    // إضاءات معلقة
+
+    // إضاءات معلقة دافئة (نقطية حقيقية)
     for (const sx of [-3.5, 0, 3.5]) {
       const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 6), mat(0x222222));
       cord.position.set(sx, 6.5, -0.5);
       scene.add(cord);
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10),
-        new THREE.MeshLambertMaterial({ color: 0xffe9a8, emissive: 0xd6a94f }));
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10),
+        new THREE.MeshStandardMaterial({ color: 0xffe9a8, emissive: 0xd6a94f, emissiveIntensity: 1.4 }));
       bulb.position.set(sx, 5.8, -0.5);
       scene.add(bulb);
+      const pl = new THREE.PointLight(0xffd9a0, 0.65, 9);
+      pl.position.set(sx, 5.6, -0.3);
+      scene.add(pl);
     }
+
+    // المساعد الآلي (يظهر عند شرائه)
+    robot = new THREE.Group();
+    const rBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 0.62, 14),
+      new THREE.MeshStandardMaterial({ color: 0xdfe6e9, roughness: 0.3, metalness: 0.6 }));
+    rBody.position.y = 0.32;
+    robot.add(rBody);
+    const rHead = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0xb2bec3, roughness: 0.3, metalness: 0.6 }));
+    rHead.position.y = 0.85;
+    robot.add(rHead);
+    const rEye = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00b8d4, emissiveIntensity: 2 }));
+    rEye.position.set(0, 0.87, 0.21);
+    robot.add(rEye);
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.22, 6), mat(0x636e72));
+    ant.position.y = 1.12;
+    robot.add(ant);
+    const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0xff5252, emissive: 0xd32f2f, emissiveIntensity: 2 }));
+    antTip.position.y = 1.25;
+    robot.add(antTip);
+    robot.position.set(4.6, 1.02, 2.5);
+    robot.visible = false;
+    robot.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    scene.add(robot);
   }
+
+  /* واجهات للتحكم من اللعبة */
+  api.setClock = function (progress) { // 0..1 من اليوم
+    if (!clockHands) return;
+    clockHands.mPivot.rotation.z = -progress * Math.PI * 2 * 4;
+    clockHands.hPivot.rotation.z = -progress * Math.PI * 2 * 0.5 - 1;
+  };
+  api.setRobot = function (on) { if (robot) robot.visible = on; };
+  api.robotPing = function () { if (robot) robot.userData.hop = 1; };
+
+  /* ثيمات الديكور */
+  const THEMES = {
+    classic: { wall: 0xffffff, floor: 0xffffff, fog: 0x1a1035 },
+    neon:    { wall: 0x7d6bff, floor: 0x9a8bd0, fog: 0x120b2e },
+    desert:  { wall: 0xffcf9e, floor: 0xffb870, fog: 0x2e1e10 },
+  };
+  api.setTheme = function (name) {
+    const t = THEMES[name] || THEMES.classic;
+    if (wallMat) wallMat.color.setHex(t.wall);
+    if (floorMat) floorMat.color.setHex(t.floor);
+    if (scene && scene.fog) scene.fog.color.setHex(t.fog);
+  };
+
+  /* عملات ذهبية تطير عند الدفع */
+  api.flyCoins = function (uid, n) {
+    if (!api.active) return;
+    const e = chars.get(uid);
+    if (!e) return;
+    for (let i = 0; i < Math.min(n, 6); i++) {
+      const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x8a6b1e, roughness: 0.25, metalness: 0.9 }));
+      coin.position.set(e.group.position.x + (Math.random() - 0.5) * 0.6, 1.8, 0.5);
+      coin.rotation.x = Math.PI / 2;
+      scene.add(coin);
+      flying.push({ m: coin, t: -i * 0.08, from: coin.position.clone(),
+        toE: { group: { position: new THREE.Vector3(0, 6.5, -1) } }, coin: true });
+    }
+  };
 
   /* ---------- تهيئة ---------- */
   api.init = function (containerEl, overlayEl) {
@@ -421,17 +654,29 @@ window.S3D = (() => {
       overlayLayer = overlayEl;
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      if ("outputColorSpace" in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.domElement.id = "canvas3d";
       container.prepend(renderer.domElement);
 
       scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x1a1035, 16, 34);
       camera = new THREE.PerspectiveCamera(42, 1, 0.1, 60);
       camera.position.set(0, 3.3, 9.0);
       camera.lookAt(0, 2.05, 0);
 
-      scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2d1b4e, 1.15));
-      const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-      sun.position.set(3, 7, 5);
+      scene.add(new THREE.HemisphereLight(0xfff2e0, 0x2d1b4e, 0.9));
+      const sun = new THREE.DirectionalLight(0xfff4e0, 1.5);
+      sun.position.set(4, 9, 6);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      sun.shadow.camera.left = -12; sun.shadow.camera.right = 12;
+      sun.shadow.camera.top = 12; sun.shadow.camera.bottom = -6;
+      sun.shadow.camera.near = 1; sun.shadow.camera.far = 30;
+      sun.shadow.bias = -0.002;
       scene.add(sun);
 
       buildRoom();
@@ -533,16 +778,36 @@ window.S3D = (() => {
 
     if (spitMeat) spitMeat.rotation.y += dt * 1.2;
 
-    // الأطباق الطائرة نحو الزبائن
+    // بخار الشاورما المتصاعد
+    for (const sp of steam) {
+      const p = ((now / 4000) + sp.userData.phase) % 1;
+      sp.position.y = 2.8 + p * 1.7;
+      sp.position.x = 6.4 + Math.sin(p * 8 + sp.userData.phase * 6) * 0.18;
+      sp.material.opacity = (p < 0.15 ? p / 0.15 : 1 - p) * 0.45;
+      sp.scale.setScalar(0.4 + p * 0.8);
+    }
+
+    // المساعد الآلي: تمايل + قفزة عند الطبخ
+    if (robot && robot.visible) {
+      robot.rotation.y = Math.sin(now / 900) * 0.35;
+      let hopY = 0;
+      if (robot.userData.hop > 0) {
+        hopY = Math.sin(robot.userData.hop * Math.PI) * 0.28;
+        robot.userData.hop -= dt * 2.2;
+      }
+      robot.position.y = 1.02 + hopY;
+    }
+
+    // الأطباق والعملات الطائرة
     for (let i = flying.length - 1; i >= 0; i--) {
       const f = flying[i];
       f.t += dt / 0.55;
-      const k = Math.min(f.t, 1);
+      const k = Math.max(0, Math.min(f.t, 1));
       const to = f.toE.group.position;
-      f.m.position.lerpVectors(f.from, new THREE.Vector3(to.x, 1.5, 0.5), k);
+      f.m.position.lerpVectors(f.from, new THREE.Vector3(to.x, f.coin ? to.y : 1.5, f.coin ? to.z : 0.5), k);
       f.m.position.y += Math.sin(k * Math.PI) * 1.3;
       f.m.rotation.y += dt * 6;
-      if (k >= 1) { scene.remove(f.m); flying.splice(i, 1); }
+      if (f.t >= 1) { scene.remove(f.m); flying.splice(i, 1); }
     }
 
     for (const e of chars.values()) {

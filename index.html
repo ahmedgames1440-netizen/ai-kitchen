@@ -17,11 +17,52 @@
 <!-- ======== شاشة البداية ======== -->
 <div id="screen-menu" class="screen active">
   <div class="menu-box">
-    <div class="logo-emoji">🌯🤖</div>
-    <h1>مطعم المستقبل</h1>
-    <div class="subtitle">AI Kitchen — مطعمك اللي يتعلم منك</div>
+    <!-- اللوقو -->
+    <svg class="logo" viewBox="0 0 340 230" role="img" aria-label="مطعم المستقبل - AI Kitchen">
+      <defs>
+        <linearGradient id="lgGold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#ffd166"/><stop offset="1" stop-color="#ff9f43"/>
+        </linearGradient>
+        <linearGradient id="lgNeon" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#a29bfe"/><stop offset="1" stop-color="#6c5ce7"/>
+        </linearGradient>
+        <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- حلقة نيون دوارة -->
+      <circle class="logo-ring" cx="170" cy="82" r="62" fill="none" stroke="url(#lgGold)" stroke-width="4" stroke-dasharray="16 10" stroke-linecap="round"/>
+      <circle cx="170" cy="82" r="52" fill="rgba(255,159,67,.08)"/>
+      <!-- الشيف الآلي -->
+      <g filter="url(#glow)">
+        <path d="M146 52 q-8 -18 10 -16 q2 -14 14 -14 q12 0 14 14 q18 -2 10 16 z" fill="#fafafa" stroke="#d9cfc0" stroke-width="2"/>
+        <rect x="146" y="52" width="48" height="8" rx="4" fill="#e8e0d2"/>
+        <rect x="146" y="62" width="48" height="40" rx="12" fill="#cfd8dc" stroke="#90a4ae" stroke-width="2"/>
+        <rect class="logo-eye" x="154" y="74" width="12" height="8" rx="4" fill="#00e5ff"/>
+        <rect class="logo-eye" x="174" y="74" width="12" height="8" rx="4" fill="#00e5ff"/>
+        <path d="M160 92 q10 7 20 0" stroke="#607d8b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- شاورما بيد الروبوت -->
+      <g filter="url(#glow)" transform="rotate(-22 218 108)">
+        <path d="M204 96 L232 96 L228 130 L208 130 Z" fill="#e8c48f" stroke="#c8965a" stroke-width="2.5"/>
+        <path d="M204 96 L232 96 L231 106 L205 106 Z" fill="#d9a55a"/>
+        <circle cx="212" cy="93" r="4" fill="#6ab04c"/><circle cx="220" cy="91" r="4" fill="#c0392b"/><circle cx="227" cy="93" r="4" fill="#8d5524"/>
+      </g>
+      <!-- شرارات -->
+      <g class="logo-sparks" fill="#ffd166">
+        <circle cx="112" cy="48" r="3"/><circle cx="230" cy="40" r="2.5"/><circle cx="120" cy="118" r="2.5"/>
+      </g>
+      <!-- الاسم -->
+      <text x="170" y="182" text-anchor="middle" class="logo-ar" fill="url(#lgGold)" filter="url(#glow)">مطعم المستقبل</text>
+      <text x="170" y="212" text-anchor="middle" class="logo-en" fill="url(#lgNeon)">A I &#160; K I T C H E N</text>
+    </svg>
+    <div class="subtitle">مطعمك اللي يتعلم منك 🤖</div>
+    <div id="player-title" class="player-title"></div>
     <button id="btn-start" class="big-btn">▶️ ابدأ اليوم</button>
+    <button id="btn-endless" class="big-btn gold hidden">♾️ التحدي اللانهائي</button>
     <button id="btn-shop-menu" class="big-btn secondary">🛒 المتجر والتطوير</button>
+    <button id="btn-achievements" class="big-btn secondary">🏅 الإنجازات والأرقام</button>
     <button id="btn-howto" class="big-btn secondary">❓ طريقة اللعب</button>
     <div id="menu-stats" class="menu-stats"></div>
   </div>
@@ -40,6 +81,11 @@
     <span class="stat combo hidden" id="stat-combo">🔥x2</span>
     <button id="btn-settings" class="icon-btn">⚙️</button>
   </div>
+  <!-- شريط الخبرة + المهمة الجانبية -->
+  <div id="subbar">
+    <div id="xp-wrap"><span id="lvl-chip">⬆️1</span><div id="xp-bar"><div id="xp-fill"></div></div></div>
+    <span id="quest-chip">🎯 —</span>
+  </div>
 
   <!-- منطقة الزبائن (مشهد ثلاثي الأبعاد + طبقة فقاعات) -->
   <div id="customers-area">
@@ -51,6 +97,7 @@
     <div class="tray-label">🍽️ الصينية</div>
     <div id="tray-slots"></div>
     <div class="tray-slot trash" id="tray-trash" title="ارمِ الصنف المحدد">🗑️</div>
+    <button id="btn-coffee" class="coffee-btn" title="قهوة عربية: ترفع صبر أتعس زبون">☕</button>
   </div>
 
   <!-- الكاونتر (محطات الطبخ) -->
@@ -74,6 +121,8 @@
       <div class="ai-title">🤖 تحليل المطعم الذكي</div>
       <div id="ai-analysis"></div>
     </div>
+    <button id="btn-wheel" class="big-btn gold hidden">🎡 أدر عجلة الحظ!</button>
+    <div id="wheel-result" class="wheel-result hidden"></div>
     <button id="btn-report-shop" class="big-btn">🛒 المتجر</button>
     <button id="btn-next-day" class="big-btn secondary">☀️ اليوم التالي</button>
   </div>
@@ -120,7 +169,14 @@
       <p>✨ <b>الطازج:</b> الصنف أول 5 ثوانٍ من جهوزيته "طازج" — تسليمه يرفع صبر الزبون. لا تخزّن بالصينية!</p>
       <p>🔥 <b>الكومبو:</b> تسليمات متتالية سريعة ترفع مضاعف أرباحك حتى ×1.8 — الخطأ أو الزبون الزعلان يكسره.</p>
       <p>⏰ <b>ساعة الذروة</b> (من اليوم الثالث): 15 ثانية زحمة وأرباح ×1.5!</p>
-      <p>🎯 <b>الهدف اليومي:</b> حققه وخذ +20% مكافأة و3 ذهب.</p>
+      <p>🎯 <b>الهدف اليومي:</b> حققه وخذ +20% مكافأة و3 ذهب — وتفتح لك <b>🎡 عجلة الحظ</b>!</p>
+      <p>📌 <b>مهمة جانبية</b> كل يوم (فوق الشاشة) — أنجزها لمكافأة إضافية.</p>
+      <p>🌦️ <b>أحداث يومية:</b> يوم ممطر، مباراة، صحافة، إجازة، حملة صحية — كل واحد يغيّر قوانين اليوم.</p>
+      <p>☕ <b>القهوة العربية:</b> زر بجانب الصينية — يهدّئ أتعس زبون (+35% صبر) كل 25 ثانية.</p>
+      <p>📈 <b>مستويات وألقاب:</b> كل تسليم يعطيك خبرة، وكل مستوى +2% بقشيش دائم.</p>
+      <p>🤖 <b>المساعد الآلي</b> (من المتجر): روبوت يطبخ لك صنفاً مطلوباً كل 12 ثانية.</p>
+      <p>🔥 <b>وضع النار:</b> كومبو ×5 أو أكثر = طبخ أسرع 20%!</p>
+      <p>♾️ <b>التحدي اللانهائي</b> (بعد اليوم 7): بدون وقت — اصمد حتى 5 زباين زعلانين وسجّل رقماً قياسياً.</p>
       <p>💬 أحياناً زبون يرسل لك رسالة — اختر الرد المناسب وترتفع معنوياته!</p>
       <p>🪙 الذهب تكسبه من التسليم المثالي (صبر شبه كامل) — استخدمه لابتكار أطباق بالذكاء الاصطناعي.</p>
       <p>📊 نهاية كل يوم: تقرير ذكي يحلل أداءك ويعطيك نصائح.</p>
@@ -129,11 +185,23 @@
   </div>
 </div>
 
+<!-- ======== شاشة الإنجازات والأرقام ======== -->
+<div id="screen-achievements" class="screen">
+  <div class="panel">
+    <h2>🏅 الإنجازات</h2>
+    <div id="ach-list"></div>
+    <h2 style="margin-top:18px">📈 أرقامك القياسية</h2>
+    <div id="records-box"></div>
+    <button id="btn-ach-back" class="big-btn">⬅️ رجوع</button>
+  </div>
+</div>
+
 <!-- ======== نافذة الإعدادات ======== -->
 <div id="settings-modal" class="modal hidden">
   <div class="modal-box">
     <h3>⚙️ الإعدادات</h3>
-    <button id="btn-sound" class="big-btn secondary">🔊 الصوت: يعمل</button>
+    <button id="btn-sound" class="big-btn secondary">🔊 المؤثرات: تعمل</button>
+    <button id="btn-music" class="big-btn secondary">🎵 الموسيقى: تعمل</button>
     <button id="btn-quit-day" class="big-btn secondary">🏁 إنهاء اليوم الحالي</button>
     <button id="btn-reset" class="big-btn danger">🗑️ مسح كل التقدم</button>
     <button id="btn-close-settings" class="big-btn">✖️ إغلاق</button>
@@ -141,6 +209,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script src="audio.js"></script>
 <script src="scene3d.js"></script>
 <script src="game.js"></script>
 </body>

@@ -184,6 +184,61 @@ const UPGRADES = [
   { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => 90 + l * 90 },
   { id: "falafel", emoji: "🧆", name: "فتح: فلافل", desc: "صنف جديد بالقائمة (6 💵)", max: 1, cost: () => 120 },
   { id: "burger",  emoji: "🍔", name: "فتح: برجر", desc: "صنف جديد بالقائمة (10 💵)", max: 1, cost: () => 200 },
+  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "روبوت على الكاونتر يطبخ صنفاً مطلوباً كل 12 ثانية", max: 1, cost: () => 350 },
+];
+
+/* ---------- الأحداث اليومية ---------- */
+const DAY_EVENTS = [
+  { id: "rain", name: "🌧️ يوم ممطر", desc: "زباين أقل لكن البقشيش +30%", spawnMult: 1.45, tipMult: 1.3 },
+  { id: "match", name: "⚽ مباراة اليوم", desc: "زحمة كبيرة وصبر أقل!", spawnMult: 0.6, patMult: 0.85 },
+  { id: "press", name: "📰 يوم الصحافة", desc: "النقاد أكثر اليوم — فرصة تقييم ذهبية", criticBoost: true },
+  { id: "holiday", name: "🎉 يوم إجازة", desc: "عوائل: صنف إضافي بكل طلب", extraItem: true },
+  { id: "health", name: "🥗 حملة صحية", desc: "الطازج ✨ يعطي ضعف المكافأة", freshX2: true },
+];
+
+/* ---------- المهمات الجانبية اليومية ---------- */
+const QUESTS = [
+  { id: "fresh5", name: "سلّم 5 أصناف طازجة ✨", check: d => d.freshServes >= 5, reward: { gold: 4 } },
+  { id: "perfect3", name: "3 تسليمات مثالية 🏆", check: d => d.perfect >= 3, reward: { gold: 3 } },
+  { id: "combo4", name: "وصل كومبو ×4 🔥", check: d => d.maxCombo >= 4, reward: { money: 60 } },
+  { id: "noangry", name: "يوم بلا زعل (3+ زباين) 😇", check: d => d.angry === 0 && d.served >= 3, reward: { gold: 5 } },
+  { id: "chat2", name: "ردّان موفقان بالمحادثة 💬", check: d => d.chatGood >= 2, reward: { money: 40 } },
+];
+
+/* ---------- المستويات والألقاب ---------- */
+const TITLES = ["طباخ مبتدئ", "مساعد شيف", "شيف", "شيف محترف", "ماستر الشاورما", "نجم الحي", "أسطورة المطبخ", "إمبراطور AI Kitchen"];
+function xpForLevel(l) { return l * l * 40; }
+function playerLevel() { let l = 1; while (xpForLevel(l + 1) <= state.xp) l++; return Math.min(l, 40); }
+function playerTitle() { return TITLES[Math.min(TITLES.length - 1, Math.floor((playerLevel() - 1) / 2))]; }
+
+/* ---------- الإنجازات ---------- */
+const ACHIEVEMENTS = [
+  { id: "first", emoji: "🍽️", name: "البداية", desc: "أول زبون راضي", check: s => s.totals.served >= 1 },
+  { id: "s50", emoji: "👨‍🍳", name: "معلم الحارة", desc: "50 زبون راضي", check: s => s.totals.served >= 50 },
+  { id: "s200", emoji: "⭐", name: "مشهور", desc: "200 زبون راضي", check: s => s.totals.served >= 200 },
+  { id: "rich", emoji: "💰", name: "تاجر شاطر", desc: "اجمع 1000 ربح إجمالي", check: s => s.totals.earned >= 1000 },
+  { id: "combo8", emoji: "🔥", name: "على النار", desc: "كومبو ×8", check: s => s.records.maxCombo >= 8 },
+  { id: "lvl5", emoji: "📈", name: "محترف معتمد", desc: "الوصول لمستوى 5", check: () => playerLevel() >= 5 },
+  { id: "ai3", emoji: "🤖", name: "شيف المستقبل", desc: "3 أطباق مبتكرة بالقائمة", check: s => s.aiDishes.length >= 3 },
+  { id: "day7", emoji: "📅", name: "أسبوع كامل", desc: "الوصول لليوم 7", check: s => s.day >= 7 },
+  { id: "star48", emoji: "🌟", name: "مطعم 5 نجوم", desc: "تقييم 4.8 أو أعلى", check: s => s.rating >= 4.8 },
+  { id: "vips", emoji: "👑", name: "صديق الجميع", desc: "أرضِ الشخصيات المميزة الخمس", check: s => (s.vipsPleased || []).length >= 5 },
+];
+function checkAchievements() {
+  for (const a of ACHIEVEMENTS) {
+    if (!state.ach[a.id] && a.check(state)) {
+      state.ach[a.id] = true;
+      toast(`🏅 إنجاز جديد: ${a.emoji} ${a.name}!`);
+      sfx.levelup();
+    }
+  }
+}
+
+/* ---------- ثيمات الديكور ---------- */
+const THEME_DEFS = [
+  { id: "classic", name: "🏠 كلاسيكي دافئ", cost: 0 },
+  { id: "neon", name: "🌌 نيون ليلي", cost: 150 },
+  { id: "desert", name: "🏜️ صحراوي تراثي", cost: 150 },
 ];
 
 /* ---------- حالة اللعبة ---------- */
@@ -192,8 +247,11 @@ let state = null;
 
 function freshState() {
   return {
-    money: 0, gold: 5, day: 1, rating: 5.0, sound: true,
-    upgrades: { grill: 0, tray: 0, decor: 0, fame: 0, falafel: 0, burger: 0 },
+    money: 0, gold: 5, day: 1, rating: 5.0, sound: true, music: true,
+    xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
+    records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
+    theme: "classic", themesOwned: ["classic"],
+    upgrades: { grill: 0, tray: 0, decor: 0, fame: 0, falafel: 0, burger: 0, robot: 0 },
     aiDishes: [],           // أطباق ابتكرها الذكاء الاصطناعي
     totals: { served: 0, angry: 0, earned: 0 },
     history: [],            // ملخص الأيام السابقة (للتحليل الذكي)
@@ -215,10 +273,14 @@ function activeMenu() {
   if (state.upgrades.burger) menu.push(UNLOCK_DISHES.burger);
   return menu.concat(state.aiDishes);
 }
-function cookTime(dish) { return dish.cook * Math.pow(0.88, state.upgrades.grill); }
-function traySize() { return 4 + state.upgrades.tray; }
-function patienceMult() { return 1 + state.upgrades.decor * 0.12; }
-function tipMult() { return 1 + state.upgrades.fame * 0.10; }
+function cookTime(dish) {
+  let t = dish.cook * Math.pow(0.88, state.upgrades.grill || 0);
+  if (day && day.combo >= 5) t *= 0.8; // وضع النار 🔥
+  return t;
+}
+function traySize() { return 4 + (state.upgrades.tray || 0); }
+function patienceMult() { return 1 + (state.upgrades.decor || 0) * 0.12; }
+function tipMult() { return (1 + (state.upgrades.fame || 0) * 0.10) * (1 + Math.min(playerLevel() - 1, 10) * 0.02); }
 
 /* ---------- حالة اليوم الجاري ---------- */
 let day = null;
@@ -249,6 +311,11 @@ function freshDay() {
     rushAt: -1, rushLeft: 0, rushDone: false, // ساعة الذروة
     vipCount: 0, vipsSeen: [], vipServed: 0, vipAngry: 0,
     freshServes: 0,          // أصناف سُلّمت وهي طازجة
+    // أنظمة تحديث 5
+    totalTime: Math.min(60000 + state.day * 12000, 150000),
+    event: null, quest: null, questDone: false,
+    coffeeCd: 0, robotIn: 12000,
+    endless: false, goalBonus: 0,
   };
 }
 
@@ -263,14 +330,17 @@ function spawnCustomer() {
     const pool = VIPS.filter(v => !day.vipsSeen.includes(v.id));
     if (pool.length) { spawnVip(rand(pool)); return; }
   }
-  // الناقد والغني أندر
-  const weighted = ["hasty","hasty","calm","calm","calm","rich","critic"];
+  // الناقد والغني أندر (يوم الصحافة يكثر النقاد)
+  const weighted = (day.event && day.event.criticBoost)
+    ? ["hasty","calm","calm","rich","critic","critic","critic"]
+    : ["hasty","hasty","calm","calm","calm","rich","critic"];
   const type = CUSTOMER_TYPES[state.day < 2 ? rand(["calm","hasty"]) : rand(weighted)];
   const menu = activeMenu();
-  const count = type.key === "rich" ? rint(2, Math.min(4, menu.length)) : rint(1, Math.min(3, menu.length));
+  let count = type.key === "rich" ? rint(2, Math.min(4, menu.length)) : rint(1, Math.min(3, menu.length));
+  if (day.event && day.event.extraItem) count = Math.min(count + 1, 4);
   const order = [];
   for (let i = 0; i < count; i++) order.push(rand(menu));
-  const maxP = type.patience * patienceMult();
+  const maxP = type.patience * patienceMult() * ((day.event && day.event.patMult) || 1);
   const c = {
     uid: ++customerSeq,
     name: rand(NAMES), face: rand(FACES), type,
@@ -284,7 +354,9 @@ function spawnCustomer() {
 
 function spawnVip(v) {
   const menu = activeMenu();
-  const count = clamp(rint(v.orders[0], v.orders[1]), 1, Math.max(2, menu.length));
+  let count = clamp(rint(v.orders[0], v.orders[1]), 1, Math.max(2, menu.length));
+  let mega = false;
+  if (v.id === "samir" && Math.random() < 0.35) { count = 5; mega = true; } // الطلب الضخم
   const order = [];
   for (let i = 0; i < count; i++) order.push(rand(menu));
   const maxP = v.patience * patienceMult();
@@ -295,12 +367,12 @@ function spawnVip(v) {
     isVip: true, vip: v.id, vipChat: v.chat,
     order: order.map(d => ({ dish: d, done: false })),
     patience: maxP, maxPatience: maxP,
-    el: null, chatPending: false, swapped: false,
+    el: null, chatPending: false, swapped: false, mega,
   };
   day.customers.push(c);
   day.vipCount++;
   day.vipsSeen.push(v.id);
-  toast(v.intro);
+  toast(mega ? "🎩💰 طلب ضخم من أبو سمير — أجرة مضاعفة ×3!" : v.intro);
   sfx.chat();
   renderCustomers();
 }
@@ -330,9 +402,10 @@ function serveTrayItem(c) {
   day.tray.splice(idx, 1);
   day.selectedTray = -1;
   sfx.serve();
-  // مكافأة الصنف الطازج: يرفع صبر الزبون
+  // مكافأة الصنف الطازج: يرفع صبر الزبون (تتضاعف بالحملة الصحية)
   if (item.readyAt && performance.now() - item.readyAt < 5000) {
-    c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * 0.06);
+    const boost = 0.06 * ((day.event && day.event.freshX2) ? 2 : 1);
+    c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * boost);
     day.freshServes++;
     floatScore(c.el, "✨ طازج!");
   }
@@ -345,7 +418,8 @@ function completeOrder(c) {
   const ratio = clamp(c.patience / c.maxPatience, 0, 1);
   let base = c.order.reduce((s, o) => s + o.dish.price, 0);
   if (c.vip === "samir") base *= 2; // التاجر يدفع الضعف
-  const tip = Math.round(base * ratio * (c.type.tip - 0.4) * tipMult());
+  if (c.mega) base = Math.round(base * 1.5); // الطلب الضخم ×3 إجمالاً
+  const tip = Math.round(base * ratio * (c.type.tip - 0.4) * tipMult() * ((day.event && day.event.tipMult) || 1));
   let total = base + Math.max(0, tip);
   if (day.rushLeft > 0) total = Math.round(total * 1.5); // ساعة الذروة
 
@@ -387,6 +461,20 @@ function completeOrder(c) {
   const target = 3 + 2.2 * ratio;
   const w = 0.09 * c.type.ratingW;
   state.rating = clamp(state.rating + (target - state.rating) * w, 1, 5);
+
+  // خبرة ومستويات
+  const lvlBefore = playerLevel();
+  state.xp += 10 + day.combo * 2 + (c.isVip ? 10 : 0);
+  if (playerLevel() > lvlBefore) {
+    toast(`⬆️ مستوى ${playerLevel()}: أنت الآن "${playerTitle()}"! (+2% بقشيش)`);
+    sfx.levelup();
+  }
+  // عملات تطير + سجلات + إنجازات
+  if (S3D.active && S3D.flyCoins) S3D.flyCoins(c.uid, Math.min(6, Math.ceil(total / 15)));
+  if (c.isVip && !state.vipsPleased.includes(c.vip)) state.vipsPleased.push(c.vip);
+  state.records.maxCombo = Math.max(state.records.maxCombo, day.combo);
+  checkAchievements();
+
   removeCustomer(c, true);
   flashStat("stat-money");
 }
@@ -394,6 +482,11 @@ function completeOrder(c) {
 function customerAngryLeave(c) {
   day.angry++;
   day.combo = 0;
+  // التحدي اللانهائي: الخسارة عند 5
+  if (day.endless && day.angry >= 5 && day.running) {
+    toast("💀 انتهى التحدي — 5 زباين زعلوا!");
+    setTimeout(() => { if (day.running) { day.customers = []; day.timeLeft = 0; } }, 100);
+  }
   if (c.isVip) { day.vipAngry++; toast(`💔 خسرت ${c.name} — الشخصيات المميزة تأثيرها كبير!`); }
   day.angryTypes[c.type.key] = (day.angryTypes[c.type.key] || 0) + 1;
   const w = 0.13 * c.type.ratingW;
@@ -498,12 +591,24 @@ function renderChat() {
 /* ============================================================
    حلقة اللعبة
    ============================================================ */
-function startDay() {
+function startDay(endless = false) {
   day = freshDay();
+  day.endless = !!endless;
+  if (endless) { day.timeLeft = 999999999; day.goal = 999999; }
   day.rushAt = day.timeLeft * (0.4 + Math.random() * 0.25); // نقطة انطلاق ساعة الذروة
+  // حدث اليوم + المهمة الجانبية
+  if (!endless && state.day >= 2 && Math.random() < 0.6) day.event = rand(DAY_EVENTS);
+  day.quest = rand(QUESTS);
   day.running = true;
-  document.body.classList.remove("rush");
-  if (S3D.active && S3D.clear) S3D.clear();
+  document.body.classList.remove("rush", "fire");
+  if (S3D.active) {
+    if (S3D.clear) S3D.clear();
+    if (S3D.setRobot) S3D.setRobot(!!state.upgrades.robot);
+    if (S3D.setTheme) S3D.setTheme(state.theme);
+  }
+  if (window.GameAudio) { GameAudio.setEnabled(state.music); GameAudio.start(); }
+  if (day.event) setTimeout(() => toast(`${day.event.name} — ${day.event.desc}`), 700);
+  if (endless) setTimeout(() => toast("♾️ التحدي اللانهائي: اصمد! تخسر عند 5 زباين زعلانين"), 700);
   showScreen("screen-game");
   renderCounter(); renderTray(); renderCustomers(); renderTopbar();
   lastTick = performance.now();
@@ -559,7 +664,41 @@ function gameLoop(now) {
     spawnCustomer();
     let base = Math.max(6500 - state.day * 300, 3200);
     if (day.rushLeft > 0) base *= 0.45;
+    if (day.event && day.event.spawnMult) base *= day.event.spawnMult;
     day.spawnIn = rint(base * 0.8, base * 1.3);
+  }
+
+  // القهوة العربية: عدّاد التبريد
+  if (day.coffeeCd > 0) day.coffeeCd -= dt;
+  const cbtn = $("btn-coffee");
+  cbtn.disabled = day.coffeeCd > 0;
+  cbtn.textContent = day.coffeeCd > 0 ? Math.ceil(day.coffeeCd / 1000) : "☕";
+
+  // المساعد الآلي يطبخ ما يحتاجه الزباين
+  if (state.upgrades.robot) {
+    day.robotIn -= dt;
+    if (day.robotIn <= 0) {
+      day.robotIn = 12000;
+      const needed = [];
+      for (const c of day.customers) for (const o of c.order) if (!o.done) needed.push(o.dish);
+      const avail = needed.filter(d =>
+        !day.tray.some(t => t.dish.id === d.id) && !day.cooking.some(k => k.dish.id === d.id));
+      if (avail.length && traySize() - day.tray.length - day.cooking.length > 0) {
+        day.cooking.push({ dish: avail[0], elapsed: 0, total: cookTime(avail[0]) });
+        if (S3D.active && S3D.robotPing) S3D.robotPing();
+        toast("🤖 المساعد الآلي بدأ يطبخ " + avail[0].name);
+      }
+    }
+  }
+
+  // وضع النار + أزيز الطبخ + إيقاع الذروة + ساعة الحائط
+  document.body.classList.toggle("fire", day.combo >= 5);
+  if (window.GameAudio) {
+    GameAudio.sizzle(day.cooking.length > 0);
+    GameAudio.setRush(day.rushLeft > 0);
+  }
+  if (S3D.active && S3D.setClock) {
+    S3D.setClock(day.endless ? (now / 90000) % 1 : 1 - day.timeLeft / day.totalTime);
   }
 
   // محادثة ذكية
@@ -584,26 +723,40 @@ function gameLoop(now) {
 function endDay() {
   day.running = false;
   cancelAnimationFrame(loopTimer);
-  document.body.classList.remove("rush");
+  document.body.classList.remove("rush", "fire");
+  if (window.GameAudio) GameAudio.stop();
   closeChat();
   // مكافأة الهدف اليومي
-  day.goalMet = day.earned >= day.goal;
+  day.goalMet = !day.endless && day.earned >= day.goal;
   if (day.goalMet) {
     day.goalBonus = Math.round(day.earned * 0.2);
     state.money += day.goalBonus;
     state.gold += 3;
     day.goldEarned += 3;
   }
+  // المهمة الجانبية
+  if (day.quest && day.quest.check(day)) {
+    day.questDone = true;
+    if (day.quest.reward.gold) { state.gold += day.quest.reward.gold; day.goldEarned += day.quest.reward.gold; }
+    if (day.quest.reward.money) state.money += day.quest.reward.money;
+  }
   state.totals.served += day.served;
   state.totals.angry += day.angry;
   state.totals.earned += day.earned;
-  state.history.push({
-    day: state.day, served: day.served, angry: day.angry, earned: day.earned,
-    avgPatience: day.served ? day.patienceSum / day.served : 0,
-  });
-  if (state.history.length > 14) state.history.shift();
+  state.records.bestDayEarn = Math.max(state.records.bestDayEarn, day.earned);
+  state.records.maxCombo = Math.max(state.records.maxCombo, day.maxCombo);
+  if (day.endless) {
+    state.records.endlessBest = Math.max(state.records.endlessBest, day.earned);
+  } else {
+    state.history.push({
+      day: state.day, served: day.served, angry: day.angry, earned: day.earned,
+      avgPatience: day.served ? day.patienceSum / day.served : 0,
+    });
+    if (state.history.length > 14) state.history.shift();
+  }
+  checkAchievements();
   showReport();
-  state.day++;
+  if (!day.endless) state.day++;
   save();
 }
 
@@ -618,8 +771,10 @@ function showReport() {
   }
   const avgP = day.served ? Math.round((day.patienceSum / day.served) * 100) : 0;
   $("report-stats").innerHTML = `
-    📅 اليوم <b>${state.day}</b> انتهى!<br>
-    🎯 الهدف اليومي: <b>${day.earned}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +3 🪙</b>` : "❌ ما تحقق"}<br>
+    ${day.endless ? `♾️ <b>التحدي اللانهائي انتهى!</b> نتيجتك: <b>${day.earned}</b> 💵 ${day.earned >= state.records.endlessBest ? "🏆 رقم قياسي جديد!" : `(رقمك القياسي: ${state.records.endlessBest})`}` : `📅 اليوم <b>${state.day}</b> انتهى!`}<br>
+    ${day.event ? `${day.event.name} — ${day.event.desc}<br>` : ""}
+    ${day.quest ? `📌 المهمة: ${day.quest.name} ${day.questDone ? `✅ <b>+${day.quest.reward.gold ? day.quest.reward.gold + " 🪙" : day.quest.reward.money + " 💵"}</b>` : "❌"}<br>` : ""}
+    ${day.endless ? "" : `🎯 الهدف اليومي: <b>${day.earned}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +3 🪙</b>` : "❌ ما تحقق"}<br>`}
     ✅ زباين راضين: <b>${day.served}</b> &nbsp;|&nbsp; 💢 زباين زعلانين: <b>${day.angry}</b><br>
     💵 أرباح اليوم: <b>${day.earned}</b> &nbsp;|&nbsp; 🪙 ذهب: <b>+${day.goldEarned}</b><br>
     🔥 أعلى كومبو: <b>x${day.maxCombo}</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
@@ -627,7 +782,40 @@ function showReport() {
     ${best ? `🥇 الأكثر مبيعاً: <b>${best.emoji} ${best.shortName || best.name}</b> (${bestN})` : "🥇 ما انباع شي اليوم 😅"}
   `;
   $("ai-analysis").innerHTML = aiAnalyze().map(t => `<div class="tip">${t}</div>`).join("");
+  // عجلة الحظ تظهر عند تحقيق الهدف
+  $("btn-wheel").classList.toggle("hidden", !day.goalMet);
+  $("btn-wheel").disabled = false;
+  $("wheel-result").classList.add("hidden");
   showScreen("screen-report");
+}
+
+/* ---------- عجلة الحظ ---------- */
+function spinWheel() {
+  const prizes = [
+    { t: "💵 +80 فلوس", f: () => state.money += 80 },
+    { t: "🪙 +5 ذهب", f: () => state.gold += 5 },
+    { t: "📈 +120 خبرة", f: () => state.xp += 120 },
+    { t: "🤖 طبق AI مجاني", f: () => state.freeDish = (state.freeDish || 0) + 1 },
+  ];
+  const btn = $("btn-wheel"), el = $("wheel-result");
+  btn.disabled = true;
+  el.classList.remove("hidden");
+  let i = 0;
+  const spins = 9 + rint(0, 3);
+  const iv = setInterval(() => {
+    el.textContent = prizes[i % prizes.length].t;
+    sfx.cook();
+    i++;
+    if (i >= spins) {
+      clearInterval(iv);
+      const p = prizes[(i - 1) % prizes.length];
+      p.f();
+      el.textContent = "🎉 ربحت: " + p.t;
+      sfx.levelup();
+      btn.classList.add("hidden");
+      save();
+    }
+  }, 170);
 }
 
 /* نظام تحليل الأداء — قواعد ذكية محلية */
@@ -688,7 +876,7 @@ function renderShop() {
   const list = $("upgrades-list");
   list.innerHTML = "";
   for (const u of UPGRADES) {
-    const lvl = state.upgrades[u.id];
+    const lvl = state.upgrades[u.id] || 0;
     const row = document.createElement("div");
     row.className = "upgrade-row";
     const maxed = lvl >= u.max;
@@ -704,9 +892,38 @@ function renderShop() {
     btn.onclick = () => {
       if (state.money < cost) return;
       state.money -= cost;
-      state.upgrades[u.id]++;
+      state.upgrades[u.id] = (state.upgrades[u.id] || 0) + 1;
       sfx.levelup();
       toast(`✅ تم شراء: ${u.name}`);
+      save();
+      renderShop();
+    };
+    row.appendChild(btn);
+    list.appendChild(row);
+  }
+
+  // ثيمات الديكور
+  for (const t of THEME_DEFS) {
+    const owned = state.themesOwned.includes(t.id);
+    const active = state.theme === t.id;
+    const row = document.createElement("div");
+    row.className = "upgrade-row";
+    row.innerHTML = `<span class="u-emoji">🎨</span>
+      <span class="u-info"><span class="u-name">${t.name}</span><br><span class="u-desc">ثيم ديكور ثلاثي الأبعاد للمطعم</span></span>`;
+    const btn = document.createElement("button");
+    btn.className = "u-buy";
+    btn.textContent = active ? "✓ مفعّل" : owned ? "فعّل" : `💵 ${t.cost}`;
+    btn.disabled = active || (!owned && state.money < t.cost);
+    btn.onclick = () => {
+      if (!owned) {
+        if (state.money < t.cost) return;
+        state.money -= t.cost;
+        state.themesOwned.push(t.id);
+      }
+      state.theme = t.id;
+      if (S3D.active && S3D.setTheme) S3D.setTheme(t.id);
+      toast(`🎨 الثيم المفعّل: ${t.name}`);
+      sfx.levelup();
       save();
       renderShop();
     };
@@ -728,15 +945,23 @@ function renderShop() {
     ml.appendChild(row);
   }
 
-  $("btn-ai-dish").disabled = state.gold < 15;
+  $("btn-ai-dish").disabled = state.gold < 15 && !(state.freeDish > 0);
+  $("btn-ai-dish").textContent = state.freeDish > 0 ? "🎡 مجاني — ابتكر طبق جديد" : "🪙 15 — ابتكر طبق جديد";
   $("ai-dish-result").classList.add("hidden");
   pendingDish = null;
 }
 
 function aiDishFlow(regenerate) {
   if (!regenerate) {
-    if (state.gold < 15) { toast("🪙 تحتاج 15 ذهب — اكسبها من التسليم المثالي!"); return; }
-    state.gold -= 15;
+    if (state.freeDish > 0) {
+      state.freeDish--;
+      toast("🎡 استخدمت طبقك المجاني من عجلة الحظ!");
+    } else if (state.gold < 15) {
+      toast("🪙 تحتاج 15 ذهب — اكسبها من التسليم المثالي!");
+      return;
+    } else {
+      state.gold -= 15;
+    }
   }
   pendingDish = aiGenerateDish();
   $("ai-dish-card").innerHTML = `
@@ -770,6 +995,18 @@ function renderTopbar() {
   const combo = $("stat-combo");
   if (day && day.combo >= 2) { combo.textContent = `🔥x${day.combo}`; combo.classList.remove("hidden"); }
   else combo.classList.add("hidden");
+  if (day && day.endless) $("stat-time").textContent = `♾️ ${day.angry}/5 💢`;
+  // شريط الخبرة والمهمة
+  const lvl = playerLevel();
+  $("lvl-chip").textContent = `⬆️${lvl}`;
+  const cur = state.xp - xpForLevel(lvl);
+  const span = xpForLevel(lvl + 1) - xpForLevel(lvl);
+  $("xp-fill").style.width = Math.min(100, (cur / span) * 100) + "%";
+  if (day && day.quest) {
+    const done = day.quest.check(day);
+    $("quest-chip").textContent = `📌 ${day.quest.name}${done ? " ✅" : ""}`;
+    $("quest-chip").classList.toggle("done", done);
+  }
 }
 function flashStat(id) {
   const el = $(id);
@@ -844,6 +1081,13 @@ function updatePatienceBars() {
       fill.style.width = (r * 100) + "%";
       fill.style.background = r > 0.5 ? "var(--green)" : r > 0.25 ? "var(--accent)" : "var(--red)";
     }
+    // جرس تحذير: الزبون على وشك الانفجار
+    if (r < 0.25 && !c.warned) {
+      c.warned = true;
+      beep(1318, 0.1, "square", 0.12);
+      setTimeout(() => beep(988, 0.12, "square", 0.12), 130);
+    }
+    c.el.classList.toggle("urgent", r < 0.25);
     // الوضع ثلاثي الأبعاد: إيموجي مزاج صغير بالفقاعة (المجسم نفسه يهتز ويحمرّ)
     const moodOv = c.el.querySelector(".ov-mood");
     if (moodOv) {
@@ -959,15 +1203,49 @@ function floatScore(el, text, bad) {
    شاشة البداية والإعدادات
    ============================================================ */
 function renderMenuScreen() {
+  $("player-title").textContent = `⬆️${playerLevel()} — ${playerTitle()}`;
+  $("btn-endless").classList.toggle("hidden", state.day < 8);
+  const achCount = Object.keys(state.ach).filter(k => state.ach[k]).length;
   $("menu-stats").innerHTML = `
     📅 اليوم: ${state.day} &nbsp; | &nbsp; ⭐ ${state.rating.toFixed(1)} &nbsp; | &nbsp; 💵 ${state.money} &nbsp; | &nbsp; 🪙 ${state.gold}<br>
-    ✅ إجمالي الزباين الراضين: ${state.totals.served} &nbsp; | &nbsp; 🤖 أطباق مبتكرة: ${state.aiDishes.length}
+    ✅ زباين راضين: ${state.totals.served} &nbsp; | &nbsp; 🤖 أطباق مبتكرة: ${state.aiDishes.length} &nbsp; | &nbsp; 🏅 ${achCount}/${ACHIEVEMENTS.length}
+    ${state.day < 8 ? "<br>♾️ التحدي اللانهائي يفتح بعد اليوم 7" : ""}
   `;
+}
+
+function renderAchievements() {
+  const list = $("ach-list");
+  list.innerHTML = "";
+  for (const a of ACHIEVEMENTS) {
+    const row = document.createElement("div");
+    row.className = "ach-row" + (state.ach[a.id] ? " unlocked" : "");
+    row.innerHTML = `<span class="a-emoji">${state.ach[a.id] ? a.emoji : "🔒"}</span>
+      <span><span class="a-name">${a.name}</span><br><span class="a-desc">${a.desc}</span></span>`;
+    list.appendChild(row);
+  }
+  $("records-box").innerHTML = `
+    💵 أفضل يوم أرباح: <b>${state.records.bestDayEarn}</b><br>
+    🔥 أعلى كومبو وصلته: <b>x${state.records.maxCombo}</b><br>
+    ♾️ رقم التحدي اللانهائي: <b>${state.records.endlessBest}</b><br>
+    📈 المستوى: <b>${playerLevel()}</b> — "${playerTitle()}"<br>
+    ✅ إجمالي الزباين الراضين: <b>${state.totals.served}</b> &nbsp;|&nbsp; 💰 إجمالي الأرباح: <b>${state.totals.earned}</b>`;
 }
 
 function bindEvents() {
   $("btn-start").onclick = () => { sfx.cook(); startDay(); };
+  $("btn-endless").onclick = () => { sfx.levelup(); startDay(true); };
   $("btn-shop-menu").onclick = () => { renderShop(); showScreen("screen-shop"); };
+  $("btn-achievements").onclick = () => { renderAchievements(); showScreen("screen-achievements"); };
+  $("btn-ach-back").onclick = () => { renderMenuScreen(); showScreen("screen-menu"); };
+  $("btn-wheel").onclick = spinWheel;
+  $("btn-coffee").onclick = () => {
+    if (!day.running || day.coffeeCd > 0 || !day.customers.length) return;
+    const c = day.customers.reduce((a, b) => (a.patience / a.maxPatience < b.patience / b.maxPatience ? a : b));
+    c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * 0.35);
+    day.coffeeCd = 25000;
+    toast(`☕ قدمت قهوة عربية لـ${c.name} — انبسط وهدأ!`);
+    sfx.serve();
+  };
   $("btn-howto").onclick = () => showScreen("screen-howto");
   $("btn-howto-back").onclick = () => { renderMenuScreen(); showScreen("screen-menu"); };
 
@@ -1007,7 +1285,16 @@ function bindEvents() {
   $("btn-close-settings").onclick = () => $("settings-modal").classList.add("hidden");
   $("btn-sound").onclick = () => {
     state.sound = !state.sound;
-    $("btn-sound").textContent = state.sound ? "🔊 الصوت: يعمل" : "🔇 الصوت: مغلق";
+    $("btn-sound").textContent = state.sound ? "🔊 المؤثرات: تعمل" : "🔇 المؤثرات: مغلقة";
+    save();
+  };
+  $("btn-music").onclick = () => {
+    state.music = !state.music;
+    $("btn-music").textContent = state.music ? "🎵 الموسيقى: تعمل" : "🔕 الموسيقى: مغلقة";
+    if (window.GameAudio) {
+      GameAudio.setEnabled(state.music);
+      if (state.music && day && day.running) GameAudio.start();
+    }
     save();
   };
   $("btn-quit-day").onclick = () => {
@@ -1032,6 +1319,7 @@ bindEvents();
 // المشهد ثلاثي الأبعاد (WebGL) — يرجع للوضع 2D تلقائياً إذا فشل
 S3D.init($("customers-area"), $("overlay3d"));
 if (S3D.active) S3D.onCustomerClick = (c) => serveTrayItem(c);
-$("btn-sound").textContent = state.sound ? "🔊 الصوت: يعمل" : "🔇 الصوت: مغلق";
+$("btn-sound").textContent = state.sound ? "🔊 المؤثرات: تعمل" : "🔇 المؤثرات: مغلقة";
+$("btn-music").textContent = state.music ? "🎵 الموسيقى: تعمل" : "🔕 الموسيقى: مغلقة";
 renderMenuScreen();
 showScreen("screen-menu");
