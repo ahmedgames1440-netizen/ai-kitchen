@@ -6,6 +6,8 @@
 
 /* ---------- أدوات عامة ---------- */
 const $ = (id) => document.getElementById(id);
+// احتياط: إذا ما تحمّل المشهد ثلاثي الأبعاد (ولا مكتبة Three) نلعب بالوضع 2D
+if (typeof window.S3D === "undefined") window.S3D = { active: false, init: () => false };
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -395,10 +397,8 @@ function customerAngryLeave(c) {
 }
 
 function removeCustomer(c, happy) {
-  if (c.el) {
-    c.el.classList.add("leaving");
-    setTimeout(() => renderCustomers(), 450);
-  }
+  if (S3D.active) S3D.leave(c, happy);
+  else if (c.el) c.el.classList.add("leaving");
   day.customers = day.customers.filter(x => x !== c);
   setTimeout(() => renderCustomers(), 460);
 }
@@ -495,6 +495,7 @@ function startDay() {
   day.rushAt = day.timeLeft * (0.4 + Math.random() * 0.25); // نقطة انطلاق ساعة الذروة
   day.running = true;
   document.body.classList.remove("rush");
+  if (S3D.active && S3D.clear) S3D.clear();
   showScreen("screen-game");
   renderCounter(); renderTray(); renderCustomers(); renderTopbar();
   lastTick = performance.now();
@@ -767,6 +768,7 @@ function flashStat(id) {
 }
 
 function renderCustomers() {
+  if (S3D.active) { renderCustomers3D(); return; }
   const area = $("customers-area");
   area.innerHTML = "";
   for (const c of day.customers) {
@@ -792,6 +794,26 @@ function renderCustomers() {
   }
 }
 
+/* الوضع ثلاثي الأبعاد: المجسم في المشهد + فقاعة HTML فوق رأسه */
+function renderCustomers3D() {
+  S3D.sync(day.customers);
+  const selected = day.selectedTray >= 0 && day.tray[day.selectedTray];
+  for (const c of day.customers) {
+    const ov = S3D.getOverlay(c);
+    if (!ov) continue;
+    ov.classList.toggle("servable",
+      !!(selected && c.order.some(o => !o.done && o.dish.id === day.tray[day.selectedTray].dish.id)));
+    ov.classList.toggle("vip", !!c.isVip);
+    ov.innerHTML = `
+      <div class="ov-name">${c.chatPending ? "💬 " : ""}${c.name} <span class="ov-type">${c.type.label}</span> <span class="ov-mood"></span></div>
+      <div class="order-bubble">${c.order.map(o => `<span class="oitem ${o.done ? "done" : ""}">${o.dish.emoji}</span>`).join("")}</div>
+      <div class="patience-bar"><div class="patience-fill" style="width:${(c.patience / c.maxPatience) * 100}%"></div></div>
+    `;
+    ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
+    c.el = ov;
+  }
+}
+
 function moodFace(c) {
   const r = c.patience / c.maxPatience;
   if (r > 0.6) return c.face;
@@ -802,21 +824,25 @@ function moodFace(c) {
 function updatePatienceBars() {
   for (const c of day.customers) {
     if (!c.el) continue;
+    const r = clamp(c.patience / c.maxPatience, 0, 1);
     const fill = c.el.querySelector(".patience-fill");
-    const face = c.el.querySelector(".face");
     if (fill) {
-      const r = clamp(c.patience / c.maxPatience, 0, 1);
       fill.style.width = (r * 100) + "%";
       fill.style.background = r > 0.5 ? "var(--green)" : r > 0.25 ? "var(--accent)" : "var(--red)";
     }
+    // الوضع ثلاثي الأبعاد: إيموجي مزاج صغير بالفقاعة (المجسم نفسه يهتز ويحمرّ)
+    const moodOv = c.el.querySelector(".ov-mood");
+    if (moodOv) {
+      moodOv.textContent = r > 0.6 ? "" : (r > 0.3 ? "😕" : "😡");
+      continue;
+    }
+    // الوضع 2D الاحتياطي
     if (c.isVip) {
       const badge = c.el.querySelector(".mood-badge");
-      if (badge) {
-        const r2 = c.patience / c.maxPatience;
-        badge.textContent = r2 > 0.6 ? "" : (r2 > 0.3 ? "😕" : "😡");
-      }
-    } else if (face) {
-      face.textContent = moodFace(c);
+      if (badge) badge.textContent = r > 0.6 ? "" : (r > 0.3 ? "😕" : "😡");
+    } else {
+      const face = c.el.querySelector(".face");
+      if (face) face.textContent = moodFace(c);
     }
   }
 }
@@ -976,6 +1002,9 @@ function bindEvents() {
 load();
 day = freshDay(); // حالة فارغة حتى لا تنكسر الواجهة قبل بدء اليوم
 bindEvents();
+// المشهد ثلاثي الأبعاد (WebGL) — يرجع للوضع 2D تلقائياً إذا فشل
+S3D.init($("customers-area"), $("overlay3d"));
+if (S3D.active) S3D.onCustomerClick = (c) => serveTrayItem(c);
 $("btn-sound").textContent = state.sound ? "🔊 الصوت: يعمل" : "🔇 الصوت: مغلق";
 renderMenuScreen();
 showScreen("screen-menu");
