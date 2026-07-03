@@ -828,7 +828,7 @@ window.S3D = (() => {
     if (!e) return;
     for (let i = 0; i < Math.min(n, 6); i++) {
       const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 12),
-        new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0x8a6b1e, roughness: 0.25, metalness: 0.9 }));
+        new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0xb8860b, emissiveIntensity: 0.7, roughness: 0.35, metalness: 0.3 }));
       coin.position.set(e.group.position.x + (Math.random() - 0.5) * 0.6, 1.8, 0.5);
       coin.rotation.x = Math.PI / 2;
       scene.add(coin);
@@ -940,6 +940,8 @@ window.S3D = (() => {
     const e = chars.get(c.uid);
     if (!e) return;
     e.leaving = happy ? 1 : -1;
+    e.leaveT = 0;
+    e.leaveScale = e.group.scale.x || 1;
     if (!happy) e.headMat.emissive = new THREE.Color(0x661111);
     if (e.mouths) {
       e.mouths.happy.visible = happy;
@@ -1009,10 +1011,15 @@ window.S3D = (() => {
       e.t += dt;
       const g = e.group;
       if (e.leaving) {
-        // خروج: سعيد يمين / زعلان يسار مع دوران
-        g.position.x += (e.leaving > 0 ? 7 : -7) * dt;
-        g.rotation.z += (e.leaving > 0 ? -1.2 : 2.2) * dt;
-        g.scale.multiplyScalar(Math.max(0, 1 - 1.4 * dt));
+        // خروج: يمشي واقفاً نحو باب المطعم (سعيد يمين بثبات / زعلان يسار بخطوات سريعة)
+        e.leaveT += dt;
+        const speed = e.leaving > 0 ? 6.2 : 8.5;
+        g.position.x += (e.leaving > 0 ? speed : -speed) * dt;
+        g.position.y = Math.max(0, Math.sin(e.leaveT * 15) * 0.1); // خطوات مشي طبيعية
+        g.rotation.z = Math.sin(e.leaveT * 15) * 0.05; // تمايل بسيط فقط، بدون انقلاب
+        g.rotation.y = e.leaving > 0 ? -0.3 : 0.3; // يستدير نحو اتجاه خروجه
+        const shrink = Math.max(0.2, 1 - e.leaveT * 0.7); // يصغر تدريجياً وهو يبتعد (منظور الخروج)
+        g.scale.setScalar(e.leaveScale * shrink);
       } else {
         // انزلاق نحو مكان الوقوف
         g.position.x += (e.slotX - g.position.x) * Math.min(1, dt * 4);
