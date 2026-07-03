@@ -1,0 +1,351 @@
+/* ===== مطعم المستقبل – AI Kitchen ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg1: #1a1035;
+  --bg2: #2d1b4e;
+  --card: #372a5c;
+  --card2: #453371;
+  --accent: #ff9f43;
+  --accent2: #ffd166;
+  --green: #2ecc71;
+  --red: #ff6b6b;
+  --text: #fff4e6;
+  --muted: #b8a9d9;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: linear-gradient(160deg, var(--bg1), var(--bg2));
+  color: var(--text);
+  user-select: none;
+}
+
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.screen.active { display: flex; }
+.hidden { display: none !important; }
+
+/* ===== شاشة البداية ===== */
+#screen-menu { align-items: center; justify-content: center; }
+.menu-box { text-align: center; padding: 24px; max-width: 420px; width: 100%; }
+.logo-emoji { font-size: 64px; margin-bottom: 8px; animation: bob 2.5s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+h1 { font-size: 34px; color: var(--accent2); text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.subtitle { color: var(--muted); margin: 6px 0 24px; font-size: 15px; }
+.menu-stats { margin-top: 20px; color: var(--muted); font-size: 14px; line-height: 1.9; }
+
+/* ===== أزرار ===== */
+.big-btn {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 14px 18px;
+  font-size: 18px;
+  font-weight: bold;
+  font-family: inherit;
+  color: #3a2200;
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 0 #c96f1e;
+  cursor: pointer;
+  transition: transform .08s;
+}
+.big-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #c96f1e; }
+.big-btn.secondary { background: var(--card2); color: var(--text); box-shadow: 0 4px 0 #241a40; }
+.big-btn.danger { background: linear-gradient(180deg, #ff8a80, var(--red)); box-shadow: 0 4px 0 #a33; color: #400; }
+.big-btn.gold { background: linear-gradient(180deg, #fff3b0, #ffd166); box-shadow: 0 4px 0 #b8912e; }
+.big-btn:disabled { opacity: .45; cursor: default; }
+.icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; }
+
+/* ===== الشريط العلوي ===== */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.35);
+  font-weight: bold;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+.stat { background: rgba(255,255,255,.08); padding: 4px 8px; border-radius: 10px; white-space: nowrap; }
+.stat.flash { animation: statflash .5s; }
+@keyframes statflash { 0% { background: var(--green); } 100% { background: rgba(255,255,255,.08); } }
+
+/* ===== منطقة الزبائن ===== */
+#customers-area {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  min-height: 220px;
+}
+.customer {
+  flex: 1;
+  max-width: 130px;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  animation: walkin .4s ease-out;
+  position: relative;
+}
+@keyframes walkin { from { transform: translateY(-30px); opacity: 0; } to { transform: none; opacity: 1; } }
+.customer.leaving { animation: walkout .5s ease-in forwards; }
+@keyframes walkout { to { transform: translateY(40px) scale(.7); opacity: 0; } }
+.customer.servable { border-color: var(--green); box-shadow: 0 0 12px rgba(46,204,113,.5); }
+.customer .face { font-size: 40px; line-height: 1.1; }
+.customer .cname { font-size: 12px; color: var(--muted); }
+.customer .ctype { font-size: 11px; background: rgba(0,0,0,.3); border-radius: 8px; padding: 1px 7px; }
+.customer .order-bubble {
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  padding: 4px 6px;
+  font-size: 20px;
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 32px;
+}
+.order-bubble .oitem.done { opacity: .25; filter: grayscale(1); }
+.patience-bar { width: 90%; height: 8px; background: rgba(0,0,0,.4); border-radius: 6px; overflow: hidden; }
+.patience-fill { height: 100%; background: var(--green); border-radius: 6px; transition: width .3s linear; }
+.customer .chat-hint {
+  position: absolute; top: -6px; left: -6px;
+  font-size: 18px;
+  animation: bob 1s infinite;
+}
+
+/* ===== الصينية ===== */
+#tray-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,.25);
+}
+.tray-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+#tray-slots { display: flex; gap: 6px; flex: 1; }
+.tray-slot {
+  width: 52px; height: 52px;
+  background: var(--card);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  border: 3px dashed rgba(255,255,255,.15);
+  cursor: pointer;
+}
+.tray-slot.filled { border-style: solid; border-color: var(--accent); background: var(--card2); }
+.tray-slot.selected { border-color: var(--green); box-shadow: 0 0 10px rgba(46,204,113,.6); transform: scale(1.08); }
+
+/* ===== الكاونتر ===== */
+#counter-area {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #4e342e, #3e2723);
+  overflow-x: auto;
+}
+.station {
+  flex: 1;
+  min-width: 76px;
+  background: var(--card);
+  border: none;
+  border-radius: 14px;
+  padding: 8px 4px;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.station:active { transform: scale(.96); }
+.station .s-emoji { font-size: 32px; display: block; }
+.station .s-name { font-size: 12px; font-weight: bold; display: block; margin-top: 2px; }
+.station .s-price { font-size: 11px; color: var(--muted); display: block; }
+.station .cook-fill {
+  position: absolute;
+  bottom: 0; right: 0;
+  height: 5px;
+  background: var(--accent);
+  width: 0%;
+}
+.station.cooking { outline: 2px solid var(--accent); }
+.station.disabled { opacity: .4; }
+
+/* ===== لوحة المحادثة ===== */
+#chat-panel {
+  position: fixed;
+  bottom: 130px;
+  right: 10px;
+  left: 10px;
+  background: #fff;
+  color: #222;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  z-index: 50;
+  animation: walkin .3s;
+}
+#chat-msg { font-size: 15px; font-weight: bold; margin-bottom: 10px; }
+#chat-replies { display: flex; flex-direction: column; gap: 6px; }
+.chat-reply {
+  background: #f0e6ff;
+  border: 2px solid #c9b3f5;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: right;
+}
+.chat-reply:active { background: #e0d0ff; }
+
+/* ===== توست ===== */
+#toast {
+  position: fixed;
+  top: 60px;
+  right: 50%;
+  transform: translateX(50%);
+  background: rgba(0,0,0,.85);
+  color: var(--accent2);
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-weight: bold;
+  font-size: 15px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s;
+  z-index: 100;
+  text-align: center;
+  max-width: 90%;
+}
+#toast.show { opacity: 1; }
+
+/* ===== لوحات عامة (تقرير/متجر) ===== */
+.panel {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+.panel h2 { text-align: center; color: var(--accent2); margin-bottom: 14px; }
+#report-stats { background: var(--card); border-radius: 14px; padding: 12px 14px; line-height: 2.1; font-size: 15px; }
+#report-stats b { color: var(--accent2); }
+.ai-box {
+  background: linear-gradient(135deg, #2a1a5e, #1f2a5e);
+  border: 2px solid #6c5ce7;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 14px 0;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.ai-title { font-weight: bold; color: #a29bfe; margin-bottom: 6px; }
+#ai-analysis .tip { margin: 4px 0; }
+
+/* ===== المتجر ===== */
+.shop-wallet { text-align: center; font-weight: bold; font-size: 17px; margin-bottom: 10px; display: flex; justify-content: center; gap: 16px; }
+.shop-section-title { font-weight: bold; color: var(--accent2); margin: 16px 0 6px; }
+.upgrade-row, .menu-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin: 6px 0;
+}
+.upgrade-row .u-emoji, .menu-row .m-emoji { font-size: 28px; }
+.upgrade-row .u-info, .menu-row .m-info { flex: 1; }
+.u-name, .m-name { font-weight: bold; font-size: 14px; }
+.u-desc, .m-desc { font-size: 12px; color: var(--muted); }
+.u-buy {
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #3a2200;
+}
+.u-buy:disabled { opacity: .4; }
+#ai-dish-card {
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+#ai-dish-card .d-name { font-size: 18px; font-weight: bold; }
+
+/* ===== طريقة اللعب ===== */
+.howto-text { background: var(--card); border-radius: 14px; padding: 14px; line-height: 2; font-size: 14px; }
+.howto-text p { margin: 6px 0; }
+
+/* ===== نافذة منبثقة ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--bg2);
+  border-radius: 18px;
+  padding: 20px;
+  width: 100%;
+  max-width: 340px;
+}
+.modal-box h3 { text-align: center; margin-bottom: 12px; color: var(--accent2); }
+
+/* ===== نقاط متطايرة ===== */
+.float-score {
+  position: fixed;
+  font-weight: bold;
+  font-size: 18px;
+  color: var(--green);
+  pointer-events: none;
+  z-index: 90;
+  animation: floatup 1s ease-out forwards;
+  text-shadow: 0 2px 4px rgba(0,0,0,.6);
+}
+.float-score.bad { color: var(--red); }
+@keyframes floatup { to { transform: translateY(-50px); opacity: 0; } }
+
+@media (max-width: 400px) {
+  .customer .face { font-size: 32px; }
+  .customer .order-bubble { font-size: 17px; }
+  .tray-slot { width: 46px; height: 46px; font-size: 26px; }
+}
