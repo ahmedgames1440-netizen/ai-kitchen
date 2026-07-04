@@ -30,7 +30,7 @@ function beep(freq, dur = 0.12, type = "sine", vol = 0.15) {
   } catch (e) { /* لا صوت */ }
 }
 const sfx = {
-  serve: () => { beep(660, .1); setTimeout(() => beep(880, .15), 90); },
+  serve: () => { beep(660, .1); setTimeout(() => beep(880, .12), 90); setTimeout(() => beep(1046, .15), 170); },
   coin:  () => { beep(1200, .08, "square", .08); },
   cook:  () => beep(440, .08, "triangle"),
   ready: () => beep(750, .12, "triangle"),
@@ -38,6 +38,10 @@ const sfx = {
   wrong: () => beep(150, .2, "square", .1),
   chat:  () => beep(980, .1, "sine", .1),
   levelup: () => { beep(523, .1); setTimeout(() => beep(659, .1), 100); setTimeout(() => beep(784, .2), 200); },
+  // دخول مفتش وزارة التجارة: نغمة رسمية جادة (نازلة)
+  inspectorEntry: () => { beep(320, .18, "square", .12); setTimeout(() => beep(240, .22, "square", .12), 160); },
+  // دخول موظف البلدية: صافرة تنبيه مختلفة (صاعدة)
+  muniEntry: () => { beep(500, .1, "sine", .12); setTimeout(() => beep(760, .16, "sine", .12), 110); },
 };
 
 /* ---------- الأطباق الأساسية ---------- */
@@ -198,17 +202,17 @@ function aiGenerateDish() {
 
 /* ---------- التطويرات: مستويات متصاعدة — البداية ~300 والسعر يقفز مع كل مستوى ---------- */
 const UPGRADES = [
-  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => Math.round(300 * Math.pow(1.5, l)) },
-  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى", max: 5, cost: l => Math.round(320 * Math.pow(1.6, l)) },
-  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => Math.round(340 * Math.pow(1.7, l)) },
-  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية لكل مستوى", max: 3, cost: l => Math.round(380 * Math.pow(1.8, l)) },
-  { id: "falafel", emoji: "🧆", name: "فتح صنف: فلافل", desc: "إضافة صنف جديد للمطعم استثمار مكلف (يبيع بـ6 💵)", max: 1, cost: () => 400 },
-  { id: "burger",  emoji: "🍔", name: "فتح صنف: برجر", desc: "الصنف الأغلى بالقائمة (يبيع بـ10 💵)", max: 1, cost: () => 700 },
-  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(600 * Math.pow(2, l)), req: { day: 6 } },
+  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => Math.round(550 * Math.pow(1.6, l)) },
+  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى", max: 5, cost: l => Math.round(600 * Math.pow(1.7, l)) },
+  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => Math.round(650 * Math.pow(1.8, l)) },
+  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية لكل مستوى", max: 3, cost: l => Math.round(700 * Math.pow(1.9, l)) },
+  { id: "falafel", emoji: "🧆", name: "فتح صنف: فلافل", desc: "إضافة صنف جديد للمطعم استثمار مكلف (يبيع بـ6 💵)", max: 1, cost: () => 800 },
+  { id: "burger",  emoji: "🍔", name: "فتح صنف: برجر", desc: "الصنف الأغلى بالقائمة (يبيع بـ10 💵)", max: 1, cost: () => 1300 },
+  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(1000 * Math.pow(2.1, l)), req: { day: 6 } },
   /* عناصر فاخرة — غالية ومقفلة بشروط صعبة */
-  { id: "soda", emoji: "🥤", name: "نافورة المشروبات الذاتية", desc: "المشروبات تجهز فورياً بدون انتظار!", max: 1, cost: () => 2200, req: { level: 5 } },
-  { id: "doubleOven", emoji: "♨️", name: "الفرن المزدوج الاحترافي", desc: "25% فرصة يطلع صنفان من كل طبخة — الثاني ببلاش!", max: 1, cost: () => 3500, req: { day: 10 } },
-  { id: "goldenSign", emoji: "🏅", name: "اللوحة الذهبية المرموقة", desc: "سمعة محصّنة: تقييمك لا ينزل أبداً تحت 3.0", max: 1, cost: () => 4200, req: { level: 8 } },
+  { id: "soda", emoji: "🥤", name: "نافورة المشروبات الذاتية", desc: "المشروبات تجهز فورياً بدون انتظار!", max: 1, cost: () => 3800, req: { level: 5 } },
+  { id: "doubleOven", emoji: "♨️", name: "الفرن المزدوج الاحترافي", desc: "25% فرصة يطلع صنفان من كل طبخة — الثاني ببلاش!", max: 1, cost: () => 6000, req: { day: 10 } },
+  { id: "goldenSign", emoji: "🏅", name: "اللوحة الذهبية المرموقة", desc: "سمعة محصّنة: تقييمك لا ينزل أبداً تحت 3.0", max: 1, cost: () => 7500, req: { level: 8 } },
 ];
 function reqMet(u) {
   if (!u.req) return true;
@@ -270,15 +274,15 @@ function checkAchievements() {
 
 /* ---------- المزايا الذهبية: مستويات بالذهب النادر ---------- */
 const PERKS = [
-  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", max: 2, cost: l => 15 + l * 15,
+  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", max: 2, cost: l => 100 + l * 90,
     desc: l => `الطازج ✨ يدوم ${(5 + (l + 1) * 3.5).toFixed(1)} ثانية (حالياً: ${(5 + l * 3.5).toFixed(1)})` },
-  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", max: 2, cost: l => 12 + l * 12,
+  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", max: 2, cost: l => 100 + l * 80,
     desc: l => `القهوة كل ${(25 - (l + 1) * 6.5).toFixed(1)} ثانية (حالياً: ${(25 - l * 6.5).toFixed(1)})` },
-  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", max: 2, cost: l => 15 + l * 15,
+  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", max: 2, cost: l => 120 + l * 100,
     desc: () => "الشخصيات المميزة تزورك أكثر ولمرات أكثر باليوم" },
-  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", max: 2, cost: l => 10 + l * 10,
+  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", max: 2, cost: l => 100 + l * 80,
     desc: l => `غرامات الوزارة −${(l + 1) * 30}% (حالياً: −${l * 30}%)` },
-  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", max: 3, cost: l => 15 + l * 15,
+  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", max: 3, cost: l => 100 + l * 90,
     desc: l => `+${(l + 1) * 10} ثانية لكل يوم (حالياً: +${l * 10})` },
 ];
 const perkLv = (id) => (state.perks && state.perks[id]) || 0;
@@ -287,8 +291,8 @@ const FRESH_MS = () => 5000 + perkLv("freshPlus") * 3500;
 /* ---------- ثيمات الديكور ---------- */
 const THEME_DEFS = [
   { id: "classic", name: "🏠 كلاسيكي دافئ", cost: 0 },
-  { id: "neon", name: "🌌 نيون ليلي", cost: 450 },
-  { id: "desert", name: "🏜️ صحراوي تراثي", cost: 450 },
+  { id: "neon", name: "🌌 نيون ليلي", cost: 800 },
+  { id: "desert", name: "🏜️ صحراوي تراثي", cost: 800 },
   { id: "royal", name: "👑 القصر الملكي", cost: 0, vipOnly: true },
 ];
 
@@ -421,7 +425,9 @@ function cookTime(dish) {
   return t;
 }
 function traySize() { return 4 + (state.upgrades.tray || 0); }
-function patienceMult() { return 1 + (state.upgrades.decor || 0) * 0.12; }
+// كل ما ارتفع المستوى تقل مساحة صبر الزبون شوي — اللعبة تصعب مع تقدمك
+function levelDifficulty() { return Math.min(playerLevel() - 1, 25) * 0.012; }
+function patienceMult() { return (1 + (state.upgrades.decor || 0) * 0.12) * (1 - levelDifficulty()); }
 function tipMult() {
   return (1 + (state.upgrades.fame || 0) * 0.10)
        * (1 + Math.min(playerLevel() - 1, 10) * 0.02)
@@ -539,7 +545,7 @@ function customerRemaining(c) { return c.order.filter(o => !o.done); }
 
 /* ---------- تفتيش وزارة التجارة ---------- */
 function runInspection() {
-  sfx.angry();
+  sfx.inspectorEntry();
   toast("🚨 زيارة مفاجئة من وزارة التجارة!");
   const insp = {
     uid: ++customerSeq,
@@ -585,7 +591,7 @@ function runInspection() {
 
 /* ---------- زيارة موظف البلدية: رخصة المطعم + النظافة + الأكل القديم ---------- */
 function runMunicipalityInspection() {
-  sfx.angry();
+  sfx.muniEntry();
   toast("🧹 زيارة مفاجئة من موظف البلدية!");
   const officer = {
     uid: ++customerSeq,
@@ -996,7 +1002,7 @@ function gameLoop(now) {
   // زبون جديد
   if (day.spawnIn <= 0 && day.timeLeft > 8000) {
     spawnCustomer();
-    let base = Math.max(6500 - state.day * 300, 3200);
+    let base = Math.max(6500 - state.day * 300 - (playerLevel() - 1) * 40, 2600);
     if (day.rushLeft > 0) base *= 0.45;
     if (day.event && day.event.spawnMult) base *= day.event.spawnMult;
     day.spawnIn = rint(base * 0.8, base * 1.3);
@@ -1433,7 +1439,7 @@ function renderShop() {
 }
 
 /* تكلفة ابتكار طبق جديد ترتفع مع كل طبق تملكه — الصنف الجديد استثمار حقيقي */
-function aiDishCost() { return { money: 500 + state.aiDishes.length * 250, gold: 10 }; }
+function aiDishCost() { return { money: 1000 + state.aiDishes.length * 300, gold: 50 + state.aiDishes.length * 10 }; }
 
 function aiDishFlow(regenerate) {
   if (!regenerate) {
@@ -1736,6 +1742,12 @@ function renderAchievements() {
     ✅ إجمالي الزباين الراضين: <b>${state.totals.served}</b> &nbsp;|&nbsp; 💰 إجمالي الأرباح: <b>${state.totals.earned}</b>`;
 }
 
+function updateMusicButtons() {
+  const t = state.music ? "🎵 الموسيقى: تعمل" : "🔕 الموسيقى: مغلقة";
+  $("btn-music").textContent = t;
+  $("btn-music-shop").textContent = t;
+}
+
 function bindEvents() {
   $("btn-start").onclick = () => { sfx.cook(); startDay(); };
   $("btn-endless").onclick = () => { sfx.levelup(); startDay(true); };
@@ -1810,13 +1822,14 @@ function bindEvents() {
   };
   $("btn-music").onclick = () => {
     state.music = !state.music;
-    $("btn-music").textContent = state.music ? "🎵 الموسيقى: تعمل" : "🔕 الموسيقى: مغلقة";
+    updateMusicButtons();
     if (window.GameAudio) {
       GameAudio.setEnabled(state.music);
       if (state.music && day && day.running) GameAudio.start();
     }
     save();
   };
+  $("btn-music-shop").onclick = () => $("btn-music").onclick();
   $("btn-quit-day").onclick = () => {
     $("settings-modal").classList.add("hidden");
     if (day && day.running) { day.customers = []; day.timeLeft = 0; }
@@ -1840,6 +1853,6 @@ bindEvents();
 S3D.init($("customers-area"), $("overlay3d"));
 if (S3D.active) S3D.onCustomerClick = (c) => serveTrayItem(c);
 $("btn-sound").textContent = state.sound ? "🔊 المؤثرات: تعمل" : "🔇 المؤثرات: مغلقة";
-$("btn-music").textContent = state.music ? "🎵 الموسيقى: تعمل" : "🔕 الموسيقى: مغلقة";
+updateMusicButtons();
 renderMenuScreen();
 showScreen("screen-menu");
