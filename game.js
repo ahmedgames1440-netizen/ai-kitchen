@@ -379,6 +379,8 @@ function freshState() {
     money: 60, gold: 2, day: 1, rating: 5.0, sound: true, music: true, // رأس مال بسيط للمواد الخام
     xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
     complaints: 0, violations: 0, perks: {},
+    license: { expiresDay: 6 },     // رخصة المطعم — تنتهي بعد اليوم 6 إذا ما جُدّدت
+    cleanliness: 100, hasCleaner: false, muniViolations: 0,
     iap: {}, adCdUntil: 0, adToggle: false,
     records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
     theme: "classic", themesOwned: ["classic"],
@@ -465,6 +467,7 @@ function freshDay() {
     fanniBoost: false,       // صيانة أبو شاكر الفني
     vipWaiverUsed: false,    // إعفاء مخالفة VIP اليومي
     adDoubled: false,        // مضاعفة أرباح اليوم بإعلان
+    muniAt: -1, muniDone: false, muniFined: 0, oldFoodServed: 0, // زيارة البلدية (نظافة + رخصة)
   };
 }
 
@@ -580,8 +583,57 @@ function runInspection() {
   }, 6000);
 }
 
+/* ---------- زيارة موظف البلدية: رخصة المطعم + النظافة + الأكل القديم ---------- */
+function runMunicipalityInspection() {
+  sfx.angry();
+  toast("🧹 زيارة مفاجئة من موظف البلدية!");
+  const officer = {
+    uid: ++customerSeq,
+    name: "موظف البلدية", face: "🧹", gender: "m",
+    vip: "muniOfficer", isMuniOfficer: true, isVip: false,
+    type: { key: "muniOfficer", label: "🧹 البلدية", drain: 0, tip: 0, ratingW: 0, patience: 1 },
+    order: [], patience: 1, maxPatience: 1,
+    el: null, chatPending: false,
+  };
+  day.customers.push(officer);
+  renderCustomers();
+  setTimeout(() => {
+    if (!day.running || !day.customers.includes(officer)) return;
+    const licenseExpired = state.day > state.license.expiresDay;
+    const dirty = state.cleanliness < 50;
+    const oldFood = day.oldFoodServed > 0;
+    let violation = licenseExpired || dirty || oldFood;
+    // 👑 عضوية VIP تسقط أول مخالفة كل يوم (نفس إعفاء وزارة التجارة)
+    if (violation && isVIP() && !day.vipWaiverUsed) {
+      day.vipWaiverUsed = true;
+      violation = false;
+      toast("👑 عضوية VIP الذهبية أسقطت مخالفة البلدية أيضاً!");
+    }
+    if (violation) {
+      let fine = 1000;
+      if (perkLv("insurance")) fine = Math.round(fine * (1 - perkLv("insurance") * 0.3));
+      fine = Math.min(fine, state.money);
+      state.money -= fine;
+      state.muniViolations++;
+      state.rating = clamp(state.rating - 0.3, 1, 5);
+      day.muniFined += fine;
+      const reason = licenseExpired ? "رخصة المطعم منتهية" : dirty ? "المطعم مو نظيف" : "قدّمت أكل قديم لزبون";
+      toast(`❌ مخالفة بلدية! السبب: ${reason} — غرامة ${fine} 💵`);
+      sfx.wrong();
+    } else {
+      state.rating = clamp(state.rating + 0.15, 1, 5);
+      toast("✅ فحص البلدية: كل شي سليم! رخصتك سارية ومطعمك نظيف");
+      sfx.levelup();
+    }
+    removeCustomer(officer, !violation);
+    renderTopbar();
+    save();
+  }, 6000);
+}
+
 function serveTrayItem(c) {
   if (c.isInspector) { toast("🏛️ هذا مفتش الوزارة، مو زبون! خله يفتش براحته 😅"); return; }
+  if (c.isMuniOfficer) { toast("🧹 هذا موظف البلدية، مو زبون! خله يفحص براحته 😅"); return; }
   let idx = day.selectedTray;
   // تسليم بلمسة واحدة: بدون تحديد، نختار تلقائياً أول صنف بالصينية يناسب طلبه
   if (idx < 0 || !day.tray[idx]) {
@@ -610,6 +662,10 @@ function serveTrayItem(c) {
     c.patience = Math.min(c.maxPatience, c.patience + c.maxPatience * boost);
     day.freshServes++;
     floatScore(c.el, "✨ طازج!");
+  } else if (item.readyAt && performance.now() - item.readyAt > 25000) {
+    // أكل قديم قاعد بالصينية أكثر من اللازم — خطر مخالفة بلدية
+    day.oldFoodServed++;
+    floatScore(c.el, "🤢 أكل قديم!", true);
   }
   if (S3D.active && S3D.flyDish) S3D.flyDish(item.dish, c.uid);
   if (customerRemaining(c).length === 0) completeOrder(c);
@@ -697,7 +753,7 @@ function completeOrder(c) {
 }
 
 function customerAngryLeave(c) {
-  if (c.isInspector) return;
+  if (c.isInspector || c.isMuniOfficer) return;
   day.angry++;
   day.combo = 0;
   // شكوى لوزارة التجارة (الناقد شبه مؤكد يشتكي)
@@ -779,7 +835,7 @@ function tickCooking(dt) {
    المحادثة الذكية
    ============================================================ */
 function maybeStartChat() {
-  const pool = day.customers.filter(c => !c.isInspector);
+  const pool = day.customers.filter(c => !c.isInspector && !c.isMuniOfficer);
   if (day.chat || pool.length === 0) return;
   const c = rand(pool);
   const events = c.vipChat || CHAT_EVENTS[c.type.key];
@@ -863,6 +919,17 @@ function startDay(endless = false) {
   if (!endless && (state.complaints > 0 ? Math.random() < 0.75 : Math.random() < 0.08)) {
     day.inspectionAt = day.timeLeft * (0.3 + Math.random() * 0.4);
   }
+  // نظافة المطعم: تتراكم الأوساخ يومياً إلا إذا عندك عامل نظافة دائم
+  if (state.hasCleaner) state.cleanliness = 100;
+  else state.cleanliness = Math.max(0, state.cleanliness - 18);
+  // زيارة البلدية: مؤكدة إذا انتهت رخصة المطعم، ونادرة عشوائياً (تفقّد روتيني) غير كذا
+  if (!endless) {
+    const licenseExpired = state.day > state.license.expiresDay;
+    if (licenseExpired || Math.random() < 0.12) {
+      day.muniAt = day.timeLeft * (0.25 + Math.random() * 0.5);
+    }
+    if (licenseExpired) setTimeout(() => toast("⚠️ رخصة مطعمك منتهية! جدّدها من المتجر قبل ما تجيك البلدية"), 900);
+  }
   if (endless) setTimeout(() => toast("♾️ التحدي اللانهائي: اصمد! تخسر عند 5 زباين زعلانين"), 700);
   showScreen("screen-game");
   renderCounter(); renderTray(); renderCustomers(); renderTopbar();
@@ -884,10 +951,15 @@ function gameLoop(now) {
     if (day.customers.length >= 4) day.inspectionAt -= 4000; // أجّل حتى يفضى مكان
     else { day.inspectionDone = true; runInspection(); }
   }
+  // زيارة موظف البلدية (نظافة + رخصة)
+  if (day.muniAt > 0 && !day.muniDone && day.timeLeft <= day.muniAt) {
+    if (day.customers.length >= 4) day.muniAt -= 4000;
+    else { day.muniDone = true; runMunicipalityInspection(); }
+  }
 
   // نزول صبر الزبائن
   for (const c of [...day.customers]) {
-    if (c.isInspector) continue;
+    if (c.isInspector || c.isMuniOfficer) continue;
     c.patience -= dt * c.type.drain;
     // العم سالم ينسى ويغيّر طلبه مرة واحدة
     if (c.vip === "salim" && !c.swapped && c.patience < c.maxPatience * 0.55) {
@@ -1044,7 +1116,10 @@ function showReport() {
     💵 الإيرادات: <b>${day.earned}</b> &nbsp;|&nbsp; 🧾 مصاريف المواد الخام: <b style="color:#ff9f43">-${day.expenses}</b><br>
     📊 صافي الربح: <b style="color:${day.earned - day.expenses >= 0 ? "#2ecc71" : "#ff6b6b"}">${day.earned - day.expenses}</b> &nbsp;|&nbsp; ${GOLD_ICON} ذهب: <b>+${day.goldEarned}</b><br>
     ${day.fined ? `🏛️ غرامة وزارة التجارة: <b style="color:#ff6b6b">-${day.fined} 💵</b> (مخالفات المطعم: ${state.violations})<br>` : ""}
+    ${day.muniFined ? `🧹 غرامة البلدية: <b style="color:#ff6b6b">-${day.muniFined} 💵</b> (مخالفات البلدية: ${state.muniViolations})<br>` : ""}
     ${state.complaints > 0 ? `⚠️ شكاوى معلّقة ضدك: <b>${state.complaints}</b> — توقّع تفتيشاً مفاجئاً بكرة!<br>` : ""}
+    ${state.day > state.license.expiresDay ? `⚠️ رخصة مطعمك منتهية! جدّدها من المتجر<br>` : ""}
+    🧹 نظافة المطعم: <b>${state.cleanliness}%</b>${day.oldFoodServed ? ` &nbsp;|&nbsp; 🤢 أكل قديم قدّمته: <b>${day.oldFoodServed}</b>` : ""}<br>
     🔥 أعلى كومبو: <b>x${day.maxCombo}</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
     🌟 متوسط رضا التسليم: <b>${avgP}%</b>${day.vipServed + day.vipAngry > 0 ? ` &nbsp;|&nbsp; ⭐ شخصيات مميزة: <b>${day.vipServed} راضي / ${day.vipAngry} زعلان</b>` : ""}<br>
     ${best ? `🥇 الأكثر مبيعاً: <b>${best.emoji} ${best.shortName || best.name}</b> (${bestN})` : "🥇 ما انباع شي اليوم 😅"}
@@ -1064,7 +1139,7 @@ function spinWheel() {
     { t: "💵 +120 فلوس", f: () => state.money += 120 },
     { t: `${GOLD_ICON} +3 ذهب`, f: () => state.gold += 3 },
     { t: "📈 +120 خبرة", f: () => state.xp += 120 },
-    { t: "🤖 طبق AI مجاني", f: () => state.freeDish = (state.freeDish || 0) + 1 },
+    { t: "🧹 تنظيف مجاني فوري", f: () => state.cleanliness = 100 },
   ];
   const btn = $("btn-wheel"), el = $("wheel-result");
   btn.disabled = true;
@@ -1176,6 +1251,58 @@ function renderShop() {
     };
     row.appendChild(btn);
     list.appendChild(row);
+  }
+
+  // الرخصة والنظافة (البلدية)
+  const muniList = $("muni-list");
+  muniList.innerHTML = "";
+  {
+    const daysLeft = state.license.expiresDay - state.day;
+    const expired = daysLeft < 0;
+    const renewCost = 350;
+    const row1 = document.createElement("div");
+    row1.className = "upgrade-row";
+    row1.innerHTML = `<span class="u-emoji">📜</span>
+      <span class="u-info"><span class="u-name">رخصة المطعم ${expired ? "❌ منتهية!" : `(باقي ${daysLeft} يوم)`}</span><br>
+      <span class="u-desc">جدّدها قبل ما تنتهي — البلدية تعطيك مخالفة 1000 💵 إذا انتهت وما جدّدتها</span></span>`;
+    const btn1 = document.createElement("button");
+    btn1.className = "u-buy";
+    btn1.textContent = `💵 ${renewCost}`;
+    btn1.disabled = state.money < renewCost;
+    btn1.onclick = () => {
+      if (state.money < renewCost) return;
+      state.money -= renewCost;
+      state.license.expiresDay = state.day + 6;
+      sfx.levelup();
+      toast("📜 تم تجديد رخصة المطعم لـ6 أيام إضافية!");
+      save();
+      renderShop();
+    };
+    row1.appendChild(btn1);
+    muniList.appendChild(row1);
+
+    const row2 = document.createElement("div");
+    row2.className = "upgrade-row";
+    row2.innerHTML = `<span class="u-emoji">🧹</span>
+      <span class="u-info"><span class="u-name">نظافة المطعم: ${state.cleanliness}% ${state.hasCleaner ? "✅ عامل نظافة معيّن" : ""}</span><br>
+      <span class="u-desc">${state.hasCleaner ? "عامل النظافة يخلي مطعمك نظيف دائماً تلقائياً" : "بدون عامل نظافة تتراكم الأوساخ يومياً — والبلدية تعطيك مخالفة إذا لقتها متسخة"}</span></span>`;
+    const btn2 = document.createElement("button");
+    btn2.className = "u-buy";
+    const cleanerCost = 2000;
+    btn2.textContent = state.hasCleaner ? "✅ معيّن" : `💵 ${cleanerCost}`;
+    btn2.disabled = state.hasCleaner || state.money < cleanerCost;
+    btn2.onclick = () => {
+      if (state.hasCleaner || state.money < cleanerCost) return;
+      state.money -= cleanerCost;
+      state.hasCleaner = true;
+      state.cleanliness = 100;
+      sfx.levelup();
+      toast("🧹 وظّفت عامل نظافة — مطعمك بيضل نظيف تلقائياً من الحين!");
+      save();
+      renderShop();
+    };
+    row2.appendChild(btn2);
+    muniList.appendChild(row2);
   }
 
   // المزايا الذهبية (مستويات بالذهب النادر)
@@ -1400,6 +1527,15 @@ function renderCustomers3D() {
       c.el = ov;
       continue;
     }
+    if (c.isMuniOfficer) {
+      ov.classList.add("inspector");
+      ov.innerHTML = `
+        <div class="ov-name">🧹 ${c.name}</div>
+        <div class="order-bubble" style="font-size:12px;font-weight:bold">🧼 فحص النظافة والرخصة!</div>`;
+      ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
+      c.el = ov;
+      continue;
+    }
     ov.classList.toggle("servable",
       !!(selected && c.order.some(o => !o.done && o.dish.id === day.tray[day.selectedTray].dish.id)));
     ov.classList.toggle("vip", !!c.isVip);
@@ -1425,7 +1561,7 @@ function moodFace(c) {
 
 function updatePatienceBars() {
   for (const c of day.customers) {
-    if (!c.el || c.isInspector) continue;
+    if (!c.el || c.isInspector || c.isMuniOfficer) continue;
     const r = clamp(c.patience / c.maxPatience, 0, 1);
     const fill = c.el.querySelector(".patience-fill");
     if (fill) {
@@ -1579,7 +1715,7 @@ function renderAchievements() {
     🔥 أعلى كومبو وصلته: <b>x${state.records.maxCombo}</b><br>
     ♾️ رقم التحدي اللانهائي: <b>${state.records.endlessBest}</b><br>
     📈 المستوى: <b>${playerLevel()}</b> — "${playerTitle()}"<br>
-    🏛️ مخالفات وزارة التجارة: <b>${state.violations}</b><br>
+    🏛️ مخالفات وزارة التجارة: <b>${state.violations}</b> &nbsp;|&nbsp; 🧹 مخالفات البلدية: <b>${state.muniViolations}</b><br>
     ✅ إجمالي الزباين الراضين: <b>${state.totals.served}</b> &nbsp;|&nbsp; 💰 إجمالي الأرباح: <b>${state.totals.earned}</b>`;
 }
 

@@ -161,9 +161,17 @@ window.S3D = (() => {
     if (vip === "salim") return salimTemplate ? buildStaticFromModel(salimTemplate) : buildLoadingPlaceholder();
     if (vip === "khalil") return regularTemplates.littleBackpacker ? buildStaticFromModel(regularTemplates.littleBackpacker) : buildLoadingPlaceholder();
     if (vip === "fanni") return regularTemplates.thumbsUpHandyman ? buildStaticFromModel(regularTemplates.thumbsUpHandyman) : buildLoadingPlaceholder();
-    if (vip === "yousef") return regularTemplates.desertGentleman ? buildStaticFromModel(regularTemplates.desertGentleman) : buildLoadingPlaceholder();
     if (vip === "edward") return regularTemplates.grandpaCane ? buildStaticFromModel(regularTemplates.grandpaCane) : buildLoadingPlaceholder();
-    if (female) return regularTemplates.veiledInBlack ? buildFemaleFromModel(c) : buildLoadingPlaceholder();
+    if (vip === "yousef") return regularTemplates.walkingWisdom ? buildStaticFromModel(regularTemplates.walkingWisdom) : buildLoadingPlaceholder();
+    if (vip === "inspector") return regularTemplates.midnightElegance ? buildStaticFromModel(regularTemplates.midnightElegance) : buildLoadingPlaceholder();
+    if (vip === "muniOfficer") return buildMunicipalityOfficer();
+    if (female) {
+      // زبونة: نموذج حقيقي دائماً من مجموعة متنوعة (منقّبة بألوان مختلفة، عباءة بوجه مكشوف، حجاب عصري، أو بدون حجاب)
+      const pool = ["veiledInBlack", "midnightAbaya", "casualChicHijab", "casualChic"].filter((k) => regularTemplates[k]);
+      if (!pool.length) return buildLoadingPlaceholder();
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      return pick === "veiledInBlack" ? buildFemaleFromModel(c) : buildStaticFromModel(regularTemplates[pick]);
+    }
     if (!vip) {
       // زبون عادي (رجل): نموذج GLTF حقيقي دائماً من مجموعة متنوعة
       const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "omar", "constructionExec", "grayKurta", "clockworkGentleman"]
@@ -173,12 +181,12 @@ window.S3D = (() => {
       return buildStaticFromModel(regularTemplates[pick]);
     }
 
-    // الشخصيات المميزة المتبقية (أحمد الفهد، أبو سمير، مفتش الوزارة)
+    // الشخصيات المميزة المتبقية (أحمد الفهد، أبو سمير)
     // ما زالت مبنية بالكود مؤقتاً — ما توفر لها نموذج GLTF جاهز بعد
     const g = new THREE.Group();
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const skin = rnd(SKINS);
-    const bodyColor = vip === "inspector" ? 0x1a1a1a : 0xf5f5f5; // بدلة المفتش السوداء الرسمية
+    const bodyColor = 0xf5f5f5;
 
     // الجسم (ثوب) — أسطح أنعم لملمس شبه واقعي بدل الشكل المضلّع
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 1.9, 24), mat(bodyColor));
@@ -317,37 +325,7 @@ window.S3D = (() => {
       }
     };
 
-    if (vip === "inspector") {
-      // مفتش رسمي: بدلة سوداء + شعر قصير + نظارة (بدون غترة) + ربطة عنق + حقيبة مستندات
-      addEars();
-      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.51, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.1), mat(0x1a1a1a));
-      hair.position.y = 2.18;
-      g.add(hair);
-      // نظارة رسمية
-      for (const sx of [-0.18, 0.18]) {
-        const lens = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 8, 16), mat(0x263238));
-        lens.position.set(sx, 2.24, 0.46);
-        g.add(lens);
-      }
-      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.028, 0.028), mat(0x263238));
-      bridge.position.set(0, 2.24, 0.47);
-      g.add(bridge);
-      // ياقة بيضاء وربطة عنق داكنة فوق البدلة السوداء
-      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.1), mat(0xffffff));
-      collar.position.set(0, 1.8, 0.4);
-      g.add(collar);
-      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.42, 0.06), mat(0x37474f));
-      tie.position.set(0, 1.58, 0.45);
-      g.add(tie);
-      // حقيبة مستندات رسمية بيده
-      const bag = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.3, 0.12),
-        new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.4 }));
-      bag.position.set(0.78, 0.72, 0.14);
-      g.add(bag);
-      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 12, Math.PI), mat(0x2a1a12));
-      handle.position.set(0.78, 0.88, 0.14);
-      g.add(handle);
-    } else if (vip === "fahad") {
+    if (vip === "fahad") {
       addGhutra(0xc0392b, true, true);
       // شارب أسود كبير + حواجب غاضبة
       const mst = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.13, 0.1), mat(0x1a1a1a));
@@ -579,11 +557,15 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.littleBackpacker = m; }, "models/little_backpacker.glb", "خليل");
     loadStatic((m) => { regularTemplates.thumbsUpHandyman = m; }, "models/thumbs_up_handyman.glb", "أبو شاكر الفني");
     loadStatic((m) => { regularTemplates.veiledInBlack = m; }, "models/veiled_in_black.glb", "المنقبة");
-    loadStatic((m) => { regularTemplates.desertGentleman = m; }, "models/desert_gentleman.glb", "شيخ يوسف");
     loadStatic((m) => { regularTemplates.grandpaCane = m; }, "models/grandpa_cane.glb", "الخواجة إدوارد");
     loadStatic((m) => { regularTemplates.constructionExec = m; }, "models/construction_exec.glb", "زبون (تنفيذي)");
     loadStatic((m) => { regularTemplates.grayKurta = m; }, "models/gray_kurta.glb", "زبون (كردتة رمادية)");
     loadStatic((m) => { regularTemplates.clockworkGentleman = m; }, "models/clockwork_gentleman.glb", "زبون (الساعاتي)");
+    loadStatic((m) => { regularTemplates.walkingWisdom = m; }, "models/walking_wisdom.glb", "شيخ يوسف");
+    loadStatic((m) => { regularTemplates.midnightElegance = m; }, "models/midnight_elegance.glb", "مفتش وزارة التجارة");
+    loadStatic((m) => { regularTemplates.casualChic = m; }, "models/casual_chic.glb", "زبونة (عصرية)");
+    loadStatic((m) => { regularTemplates.casualChicHijab = m; }, "models/casual_chic_hijab.glb", "زبونة (حجاب)");
+    loadStatic((m) => { regularTemplates.midnightAbaya = m; }, "models/midnight_abaya.glb", "زبونة (عباءة)");
   }
 
   /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
@@ -635,6 +617,101 @@ window.S3D = (() => {
     g.traverse((o) => { if (o.isMesh && !headMat) headMat = o.material; });
     g.add(groundShadow());
     return { group: g, head: null, headMat, height: MODEL_HEIGHT, mouths: null };
+  }
+
+  /* موظف البلدية: بذلة كاكي/زيتونية رسمية + قبعة + شارة + لوحة تفتيش — مختلف بصرياً عن مفتش وزارة التجارة */
+  function buildMunicipalityOfficer() {
+    const g = new THREE.Group();
+    const skin = 0xdba876;
+    const uniform = 0x5d6b3f; // كاكي زيتوني
+
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.85, 1.9, 24), mat(uniform));
+    body.position.y = 0.95;
+    g.add(body);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 16), mat(skin));
+    neck.position.y = 1.92;
+    g.add(neck);
+    for (const side of [-1, 1]) {
+      const sh = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12), mat(uniform));
+      sh.position.set(side * 0.4, 1.76, 0.02);
+      g.add(sh);
+    }
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.85, 14), mat(uniform));
+      arm.position.set(side * 0.58, 1.35, 0.05);
+      arm.rotation.z = side * 0.32;
+      g.add(arm);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), mat(skin));
+      hand.position.set(side * 0.72, 0.95, 0.08);
+      g.add(hand);
+    }
+
+    // شارة رسمية على الصدر
+    const badge = new THREE.Mesh(new THREE.CircleGeometry(0.1, 16), new THREE.MeshStandardMaterial({ color: 0xffd166, roughness: 0.3, metalness: 0.6 }));
+    badge.position.set(-0.28, 1.5, 0.44);
+    g.add(badge);
+
+    const headMat = mat(skin);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 22), headMat);
+    head.position.y = 2.15;
+    g.add(head);
+
+    const darkSkin = new THREE.Color(skin).multiplyScalar(0.82).getHex();
+    for (const sx of [-0.19, 0.19]) {
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), mat(0xffffff));
+      white.position.set(sx, 2.24, 0.40);
+      white.scale.z = 0.55;
+      g.add(white);
+      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), mat(0x4e342e));
+      iris.position.set(sx, 2.24, 0.47);
+      g.add(iris);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), mat(0x0d0704));
+      pupil.position.set(sx, 2.24, 0.51);
+      g.add(pupil);
+      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.05), mat(0x2a1f14));
+      brow.position.set(sx, 2.42, 0.42);
+      brow.rotation.z = sx < 0 ? 0.12 : -0.12;
+      g.add(brow);
+    }
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(darkSkin));
+    nose.position.set(0, 2.12, 0.48);
+    nose.scale.set(0.9, 1.15, 0.9);
+    g.add(nose);
+
+    const my = 1.93, mz = 0.46;
+    const mMat = mat(0x7a3b2e);
+    const happy = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.028, 6, 12, Math.PI), mMat);
+    happy.rotation.z = Math.PI;
+    happy.position.set(0, my + 0.05, mz);
+    const mid = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.04), mMat);
+    mid.position.set(0, my, mz);
+    mid.visible = false;
+    const sad = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.028, 6, 12, Math.PI), mMat);
+    sad.position.set(0, my - 0.06, mz);
+    sad.visible = false;
+    g.add(happy); g.add(mid); g.add(sad);
+
+    // قبعة رسمية بمظلة
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.53, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x3f4a2c));
+    cap.position.y = 2.32;
+    g.add(cap);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.04, 20), mat(0x2f3720));
+    brim.position.set(0, 2.2, 0.08);
+    g.add(brim);
+
+    // لوحة تفتيش بيده
+    const board = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.46, 0.05), new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.5 }));
+    board.position.set(0.78, 0.85, 0.14);
+    g.add(board);
+    const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.36), mat(0xf5f0e6));
+    paper.position.set(0.78, 0.85, 0.17);
+    g.add(paper);
+
+    const shadow = groundShadow();
+    g.add(shadow);
+    g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    return { group: g, head, headMat, height: 2.95, mouths: { happy, mid, sad } };
   }
 
   /* جدار جانبي عمودي بباب خروج — يواجه الكاميرا مباشرة (نفس اتجاه النوافذ الخلفية) */

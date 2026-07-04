@@ -250,28 +250,54 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   transform: translate(-50%, -100%);
   pointer-events: auto;
   cursor: pointer;
-  background: rgba(20, 12, 45, .78);
-  border: 2px solid rgba(255,255,255,.18);
-  border-radius: 12px;
-  padding: 5px 8px;
-  min-width: 88px;
-  max-width: 150px;
+  background: rgba(15, 9, 35, .9);
+  border: 2px solid rgba(255,255,255,.28);
+  border-radius: 14px;
+  padding: 6px 9px;
+  min-width: 96px;
+  max-width: 165px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   backdrop-filter: blur(2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.5);
 }
 .ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,209,102,.35); }
-.ov3d.servable { border-color: var(--green); box-shadow: 0 0 12px rgba(46,204,113,.55); }
-.ov3d .ov-name { font-size: 11px; font-weight: bold; white-space: nowrap; }
-.ov3d .ov-type { color: var(--muted); font-weight: normal; font-size: 10px; }
-.ov3d .order-bubble { font-size: 17px; padding: 3px 6px; min-height: 32px; align-items: center; border: 2px solid #ddd; }
+.ov3d.servable { border-color: var(--green); box-shadow: 0 0 14px rgba(46,204,113,.75); border-width: 3px; }
+.ov3d .ov-name { font-size: 13px; font-weight: bold; white-space: nowrap; color: #fff; }
+.ov3d .ov-type { color: var(--accent2); font-weight: bold; font-size: 11px; }
+/* بطاقة بيضاء للطلب: الأيقونات الملوّنة تبرز بوضوح فوق خلفية فاتحة بدل الأرجواني الغامق */
+.ov3d .order-bubble {
+  font-size: 17px;
+  padding: 5px 7px;
+  min-height: 40px;
+  align-items: center;
+  background: #fff8ec;
+  border: 2px solid #e8d9b8;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.15);
+}
 .ov3d .order-bubble img {
-  width: 32px; height: 32px;
+  width: 40px; height: 40px;
   display: block;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.45)) saturate(1.25) contrast(1.1);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)) saturate(1.3) contrast(1.1);
+}
+/* الصنف المسلَّم: علامة صح خضراء واضحة بدل مجرد تعتيمه */
+.ov3d .order-bubble .oitem { position: relative; }
+.ov3d .order-bubble .oitem.done { opacity: .35; filter: grayscale(1); }
+.ov3d .order-bubble .oitem.done::after {
+  content: "✔";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2ecc71;
+  font-size: 20px;
+  font-weight: 900;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
 }
 .ov3d.inspector {
   border-color: #ff6b6b;
