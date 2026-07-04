@@ -23,7 +23,10 @@ window.S3D = (() => {
   const SKINS = [0xeeb98c, 0xdba876, 0xf2c49b, 0xc98e63];
   const THOBES = [0xf5f5f5, 0xdfe6e9, 0xcfd8dc, 0x90a4ae, 0x6d4c2f, 0x4e6e5d];
   const mat = (color, emissive = 0x000000) =>
-    new THREE.MeshStandardMaterial({ color, emissive, roughness: 0.72, metalness: 0.04 });
+    new THREE.MeshPhysicalMaterial({
+      color, emissive, roughness: 0.55, metalness: 0.05,
+      clearcoat: 0.35, clearcoatRoughness: 0.3, // لمسة لامعة كالمجسمات الجاهزة (figurine look)
+    });
 
   /* تكستر مرسوم على كانفس */
   function canvasTexture(w, h, draw) {
@@ -138,6 +141,17 @@ window.S3D = (() => {
     });
   }
 
+  /* لافتة الخروج فوق الأبواب الجانبية */
+  function exitSignTexture() {
+    return canvasTexture(320, 128, (g, w, h) => {
+      g.fillStyle = "#0e6b3a"; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#ffd166"; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
+      g.textAlign = "center"; g.fillStyle = "#ffffff";
+      g.font = "900 54px Cairo, Arial";
+      g.fillText("🚪 الخروج", w / 2, 78);
+    });
+  }
+
   /* ---------- بناء شخصية كرتونية ---------- */
   function makeCharacter(c) {
     const g = new THREE.Group();
@@ -154,28 +168,28 @@ window.S3D = (() => {
       vip === "edward" ? 0x8d6e63 : // جاكيت تويد
       vip ? 0xf5f5f5 : rnd(THOBES);
 
-    // الجسم (ثوب / عباءة)
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(female ? 0.4 : 0.45, female ? 0.8 : 0.85, 1.9, 12), mat(bodyColor));
+    // الجسم (ثوب / عباءة) — أسطح أنعم لملمس شبه واقعي بدل الشكل المضلّع
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(female ? 0.4 : 0.45, female ? 0.8 : 0.85, 1.9, 24), mat(bodyColor));
     body.position.y = 0.95;
     g.add(body);
 
     // رقبة وأكتاف — قوام أقرب للواقع
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 10), mat(female ? bodyColor : skin));
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 16), mat(female ? bodyColor : skin));
     neck.position.y = 1.92;
     g.add(neck);
     for (const side of [-1, 1]) {
-      const sh = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), mat(bodyColor));
+      const sh = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12), mat(bodyColor));
       sh.position.set(side * 0.4, 1.76, 0.02);
       g.add(sh);
     }
 
     // ذراعان بكفوف — تعطي واقعية كبيرة للقوام
     for (const side of [-1, 1]) {
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.85, 8), mat(bodyColor));
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.85, 14), mat(bodyColor));
       arm.position.set(side * 0.58, 1.35, 0.05);
       arm.rotation.z = side * 0.32;
       g.add(arm);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 7), mat(skin));
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), mat(skin));
       hand.position.set(side * 0.72, 0.95, 0.08);
       g.add(hand);
     }
@@ -189,7 +203,7 @@ window.S3D = (() => {
 
     // الرأس
     const headMat = mat(skin);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 14), headMat);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 22), headMat);
     head.position.y = 2.15;
     if (vip === "salim") head.scale.y = 1.28;
     g.add(head);
@@ -269,15 +283,15 @@ window.S3D = (() => {
     // غطاء الرأس (مطابق للصور: شماغ منقوش متدلٍ على الصدر + عقال مزدوج)
     const addGhutra = (color, agal = true, pattern = false) => {
       const clothMat = () => pattern
-        ? new THREE.MeshStandardMaterial({ map: getShemaghTexture(), roughness: 0.85, side: THREE.DoubleSide })
-        : new THREE.MeshStandardMaterial({ color, roughness: 0.85, side: THREE.DoubleSide });
-      const gh = new THREE.Mesh(new THREE.SphereGeometry(0.56, 16, 12), clothMat());
+        ? new THREE.MeshPhysicalMaterial({ map: getShemaghTexture(), roughness: 0.7, side: THREE.DoubleSide, clearcoat: 0.2, clearcoatRoughness: 0.4 })
+        : new THREE.MeshPhysicalMaterial({ color, roughness: 0.7, side: THREE.DoubleSide, clearcoat: 0.2, clearcoatRoughness: 0.4 });
+      const gh = new THREE.Mesh(new THREE.SphereGeometry(0.56, 28, 22), clothMat());
       gh.position.y = 2.32;
       gh.scale.set(1, 0.78, 1);
       g.add(gh);
       // أطراف تغطي الخلف والجوانب وتنسدل أطول (الوجه مكشوف)
       const flap = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.56, 0.7, 0.75, 12, 1, true, Math.PI * 0.3, Math.PI * 1.4),
+        new THREE.CylinderGeometry(0.56, 0.7, 0.75, 24, 1, true, Math.PI * 0.3, Math.PI * 1.4),
         clothMat()
       );
       flap.position.y = 2.02;
@@ -303,12 +317,12 @@ window.S3D = (() => {
 
     if (female) {
       // حجاب كامل + نقاب: تظهر العيون فقط، مع غطاء يتدلى على الكتفين
-      const hijab = new THREE.Mesh(new THREE.SphereGeometry(0.57, 16, 14), mat(bodyColor));
+      const hijab = new THREE.Mesh(new THREE.SphereGeometry(0.57, 28, 22), mat(bodyColor));
       hijab.position.y = 2.18;
       g.add(hijab);
       const veil = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.5, 0.78, 1.05, 12, 1, true),
-        new THREE.MeshStandardMaterial({ color: bodyColor, side: THREE.DoubleSide, roughness: 0.85 })
+        new THREE.CylinderGeometry(0.5, 0.78, 1.05, 24, 1, true),
+        new THREE.MeshPhysicalMaterial({ color: bodyColor, side: THREE.DoubleSide, roughness: 0.7, clearcoat: 0.3, clearcoatRoughness: 0.3 })
       );
       veil.position.y = 1.72;
       g.add(veil);
@@ -647,6 +661,46 @@ window.S3D = (() => {
 
   /* ---------- ديكور المطعم (واقعي) ---------- */
   let floorMat = null, wallMat = null, clockHands = null, steam = [], robot = null;
+  let leftDoorGroup = null, rightDoorGroup = null;
+
+  /* جدار جانبي عمودي بباب خروج — يواجه الكاميرا مباشرة (نفس اتجاه النوافذ الخلفية) */
+  function buildDoorGroup() {
+    const grp = new THREE.Group();
+
+    // جدار جانبي عريض يحيط بالمطعم من هذا الطرف
+    const sideWall = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 8.5), wallMat);
+    sideWall.position.set(0, 4, -0.6);
+    sideWall.receiveShadow = true;
+    grp.add(sideWall);
+
+    // إطار الباب الخشبي
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x6d4c2f, roughness: 0.6 });
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.75, 3.05, 0.16), frameMat);
+    frame.position.set(0, 1.55, -0.2);
+    frame.castShadow = true;
+    grp.add(frame);
+
+    // فتحة الباب: منظر ليلي خارجي يوحي بخروج حقيقي من المطعم
+    const opening = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 2.65),
+      new THREE.MeshBasicMaterial({ map: windowTexture() }));
+    opening.position.set(0, 1.55, -0.11);
+    grp.add(opening);
+
+    // عتبة الباب
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.09, 0.32),
+      new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.6 }));
+    sill.position.set(0, 0.045, 0.02);
+    sill.receiveShadow = true;
+    grp.add(sill);
+
+    // لافتة "الخروج" فوق الباب
+    const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.56),
+      new THREE.MeshBasicMaterial({ map: exitSignTexture() }));
+    signMesh.position.set(0, 3.25, -0.11);
+    grp.add(signMesh);
+
+    return grp;
+  }
 
   function buildRoom() {
     // أرضية خشبية بتكستر حقيقي
@@ -665,6 +719,14 @@ window.S3D = (() => {
     wall.position.set(0, 5, -3.2);
     wall.receiveShadow = true;
     scene.add(wall);
+
+    // جداران جانبيان بباب خروج حقيقي — الزبون يمشي نحوهما ليخرج فعلياً من المطعم
+    leftDoorGroup = buildDoorGroup();
+    leftDoorGroup.position.x = -(slotSpread + 2.7);
+    scene.add(leftDoorGroup);
+    rightDoorGroup = buildDoorGroup();
+    rightDoorGroup.position.x = slotSpread + 2.7;
+    scene.add(rightDoorGroup);
 
     // لوحة نيون بنص عربي حقيقي
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.9),
@@ -869,6 +931,14 @@ window.S3D = (() => {
       sun.shadow.camera.near = 1; sun.shadow.camera.far = 30;
       sun.shadow.bias = -0.002;
       scene.add(sun);
+      // إضاءة تعبئة ناعمة من جهة الكاميرا — تنوّر الوجه المقابل للشمس (إضاءة ثلاثية الاتجاه)
+      const fill = new THREE.DirectionalLight(0xd6e4ff, 0.5);
+      fill.position.set(-3, 4, 8);
+      scene.add(fill);
+      // إضاءة حافة خلفية خفيفة تفصل الشخصيات عن الخلفية (لمعان المجسمات الجاهزة)
+      const rim = new THREE.PointLight(0xfff0d0, 0.55, 14);
+      rim.position.set(0, 5, -1.5);
+      scene.add(rim);
 
       buildRoom();
 
@@ -899,6 +969,9 @@ window.S3D = (() => {
     // وسّع أو ضيّق أماكن الوقوف حسب عرض الشاشة
     const halfW = Math.tan((camera.fov / 2) * Math.PI / 180) * 9.0 * camera.aspect;
     slotSpread = Math.min(4.3, Math.max(2.4, halfW * 0.62));
+    // حرّك بابي الخروج مع تغيّر عرض الشاشة كي يبقيا عند حافة منطقة الوقوف
+    if (leftDoorGroup) leftDoorGroup.position.x = -(slotSpread + 2.7);
+    if (rightDoorGroup) rightDoorGroup.position.x = slotSpread + 2.7;
   }
 
   function slotX(i, n) {

@@ -10,6 +10,8 @@ const $ = (id) => document.getElementById(id);
 if (typeof window.S3D === "undefined") window.S3D = { active: false, init: () => false };
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+// أيقونة الذهب: بعض الأجهزة تعرض إيموجي 🪙 بلون أسود بدون تلوين — نرسمها بـCSS بدل الاعتماد على خط الجهاز
+const GOLD_ICON = '<span class="gcoin"></span>';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ---------- الصوت (WebAudio) ---------- */
@@ -302,7 +304,7 @@ const IAP_PRODUCTS = [
     desc: "+1200 فلوس فوراً", grant: () => { state.money += 1200; } },
   { id: "money2", emoji: "💰", name: "خزنة الفلوس الكبيرة", price: "39.99 ر.س",
     desc: "+6500 فلوس فوراً (أفضل قيمة)", grant: () => { state.money += 6500; } },
-  { id: "gold1", emoji: "🪙", name: "كيس ذهب", price: "14.99 ر.س",
+  { id: "gold1", emoji: GOLD_ICON, name: "كيس ذهب", price: "14.99 ر.س",
     desc: "+25 ذهب فوراً", grant: () => { state.gold += 25; } },
   { id: "gold2", emoji: "🏆", name: "صندوق الذهب الملكي", price: "49.99 ر.س",
     desc: "+110 ذهب فوراً (أفضل قيمة)", grant: () => { state.gold += 110; } },
@@ -338,7 +340,7 @@ function watchShopAd() {
     state.adCdUntil = Date.now() + AD_COOLDOWN;
     state.adToggle = !state.adToggle;
     if (state.adToggle) { state.money += 60; toast("🎬 مكافأة الإعلان: +60 💵!"); }
-    else { state.gold += 1; toast("🎬 مكافأة الإعلان: +1 🪙!"); }
+    else { state.gold += 1; toast(`🎬 مكافأة الإعلان: +1 ${GOLD_ICON}!`); }
     sfx.coin();
     save();
     renderShop();
@@ -349,7 +351,7 @@ function watchShopAd() {
 let pendingIAP = null;
 function buyIAP(p) {
   pendingIAP = p;
-  $("iap-name").textContent = `${p.emoji} ${p.name} — ${p.price}`;
+  $("iap-name").innerHTML = `${p.emoji} ${p.name} — ${p.price}`;
   $("iap-modal").classList.remove("hidden");
 }
 function confirmIAP() {
@@ -645,7 +647,7 @@ function completeOrder(c) {
     if (g > 0) {
       state.gold += g; day.goldEarned += g;
       sfx.coin();
-      floatScore(c.el, `+${total} 💵 +${g} 🪙${comboTxt}`);
+      floatScore(c.el, `+${total} 💵 +${g} ${GOLD_ICON}${comboTxt}`);
     } else {
       floatScore(c.el, `+${total} 💵 🌟${comboTxt}`);
     }
@@ -797,7 +799,7 @@ function answerChat(reply) {
   if (reply.eff >= 15) {
     day.chatGood++;
     toast("💬 عجبه ردك! ارتفعت معنوياته 🎉");
-    if (c.type.key === "rich" && Math.random() < 0.25) { state.gold++; day.goldEarned++; sfx.coin(); toast("💎 الزبون الغني أعطاك 🪙 ذهب!"); }
+    if (c.type.key === "rich" && Math.random() < 0.25) { state.gold++; day.goldEarned++; sfx.coin(); toast(`💎 الزبون الغني أعطاك ${GOLD_ICON} ذهب!`); }
   } else if (reply.eff < 0) {
     day.chatBad++;
     toast("💬 ما عجبه الرد… انخفض صبره 😬");
@@ -1036,11 +1038,11 @@ function showReport() {
   $("report-stats").innerHTML = `
     ${day.endless ? `♾️ <b>التحدي اللانهائي انتهى!</b> نتيجتك: <b>${day.earned}</b> 💵 ${day.earned >= state.records.endlessBest ? "🏆 رقم قياسي جديد!" : `(رقمك القياسي: ${state.records.endlessBest})`}` : `📅 اليوم <b>${state.day}</b> انتهى!`}<br>
     ${day.event ? `${day.event.name} — ${day.event.desc}<br>` : ""}
-    ${day.quest ? `📌 المهمة: ${day.quest.name} ${day.questDone ? `✅ <b>+${day.quest.reward.gold ? day.quest.reward.gold + " 🪙" : day.quest.reward.money + " 💵"}</b>` : "❌"}<br>` : ""}
-    ${day.endless ? "" : `🎯 الهدف اليومي (صافي): <b>${day.earned - day.expenses}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +2 🪙</b>` : "❌ ما تحقق"}<br>`}
+    ${day.quest ? `📌 المهمة: ${day.quest.name} ${day.questDone ? `✅ <b>+${day.quest.reward.gold ? day.quest.reward.gold + " " + GOLD_ICON : day.quest.reward.money + " 💵"}</b>` : "❌"}<br>` : ""}
+    ${day.endless ? "" : `🎯 الهدف اليومي (صافي): <b>${day.earned - day.expenses}/${day.goal}</b> ${day.goalMet ? `✅ تحقق! مكافأة <b>+${day.goalBonus} 💵 +2 ${GOLD_ICON}</b>` : "❌ ما تحقق"}<br>`}
     ✅ زباين راضين: <b>${day.served}</b> &nbsp;|&nbsp; 💢 زباين زعلانين: <b>${day.angry}</b><br>
     💵 الإيرادات: <b>${day.earned}</b> &nbsp;|&nbsp; 🧾 مصاريف المواد الخام: <b style="color:#ff9f43">-${day.expenses}</b><br>
-    📊 صافي الربح: <b style="color:${day.earned - day.expenses >= 0 ? "#2ecc71" : "#ff6b6b"}">${day.earned - day.expenses}</b> &nbsp;|&nbsp; 🪙 ذهب: <b>+${day.goldEarned}</b><br>
+    📊 صافي الربح: <b style="color:${day.earned - day.expenses >= 0 ? "#2ecc71" : "#ff6b6b"}">${day.earned - day.expenses}</b> &nbsp;|&nbsp; ${GOLD_ICON} ذهب: <b>+${day.goldEarned}</b><br>
     ${day.fined ? `🏛️ غرامة وزارة التجارة: <b style="color:#ff6b6b">-${day.fined} 💵</b> (مخالفات المطعم: ${state.violations})<br>` : ""}
     ${state.complaints > 0 ? `⚠️ شكاوى معلّقة ضدك: <b>${state.complaints}</b> — توقّع تفتيشاً مفاجئاً بكرة!<br>` : ""}
     🔥 أعلى كومبو: <b>x${day.maxCombo}</b> &nbsp;|&nbsp; 🏆 تسليم مثالي: <b>${day.perfect}</b><br>
@@ -1060,7 +1062,7 @@ function showReport() {
 function spinWheel() {
   const prizes = [
     { t: "💵 +120 فلوس", f: () => state.money += 120 },
-    { t: "🪙 +3 ذهب", f: () => state.gold += 3 },
+    { t: `${GOLD_ICON} +3 ذهب`, f: () => state.gold += 3 },
     { t: "📈 +120 خبرة", f: () => state.xp += 120 },
     { t: "🤖 طبق AI مجاني", f: () => state.freeDish = (state.freeDish || 0) + 1 },
   ];
@@ -1070,14 +1072,14 @@ function spinWheel() {
   let i = 0;
   const spins = 9 + rint(0, 3);
   const iv = setInterval(() => {
-    el.textContent = prizes[i % prizes.length].t;
+    el.innerHTML = prizes[i % prizes.length].t;
     sfx.cook();
     i++;
     if (i >= spins) {
       clearInterval(iv);
       const p = prizes[(i - 1) % prizes.length];
       p.f();
-      el.textContent = "🎉 ربحت: " + p.t;
+      el.innerHTML = "🎉 ربحت: " + p.t;
       sfx.levelup();
       btn.classList.add("hidden");
       save();
@@ -1114,7 +1116,7 @@ function aiAnalyze() {
   else if (day.served >= 4 && day.maxCombo <= 2) tips.push("🔥 كومبوك ضعيف — سلّم بسرعة وبدون أخطاء عشان يرتفع المضاعف حتى ×1.8.");
   if (!day.goalMet && day.earned > 0) tips.push(`🎯 نقصك ${day.goal - day.earned} 💵 عن الهدف — الهدف المحقق يعطيك +20% مكافأة و3 ذهب.`);
   if (day.wrongServes >= 3) tips.push(`🎯 سلّمت ${day.wrongServes} أصناف خاطئة — تأكد من فقاعة الطلب قبل التسليم، الناقد يعاقبك عليها أكثر.`);
-  if (day.perfect >= 3) tips.push(`🪙 ممتاز! ${day.perfect} تسليمات مثالية جابت لك ذهب. الذهب يفتح لك أطباق الذكاء الاصطناعي.`);
+  if (day.perfect >= 3) tips.push(`${GOLD_ICON} ممتاز! ${day.perfect} تسليمات مثالية جابت لك ذهب. الذهب يفتح لك أطباق الذكاء الاصطناعي.`);
   if (day.freshServes >= 5) tips.push(`✨ سلّمت ${day.freshServes} أصناف وهي طازجة — الزباين يحسون بالفرق والصبر يرتفع!`);
   else if (day.served >= 4 && day.freshServes === 0) tips.push("✨ ولا صنف انسلّم طازج — الصنف أول 5 ثوانٍ من جهوزيته يعطي الزبون دفعة صبر، لا تخزّن بالصينية.");
   if (day.chatBad > day.chatGood) tips.push("💬 ردودك على الزباين تحتاج لباقة أكثر — الرد الحلو يرفع صبرهم مجاناً!");
@@ -1144,7 +1146,7 @@ let pendingDish = null;
 
 function renderShop() {
   $("shop-money").textContent = `💵 ${state.money}`;
-  $("shop-gold").textContent = `🪙 ${state.gold}`;
+  $("shop-gold").innerHTML = `${GOLD_ICON} ${state.gold}`;
 
   const list = $("upgrades-list");
   list.innerHTML = "";
@@ -1189,7 +1191,7 @@ function renderShop() {
       <span class="u-info"><span class="u-name">${p.name} (${lv}/${p.max})</span><br><span class="u-desc">${maxed ? "وصلت أعلى مستوى ✅" : p.desc(lv)}</span></span>`;
     const btn = document.createElement("button");
     btn.className = "u-buy";
-    btn.textContent = maxed ? "✅ مكتمل" : `🪙 ${cost}`;
+    btn.innerHTML = maxed ? "✅ مكتمل" : `${GOLD_ICON} ${cost}`;
     btn.disabled = maxed || state.gold < cost;
     btn.onclick = () => {
       if (maxed || state.gold < cost) return;
@@ -1212,7 +1214,7 @@ function renderShop() {
   adRow.className = "upgrade-row ad-row";
   const adOk = adReady();
   adRow.innerHTML = `<span class="u-emoji">🎬</span>
-    <span class="u-info"><span class="u-name">شاهد إعلاناً واكسب!</span><br><span class="u-desc">مكافأة فورية: +60 💵 أو +1 🪙 (كل 3 دقائق)</span></span>`;
+    <span class="u-info"><span class="u-name">شاهد إعلاناً واكسب!</span><br><span class="u-desc">مكافأة فورية: +60 💵 أو +1 ${GOLD_ICON} (كل 3 دقائق)</span></span>`;
   const adBtn = document.createElement("button");
   adBtn.className = "u-buy";
   adBtn.textContent = adOk ? "▶️ شاهد" : `⏳ ${Math.ceil(((state.adCdUntil || 0) - Date.now()) / 1000)}ث`;
@@ -1281,7 +1283,7 @@ function renderShop() {
 
   const cst = aiDishCost();
   $("btn-ai-dish").disabled = (state.gold < cst.gold || state.money < cst.money) && !(state.freeDish > 0);
-  $("btn-ai-dish").textContent = state.freeDish > 0 ? "🎡 مجاني — ابتكر طبق جديد" : `💵 ${cst.money} + 🪙 ${cst.gold} — ابتكر طبق`;
+  $("btn-ai-dish").innerHTML = state.freeDish > 0 ? "🎡 مجاني — ابتكر طبق جديد" : `💵 ${cst.money} + ${GOLD_ICON} ${cst.gold} — ابتكر طبق`;
   $("ai-dish-result").classList.add("hidden");
   pendingDish = null;
 }
@@ -1296,7 +1298,7 @@ function aiDishFlow(regenerate) {
       state.freeDish--;
       toast("🎡 استخدمت طبقك المجاني من عجلة الحظ!");
     } else if (state.gold < cst.gold || state.money < cst.money) {
-      toast(`🧾 ابتكار طبق يحتاج ${cst.money} 💵 + ${cst.gold} 🪙`);
+      toast(`🧾 ابتكار طبق يحتاج ${cst.money} 💵 + ${cst.gold} ${GOLD_ICON}`);
       return;
     } else {
       state.gold -= cst.gold;
@@ -1311,7 +1313,7 @@ function aiDishFlow(regenerate) {
     <div>💵 السعر: <b>${pendingDish.price}</b> — ⏱️ وقت الطبخ: ${(pendingDish.cook / 1000).toFixed(1)} ث</div>
   `;
   $("ai-dish-result").classList.remove("hidden");
-  $("shop-gold").textContent = `🪙 ${state.gold}`;
+  $("shop-gold").innerHTML = `${GOLD_ICON} ${state.gold}`;
   sfx.levelup();
 }
 
@@ -1327,7 +1329,7 @@ function showScreen(id) {
 
 function renderTopbar() {
   $("stat-money").textContent = `💵 ${state.money}`;
-  $("stat-gold").textContent = `🪙 ${state.gold}`;
+  $("stat-gold").innerHTML = `${GOLD_ICON} ${state.gold}`;
   $("stat-rating").textContent = `⭐ ${state.rating.toFixed(1)}`;
   $("stat-time").textContent = `⏰ ${Math.max(0, Math.ceil(day ? day.timeLeft / 1000 : 0))}`;
   $("stat-day").textContent = `📅 ${state.day}`;
@@ -1531,7 +1533,7 @@ function renderCounterProgress() {
 let toastTimer = null;
 function toast(msg) {
   const t = $("toast");
-  t.textContent = msg;
+  t.innerHTML = msg;
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
@@ -1540,7 +1542,7 @@ function toast(msg) {
 function floatScore(el, text, bad) {
   const f = document.createElement("div");
   f.className = "float-score" + (bad ? " bad" : "");
-  f.textContent = text;
+  f.innerHTML = text;
   const r = el ? el.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0 };
   f.style.left = (r.left + r.width / 2 - 40) + "px";
   f.style.top = (r.top + 10) + "px";
@@ -1556,7 +1558,7 @@ function renderMenuScreen() {
   $("btn-endless").classList.toggle("hidden", state.day < 8);
   const achCount = Object.keys(state.ach).filter(k => state.ach[k]).length;
   $("menu-stats").innerHTML = `
-    📅 اليوم: ${state.day} &nbsp; | &nbsp; ⭐ ${state.rating.toFixed(1)} &nbsp; | &nbsp; 💵 ${state.money} &nbsp; | &nbsp; 🪙 ${state.gold}<br>
+    📅 اليوم: ${state.day} &nbsp; | &nbsp; ⭐ ${state.rating.toFixed(1)} &nbsp; | &nbsp; 💵 ${state.money} &nbsp; | &nbsp; ${GOLD_ICON} ${state.gold}<br>
     ✅ زباين راضين: ${state.totals.served} &nbsp; | &nbsp; 🤖 أطباق مبتكرة: ${state.aiDishes.length} &nbsp; | &nbsp; 🏅 ${achCount}/${ACHIEVEMENTS.length}
     ${state.day < 8 ? "<br>♾️ التحدي اللانهائي يفتح بعد اليوم 7" : ""}
   `;
