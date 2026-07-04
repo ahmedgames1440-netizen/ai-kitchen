@@ -161,26 +161,24 @@ window.S3D = (() => {
     if (vip === "salim") return salimTemplate ? buildStaticFromModel(salimTemplate) : buildLoadingPlaceholder();
     if (vip === "khalil") return regularTemplates.littleBackpacker ? buildStaticFromModel(regularTemplates.littleBackpacker) : buildLoadingPlaceholder();
     if (vip === "fanni") return regularTemplates.thumbsUpHandyman ? buildStaticFromModel(regularTemplates.thumbsUpHandyman) : buildLoadingPlaceholder();
+    if (vip === "yousef") return regularTemplates.desertGentleman ? buildStaticFromModel(regularTemplates.desertGentleman) : buildLoadingPlaceholder();
+    if (vip === "edward") return regularTemplates.grandpaCane ? buildStaticFromModel(regularTemplates.grandpaCane) : buildLoadingPlaceholder();
     if (female) return regularTemplates.veiledInBlack ? buildFemaleFromModel(c) : buildLoadingPlaceholder();
     if (!vip) {
       // زبون عادي (رجل): نموذج GLTF حقيقي دائماً من مجموعة متنوعة
-      const pool = [];
-      if (regularTemplates.blueThobe) pool.push(blueThobeRig && blueThobeRig.runClip ? "blueThobeAnimated" : "blueThobe");
-      if (regularTemplates.businessman) pool.push("businessman");
-      if (regularTemplates.emeraldRobed) pool.push("emeraldRobed");
-      if (regularTemplates.jollyPortly) pool.push("jollyPortly");
-      if (regularTemplates.omar) pool.push("omar");
+      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "omar", "constructionExec", "grayKurta", "clockworkGentleman"]
+        .filter((k) => regularTemplates[k]);
       if (!pool.length) return buildLoadingPlaceholder();
       const pick = pool[Math.floor(Math.random() * pool.length)];
-      return pick === "blueThobeAnimated" ? buildBlueThobeAnimated() : buildStaticFromModel(regularTemplates[pick]);
+      return buildStaticFromModel(regularTemplates[pick]);
     }
 
-    // الشخصيات المميزة المتبقية (شيخ يوسف، أحمد الفهد، أبو سمير، الخواجة إدوارد، مفتش الوزارة)
+    // الشخصيات المميزة المتبقية (أحمد الفهد، أبو سمير، مفتش الوزارة)
     // ما زالت مبنية بالكود مؤقتاً — ما توفر لها نموذج GLTF جاهز بعد
     const g = new THREE.Group();
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const skin = rnd(SKINS);
-    const bodyColor = vip === "edward" ? 0x8d6e63 : 0xf5f5f5;
+    const bodyColor = vip === "inspector" ? 0x1a1a1a : 0xf5f5f5; // بدلة المفتش السوداء الرسمية
 
     // الجسم (ثوب) — أسطح أنعم لملمس شبه واقعي بدل الشكل المضلّع
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 1.9, 24), mat(bodyColor));
@@ -223,7 +221,7 @@ window.S3D = (() => {
 
     // ===== الوجه: ملامح واضحة =====
     const darkSkin = new THREE.Color(skin).multiplyScalar(0.82).getHex();
-    const hairColor = (vip === "yousef" || vip === "samir" || vip === "edward") ? 0xd7d7d7 : 0x3a2a1a;
+    const hairColor = vip === "samir" ? 0xd7d7d7 : 0x3a2a1a;
     // عيون كرتونية: بياض + بؤبؤ + لمعة
     const eyeZ = 0.40;
     for (const sx of [-0.19, 0.19]) {
@@ -256,9 +254,9 @@ window.S3D = (() => {
     nose.position.set(0, 2.12, 0.48);
     nose.scale.set(0.9, 1.15, 0.9);
     g.add(nose);
-    // فم يتغير مع المزاج (مبتسم / محايد / عابس) — لحية الشيخ تغطيه
+    // فم يتغير مع المزاج (مبتسم / محايد / عابس)
     let mouths = null;
-    if (vip !== "yousef") {
+    {
       const my = (vip === "fahad" || vip === "samir") ? 1.83 : 1.93; // تحت الشنب
       const mz = 0.46;
       const mMat = mat(0x7a3b2e);
@@ -320,8 +318,11 @@ window.S3D = (() => {
     };
 
     if (vip === "inspector") {
+      // مفتش رسمي: بدلة سوداء + شعر قصير + نظارة (بدون غترة) + ربطة عنق + حقيبة مستندات
       addEars();
-      addGhutra(0xc0392b, true, true); // شماغ رسمي منقوش
+      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.51, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2.1), mat(0x1a1a1a));
+      hair.position.y = 2.18;
+      g.add(hair);
       // نظارة رسمية
       for (const sx of [-0.18, 0.18]) {
         const lens = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 8, 16), mat(0x263238));
@@ -331,7 +332,14 @@ window.S3D = (() => {
       const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.028, 0.028), mat(0x263238));
       bridge.position.set(0, 2.24, 0.47);
       g.add(bridge);
-      // حقيبة رسمية بيده
+      // ياقة بيضاء وربطة عنق داكنة فوق البدلة السوداء
+      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.1), mat(0xffffff));
+      collar.position.set(0, 1.8, 0.4);
+      g.add(collar);
+      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.42, 0.06), mat(0x37474f));
+      tie.position.set(0, 1.58, 0.45);
+      g.add(tie);
+      // حقيبة مستندات رسمية بيده
       const bag = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.3, 0.12),
         new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.4 }));
       bag.position.set(0.78, 0.72, 0.14);
@@ -339,13 +347,6 @@ window.S3D = (() => {
       const handle = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 12, Math.PI), mat(0x2a1a12));
       handle.position.set(0.78, 0.88, 0.14);
       g.add(handle);
-    } else if (vip === "yousef") {
-      addGhutra(0xffffff);
-      // لحية طويلة بيضاء
-      const beard = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.95, 10), mat(0xfafafa));
-      beard.rotation.x = Math.PI;
-      beard.position.set(0, 1.66, 0.3);
-      g.add(beard);
     } else if (vip === "fahad") {
       addGhutra(0xc0392b, true, true);
       // شارب أسود كبير + حواجب غاضبة
@@ -370,62 +371,6 @@ window.S3D = (() => {
       const mst = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.15, 0.1), mat(0x9e9e9e));
       mst.position.set(0, 1.97, 0.45);
       g.add(mst);
-    } else if (vip === "salim") {
-      addEars();
-      // نظارات + سكسوكة رمادية
-      for (const sx of [-0.18, 0.18]) {
-        const lens = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.025, 8, 16), mat(0x555555));
-        lens.position.set(sx, 2.24, 0.46);
-        g.add(lens);
-      }
-      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.03), mat(0x555555));
-      bridge.position.set(0, 2.24, 0.47);
-      g.add(bridge);
-      const goat = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 8), mat(0x9a9a9a));
-      goat.rotation.x = Math.PI;
-      goat.position.set(0, 1.72, 0.32);
-      g.add(goat);
-    } else if (vip === "edward") {
-      // الخواجة: شعر أبيض جانبي + شارب ولحية بيضاء + فست وربطة + عصا (مثل الصورة)
-      addEars();
-      for (const sx of [-0.44, 0.44]) {
-        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 7), mat(0xeceff1));
-        hair.position.set(sx, 2.34, -0.05);
-        hair.scale.set(0.7, 1, 1.1);
-        g.add(hair);
-      }
-      const backHair = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xeceff1));
-      backHair.rotation.x = Math.PI * 0.55;
-      backHair.position.set(0, 2.28, -0.25);
-      g.add(backHair);
-      // شارب أبيض ضخم + لحية قصيرة
-      for (const side of [-1, 1]) {
-        const mst = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 7), mat(0xfafafa));
-        mst.position.set(side * 0.13, 1.99, 0.44);
-        mst.scale.set(1.3, 0.6, 0.7);
-        g.add(mst);
-      }
-      const beard = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.35, 8), mat(0xfafafa));
-      beard.rotation.x = Math.PI;
-      beard.position.set(0, 1.73, 0.3);
-      g.add(beard);
-      // فست رمادي + ربطة عنق + ياقة
-      const vest = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.72, 0.14), mat(0x546e7a));
-      vest.position.set(0, 1.42, 0.36);
-      g.add(vest);
-      const collar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.12, 0.1), mat(0xffffff));
-      collar.position.set(0, 1.8, 0.4);
-      g.add(collar);
-      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.42, 0.06), mat(0x5d1a12));
-      tie.position.set(0, 1.58, 0.45);
-      g.add(tie);
-      // عصا خشبية
-      const cane = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.15, 8), mat(0x5d4037));
-      cane.position.set(0.8, 0.58, 0.2);
-      g.add(cane);
-      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat(0x3e2723));
-      knob.position.set(0.8, 1.18, 0.2);
-      g.add(knob);
     }
 
     // ظل دائري
@@ -607,10 +552,8 @@ window.S3D = (() => {
   }
 
   let salimTemplate = null;
-  // blueThobe, businessman, emeraldRobed, jollyPortly, omar (رجال) + littleBackpacker, thumbsUpHandyman (VIP)
-  // + veiledInBlack (نساء) → THREE.Group بعد التحميل
+  // بقية الشخصيات (رجال/نساء VIP وعاديين) → THREE.Group بعد التحميل، كلها بنفس المفتاح المستخدم في makeCharacter
   const regularTemplates = {};
-  let blueThobeRig = null;     // { template (مجسّم متحرك), walkClip, runClip }
   let modelsLoadStarted = false;
 
   function preloadRealModels() {
@@ -636,19 +579,11 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.littleBackpacker = m; }, "models/little_backpacker.glb", "خليل");
     loadStatic((m) => { regularTemplates.thumbsUpHandyman = m; }, "models/thumbs_up_handyman.glb", "أبو شاكر الفني");
     loadStatic((m) => { regularTemplates.veiledInBlack = m; }, "models/veiled_in_black.glb", "المنقبة");
-
-    // السيخ المتحرك (مشي/جري حقيقي) لشخصية الثوب الأزرق فقط — مجسّم منفصل بدون تكستر (مربوط بهيكل عظمي)
-    if (typeof SkeletonUtils === "undefined") return;
-    loader.load("models/blue_thobe_walk.glb", (gltf) => {
-      const rig = gltf.scene;
-      autoScaleGround(rig, MODEL_HEIGHT);
-      const tint = new THREE.MeshPhysicalMaterial({ color: 0x1e4d8c, roughness: 0.65, clearcoat: 0.2, clearcoatRoughness: 0.4 });
-      rig.traverse((o) => { if (o.isMesh) { o.material = tint; o.castShadow = true; } });
-      blueThobeRig = { template: rig, walkClip: gltf.animations[0], runClip: null };
-      loader.load("models/blue_thobe_run.glb", (gltf2) => {
-        if (blueThobeRig) blueThobeRig.runClip = gltf2.animations[0];
-      }, undefined, (err) => console.warn("تعذر تحميل حركة الجري", err));
-    }, undefined, (err) => console.warn("تعذر تحميل هيكل المشي المتحرك", err));
+    loadStatic((m) => { regularTemplates.desertGentleman = m; }, "models/desert_gentleman.glb", "شيخ يوسف");
+    loadStatic((m) => { regularTemplates.grandpaCane = m; }, "models/grandpa_cane.glb", "الخواجة إدوارد");
+    loadStatic((m) => { regularTemplates.constructionExec = m; }, "models/construction_exec.glb", "زبون (تنفيذي)");
+    loadStatic((m) => { regularTemplates.grayKurta = m; }, "models/gray_kurta.glb", "زبون (كردتة رمادية)");
+    loadStatic((m) => { regularTemplates.clockworkGentleman = m; }, "models/clockwork_gentleman.glb", "زبون (الساعاتي)");
   }
 
   /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
@@ -700,34 +635,6 @@ window.S3D = (() => {
     g.traverse((o) => { if (o.isMesh && !headMat) headMat = o.material; });
     g.add(groundShadow());
     return { group: g, head: null, headMat, height: MODEL_HEIGHT, mouths: null };
-  }
-
-  /* شخصية "الثوب الأزرق": هيكل متحرك حقيقي (مشي/جري) أثناء الدخول والخروج،
-     ونموذج ثابت عالي التفصيل بالتكستر الحقيقي أثناء الوقوف والطلب */
-  function buildBlueThobeAnimated() {
-    const g = new THREE.Group();
-
-    const animRig = SkeletonUtils.clone(blueThobeRig.template);
-    g.add(animRig);
-    const mixer = new THREE.AnimationMixer(animRig);
-    const walkAction = mixer.clipAction(blueThobeRig.walkClip);
-    const runAction = blueThobeRig.runClip ? mixer.clipAction(blueThobeRig.runClip) : null;
-    walkAction.play();
-
-    const staticModel = regularTemplates.blueThobe.clone(true);
-    staticModel.visible = false;
-    g.add(staticModel);
-
-    let staticMat = null;
-    staticModel.traverse((o) => { if (o.isMesh && !staticMat) staticMat = o.material; });
-    let rigMat = null;
-    animRig.traverse((o) => { if (o.isMesh && !rigMat) rigMat = o.material; });
-
-    g.add(groundShadow());
-    return {
-      group: g, head: null, headMat: [rigMat, staticMat], height: MODEL_HEIGHT, mouths: null,
-      animRig, staticModel, mixer, walkAction, runAction, animPhase: "entering",
-    };
   }
 
   /* جدار جانبي عمودي بباب خروج — يواجه الكاميرا مباشرة (نفس اتجاه النوافذ الخلفية) */
@@ -1096,16 +1003,6 @@ window.S3D = (() => {
       e.mouths.mid.visible = false;
       e.mouths.sad.visible = !happy;
     }
-    // شخصية الثوب الأزرق المتحركة: ارجع للهيكل المتحرك وشغّل مشي (راضٍ) أو جري (زعلان) عند الخروج
-    if (e.animRig) {
-      e.staticModel.visible = false;
-      e.animRig.visible = true;
-      e.animPhase = "leaving";
-      e.walkAction.stop();
-      if (e.runAction) e.runAction.stop();
-      const action = (!happy && e.runAction) ? e.runAction : e.walkAction;
-      action.reset().play();
-    }
     if (e.ov) { e.ov.remove(); e.ov = null; }
     setTimeout(() => disposeChar(c.uid), 750);
   };
@@ -1167,7 +1064,6 @@ window.S3D = (() => {
 
     for (const e of chars.values()) {
       e.t += dt;
-      if (e.mixer && e.animRig.visible) e.mixer.update(dt);
       const g = e.group;
       if (e.leaving) {
         // خروج: يمشي واقفاً نحو باب المطعم (سعيد يمين بثبات / زعلان يسار بخطوات سريعة)
@@ -1181,25 +1077,23 @@ window.S3D = (() => {
         g.scale.setScalar(e.leaveScale * shrink);
       } else {
         // انزلاق نحو مكان الوقوف
+        const distToSlot = Math.abs(e.slotX - g.position.x);
         g.position.x += (e.slotX - g.position.x) * Math.min(1, dt * 4);
-        // تمايل خفيف
-        g.position.y = Math.sin(e.t * 2.1) * 0.05;
-        // اهتزاز غضب عند قرب نفاد الصبر
+        // أثناء الدخول: تمايل مشي أوضح وأسرع (يحاكي الخطوات) — بعد الوصول: تمايل هادئ يوحي بالحياة أثناء الانتظار
+        const walking = distToSlot > 0.06;
+        const bobFreq = walking ? 9 : 2.1;
+        const bobAmp = walking ? 0.09 : 0.045;
+        g.position.y = Math.sin(e.t * bobFreq) * bobAmp;
+        // اهتزاز غضب عند قرب نفاد الصبر (يطغى على التمايل العادي)
         const c = e.cust;
         const r = c ? c.patience / c.maxPatience : 1;
         if (r < 0.3) {
           g.rotation.z = Math.sin(e.t * 30) * 0.05;
           tintEmissive(e, 0x551111);
         } else {
-          g.rotation.z = 0;
+          // تمايل جانبي خفيف متزامن مع الحركة الرأسية (كأنه يحرك وزنه بين قدميه)
+          g.rotation.z = Math.sin(e.t * bobFreq) * (walking ? 0.035 : 0.012);
           tintEmissive(e, 0x000000);
-        }
-        // شخصية الثوب الأزرق: بمجرد وصوله لمكانه ينتقل من هيكل المشي المتحرك للنموذج الثابت المفصّل
-        if (e.animRig && e.animPhase === "entering" && Math.abs(g.position.x - e.slotX) < 0.05) {
-          e.animRig.visible = false;
-          e.staticModel.visible = true;
-          e.walkAction.stop();
-          e.animPhase = "standing";
         }
         // الفم يتبع المزاج
         if (e.mouths) {
