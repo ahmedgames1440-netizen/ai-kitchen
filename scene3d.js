@@ -8,6 +8,7 @@
 window.S3D = (() => {
   let renderer, scene, camera, container, overlayLayer;
   let raycaster, pointer;
+  let maxAniso = 1; // أقصى تصفية أنيزوتروبية مدعومة — تُحسب بعد إنشاء الـrenderer
   const chars = new Map();   // uid -> { group, ov, head, t, slotX, entering, leaving, height, baseTint }
   let slotSpread = 4.2;
   let running = false;
@@ -543,7 +544,18 @@ window.S3D = (() => {
       loader.load(url, (gltf) => {
         const model = gltf.scene;
         autoScaleGround(model, MODEL_HEIGHT);
-        model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+        model.traverse((o) => {
+          if (o.isMesh) {
+            o.castShadow = true; o.receiveShadow = true;
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            for (const mat of mats) {
+              if (!mat) continue;
+              for (const key of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]) {
+                if (mat[key]) mat[key].anisotropy = maxAniso;
+              }
+            }
+          }
+        });
         onDone(model);
       }, undefined, (err) => console.warn(`تعذر تحميل نموذج ${label} — استخدام الشكل الافتراضي`, err));
     };
@@ -964,6 +976,7 @@ window.S3D = (() => {
       if ("outputColorSpace" in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.domElement.id = "canvas3d";
       container.prepend(renderer.domElement);
+      maxAniso = renderer.capabilities.getMaxAnisotropy();
 
       scene = new THREE.Scene();
       scene.fog = new THREE.Fog(0x1a1035, 16, 34);
@@ -975,7 +988,7 @@ window.S3D = (() => {
       const sun = new THREE.DirectionalLight(0xfff4e0, 1.5);
       sun.position.set(4, 9, 6);
       sun.castShadow = true;
-      sun.shadow.mapSize.set(1024, 1024);
+      sun.shadow.mapSize.set(2048, 2048);
       sun.shadow.camera.left = -12; sun.shadow.camera.right = 12;
       sun.shadow.camera.top = 12; sun.shadow.camera.bottom = -6;
       sun.shadow.camera.near = 1; sun.shadow.camera.far = 30;

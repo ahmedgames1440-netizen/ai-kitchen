@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">مطعم المستقبل</string>
+    <string name="title_activity_main">مطعم المستقبل</string>
+    <string name="package_name">com.aikitchen.futurerestaurant</string>
+    <string name="custom_url_scheme">com.aikitchen.futurerestaurant</string>
+</resources>
