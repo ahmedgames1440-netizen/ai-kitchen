@@ -250,9 +250,24 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-<script src="audio.js"></script>
-<script src="scene3d.js"></script>
-<script src="game.js"></script>
+<!-- Three.js عبر ES Modules (مطلوب لتحميل نماذج GLTF مثل شخصية العم سالم الحقيقية) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from "three";
+  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+  window.THREE = THREE;
+  window.GLTFLoader = GLTFLoader;
+</script>
+<!-- defer كي تنتظر تعريف window.THREE أعلاه قبل التنفيذ (الترتيب النسبي محفوظ بين module وdefer) -->
+<script src="audio.js" defer></script>
+<script src="scene3d.js" defer></script>
+<script src="game.js" defer></script>
 </body>
 </html>

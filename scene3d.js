@@ -154,6 +154,9 @@ window.S3D = (() => {
 
   /* ---------- بناء شخصية كرتونية ---------- */
   function makeCharacter(c) {
+    // العم سالم: نموذج GLTF حقيقي بدل الأشكال المبنية بالكود (مع سقوط احتياطي إذا لم يكتمل التحميل بعد)
+    if (c.vip === "salim" && salimTemplate) return buildSalimFromModel();
+
     const g = new THREE.Group();
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const skin = rnd(SKINS);
@@ -663,6 +666,51 @@ window.S3D = (() => {
   let floorMat = null, wallMat = null, clockHands = null, steam = [], robot = null;
   let leftDoorGroup = null, rightDoorGroup = null;
 
+  /* ---------- نموذج GLTF حقيقي (العم سالم) بدل الشخصية المبنية بالكود ---------- */
+  const SALIM_HEIGHT = 2.95; // نفس ارتفاع رأس بقية الشخصيات تقريباً (لتموضع فقاعة الحوار)
+  let salimTemplate = null, salimLoadStarted = false;
+  function preloadSalimModel() {
+    if (salimLoadStarted || typeof GLTFLoader === "undefined") return;
+    salimLoadStarted = true;
+    new GLTFLoader().load(
+      "models/old_gentleman.glb",
+      (gltf) => {
+        const model = gltf.scene;
+        // عاير المقياس والوضع مرة وحدة حسب الصندوق المحيط الحقيقي للنموذج
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const scale = SALIM_HEIGHT / Math.max(size.y, 0.001);
+        model.scale.setScalar(scale);
+        const box2 = new THREE.Box3().setFromObject(model);
+        model.position.y -= box2.min.y; // تثبيت القدمين على الأرض (y=0)
+        model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+        salimTemplate = model;
+      },
+      undefined,
+      (err) => console.warn("تعذر تحميل نموذج العم سالم — استخدام النموذج الافتراضي", err)
+    );
+  }
+
+  /* شخصية العم سالم من نموذج GLTF حقيقي (مع سقوط احتياطي على الشكل المبني بالكود) */
+  function buildSalimFromModel() {
+    // غلاف علوي فارغ: حلقة الرسم تكتب فوق group.position.y كل إطار (اهتزاز المشي)،
+    // فلازم يبقى إزاحة "تثبيت القدمين على الأرض" على النموذج الابن لا الغلاف نفسه
+    const g = new THREE.Group();
+    const model = salimTemplate.clone(true);
+    g.add(model);
+    let headMat = null;
+    g.traverse((o) => { if (o.isMesh && !headMat) headMat = o.material; });
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.85, 20),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 })
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.02;
+    g.add(shadow);
+    return { group: g, head: null, headMat, height: SALIM_HEIGHT, mouths: null };
+  }
+
   /* جدار جانبي عمودي بباب خروج — يواجه الكاميرا مباشرة (نفس اتجاه النوافذ الخلفية) */
   function buildDoorGroup() {
     const grp = new THREE.Group();
@@ -941,6 +989,7 @@ window.S3D = (() => {
       scene.add(rim);
 
       buildRoom();
+      preloadSalimModel();
 
       raycaster = new THREE.Raycaster();
       pointer = new THREE.Vector2();
