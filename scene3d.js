@@ -154,46 +154,41 @@ window.S3D = (() => {
 
   /* ---------- بناء شخصية كرتونية ---------- */
   function makeCharacter(c) {
-    // العم سالم: نموذج GLTF حقيقي بدل الأشكال المبنية بالكود (مع سقوط احتياطي إذا لم يكتمل التحميل بعد)
-    if (c.vip === "salim" && salimTemplate) return buildStaticFromModel(salimTemplate);
-
     const vip = c.vip || null;
     const female = c.gender === "f" && !vip;
 
-    // زبون عادي (رجل): فرصة استخدام نموذج GLTF حقيقي بدل الشكل المبني بالكود لتنويع بصري
-    if (!vip && !female) {
+    // شخصيات صار لها نموذج GLTF حقيقي — بدون أي "كبسولات" مبنية بالكود بعد اليوم
+    if (vip === "salim") return salimTemplate ? buildStaticFromModel(salimTemplate) : buildLoadingPlaceholder();
+    if (vip === "khalil") return regularTemplates.littleBackpacker ? buildStaticFromModel(regularTemplates.littleBackpacker) : buildLoadingPlaceholder();
+    if (vip === "fanni") return regularTemplates.thumbsUpHandyman ? buildStaticFromModel(regularTemplates.thumbsUpHandyman) : buildLoadingPlaceholder();
+    if (female) return regularTemplates.veiledInBlack ? buildFemaleFromModel(c) : buildLoadingPlaceholder();
+    if (!vip) {
+      // زبون عادي (رجل): نموذج GLTF حقيقي دائماً من مجموعة متنوعة
       const pool = [];
       if (regularTemplates.blueThobe) pool.push(blueThobeRig && blueThobeRig.runClip ? "blueThobeAnimated" : "blueThobe");
       if (regularTemplates.businessman) pool.push("businessman");
       if (regularTemplates.emeraldRobed) pool.push("emeraldRobed");
-      if (pool.length && Math.random() < 0.4) {
-        const pick = pool[Math.floor(Math.random() * pool.length)];
-        if (pick === "blueThobeAnimated") return buildBlueThobeAnimated();
-        if (pick === "blueThobe") return buildStaticFromModel(regularTemplates.blueThobe);
-        if (pick === "businessman") return buildStaticFromModel(regularTemplates.businessman);
-        if (pick === "emeraldRobed") return buildStaticFromModel(regularTemplates.emeraldRobed);
-      }
+      if (regularTemplates.jollyPortly) pool.push("jollyPortly");
+      if (regularTemplates.omar) pool.push("omar");
+      if (!pool.length) return buildLoadingPlaceholder();
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      return pick === "blueThobeAnimated" ? buildBlueThobeAnimated() : buildStaticFromModel(regularTemplates[pick]);
     }
 
+    // الشخصيات المميزة المتبقية (شيخ يوسف، أحمد الفهد، أبو سمير، الخواجة إدوارد، مفتش الوزارة)
+    // ما زالت مبنية بالكود مؤقتاً — ما توفر لها نموذج GLTF جاهز بعد
     const g = new THREE.Group();
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const skin = rnd(SKINS);
+    const bodyColor = vip === "edward" ? 0x8d6e63 : 0xf5f5f5;
 
-    const bodyColor =
-      female ? rnd([0x1a1a1a, 0x241b3a, 0x3d1626, 0x14251c]) : // عباءات
-      vip === "khalil" ? 0x6d4c2f :
-      vip === "salim"  ? 0x8d7350 :
-      vip === "fanni"  ? 0x1976d2 : // أفرول الفني الأزرق
-      vip === "edward" ? 0x8d6e63 : // جاكيت تويد
-      vip ? 0xf5f5f5 : rnd(THOBES);
-
-    // الجسم (ثوب / عباءة) — أسطح أنعم لملمس شبه واقعي بدل الشكل المضلّع
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(female ? 0.4 : 0.45, female ? 0.8 : 0.85, 1.9, 24), mat(bodyColor));
+    // الجسم (ثوب) — أسطح أنعم لملمس شبه واقعي بدل الشكل المضلّع
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 1.9, 24), mat(bodyColor));
     body.position.y = 0.95;
     g.add(body);
 
     // رقبة وأكتاف — قوام أقرب للواقع
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 16), mat(female ? bodyColor : skin));
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 16), mat(skin));
     neck.position.y = 1.92;
     g.add(neck);
     for (const side of [-1, 1]) {
@@ -224,18 +219,17 @@ window.S3D = (() => {
     const headMat = mat(skin);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 22), headMat);
     head.position.y = 2.15;
-    if (vip === "salim") head.scale.y = 1.28;
     g.add(head);
 
     // ===== الوجه: ملامح واضحة =====
     const darkSkin = new THREE.Color(skin).multiplyScalar(0.82).getHex();
-    const hairColor = (vip === "yousef" || vip === "salim" || vip === "samir" || vip === "edward") ? 0xd7d7d7 : 0x3a2a1a;
-    // عيون كرتونية: بياض + بؤبؤ + لمعة (المنقبات: العيون فوق فتحة النقاب)
-    const eyeZ = female ? 0.57 : 0.40; // عيون المنقبات بارزة أمام الحجاب
+    const hairColor = (vip === "yousef" || vip === "samir" || vip === "edward") ? 0xd7d7d7 : 0x3a2a1a;
+    // عيون كرتونية: بياض + بؤبؤ + لمعة
+    const eyeZ = 0.40;
     for (const sx of [-0.19, 0.19]) {
       const white = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), mat(0xffffff));
       white.position.set(sx, 2.24, eyeZ);
-      white.scale.z = female ? 0.4 : 0.55;
+      white.scale.z = 0.55;
       g.add(white);
       // قزحية ملونة (بني/أخضر/عسلي مثل الصور) + بؤبؤ أسود
       const irisCol = c._iris || (c._iris = Math.random() < 0.2 ? 0x2e7d32 : (Math.random() < 0.35 ? 0x8d6e63 : 0x4e342e));
@@ -249,31 +243,22 @@ window.S3D = (() => {
         new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x999999 }));
       shine.position.set(sx + 0.03, 2.27, eyeZ + 0.1);
       g.add(shine);
-      // رموش للمنقبات
-      if (female) {
-        const lash = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.03), mat(0x1a1a1a));
-        lash.position.set(sx, 2.32, eyeZ + 0.06);
-        lash.rotation.z = sx < 0 ? 0.1 : -0.1;
-        g.add(lash);
-      }
-      // حواجب (الفهد له حواجبه الغاضبة الخاصة، والمنقبات وجههن مغطى)
-      if (vip !== "fahad" && !female) {
+      // حواجب (الفهد له حواجبه الغاضبة الخاصة)
+      if (vip !== "fahad") {
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.05), mat(hairColor));
         brow.position.set(sx, 2.42, 0.42);
         brow.rotation.z = sx < 0 ? 0.12 : -0.12;
         g.add(brow);
       }
     }
-    // أنف (مغطى عند المنقبات)
-    if (!female) {
-      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(darkSkin));
-      nose.position.set(0, 2.12, 0.48);
-      nose.scale.set(0.9, 1.15, 0.9);
-      g.add(nose);
-    }
-    // فم يتغير مع المزاج (مبتسم / محايد / عابس) — لحية الشيخ والنقاب يغطيانه
+    // أنف
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(darkSkin));
+    nose.position.set(0, 2.12, 0.48);
+    nose.scale.set(0.9, 1.15, 0.9);
+    g.add(nose);
+    // فم يتغير مع المزاج (مبتسم / محايد / عابس) — لحية الشيخ تغطيه
     let mouths = null;
-    if (vip !== "yousef" && !female) {
+    if (vip !== "yousef") {
       const my = (vip === "fahad" || vip === "samir") ? 1.83 : 1.93; // تحت الشنب
       const mz = 0.46;
       const mMat = mat(0x7a3b2e);
@@ -334,22 +319,7 @@ window.S3D = (() => {
       }
     };
 
-    if (female) {
-      // حجاب كامل + نقاب: تظهر العيون فقط، مع غطاء يتدلى على الكتفين
-      const hijab = new THREE.Mesh(new THREE.SphereGeometry(0.57, 28, 22), mat(bodyColor));
-      hijab.position.y = 2.18;
-      g.add(hijab);
-      const veil = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.5, 0.78, 1.05, 24, 1, true),
-        new THREE.MeshPhysicalMaterial({ color: bodyColor, side: THREE.DoubleSide, roughness: 0.7, clearcoat: 0.3, clearcoatRoughness: 0.3 })
-      );
-      veil.position.y = 1.72;
-      g.add(veil);
-      // فتحة العيون (البرقع) — بارزة قدام سطح الحجاب
-      const strip = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.18, 0.1), mat(skin));
-      strip.position.set(0, 2.25, 0.54);
-      g.add(strip);
-    } else if (vip === "inspector") {
+    if (vip === "inspector") {
       addEars();
       addGhutra(0xc0392b, true, true); // شماغ رسمي منقوش
       // نظارة رسمية
@@ -415,46 +385,6 @@ window.S3D = (() => {
       goat.rotation.x = Math.PI;
       goat.position.set(0, 1.72, 0.32);
       g.add(goat);
-    } else if (vip === "khalil") {
-      // طفل أصلع — بدون غطاء رأس (فمه من أفواه المزاج)
-      addEars();
-    } else if (vip === "fanni") {
-      // الفني: كاب أزرق بمقدمة رمادية + أفرول وقميص أبيض + مفتاح ربط أحمر (مثل الصورة)
-      addEars();
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.54, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x1565c0));
-      cap.position.y = 2.34;
-      g.add(cap);
-      const capTop = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xcfd8dc));
-      capTop.position.y = 2.44;
-      g.add(capTop);
-      const brim = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.05, 0.34), mat(0x1565c0));
-      brim.position.set(0, 2.4, 0.5);
-      brim.rotation.x = -0.12;
-      g.add(brim);
-      // صدر القميص الأبيض + حمالات الأفرول
-      const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.58, 0.62, 12), mat(0xf5f5f5));
-      chest.position.y = 1.56;
-      g.add(chest);
-      for (const side of [-1, 1]) {
-        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.55, 0.06), mat(0x0d47a1));
-        strap.position.set(side * 0.22, 1.62, 0.44);
-        strap.rotation.x = -0.12;
-        g.add(strap);
-      }
-      // مفتاح الربط الأحمر على كتفه
-      const wHandle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.72, 0.07), mat(0xc62828));
-      wHandle.position.set(0.72, 1.35, 0.12);
-      wHandle.rotation.z = 0.5;
-      g.add(wHandle);
-      const wHead = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.09),
-        new THREE.MeshStandardMaterial({ color: 0x9e9e9e, roughness: 0.3, metalness: 0.7 }));
-      wHead.position.set(0.9, 1.68, 0.12);
-      wHead.rotation.z = 0.5;
-      g.add(wHead);
-      // شعر بني تحت الكاب
-      const hair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.1), mat(0x4e342e));
-      hair.position.set(0, 2.3, -0.42);
-      g.add(hair);
     } else if (vip === "edward") {
       // الخواجة: شعر أبيض جانبي + شارب ولحية بيضاء + فست وربطة + عصا (مثل الصورة)
       addEars();
@@ -496,35 +426,6 @@ window.S3D = (() => {
       const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat(0x3e2723));
       knob.position.set(0.8, 1.18, 0.2);
       g.add(knob);
-    } else {
-      // زبون عادي: غترة بيضاء أو شماغ منقوش (مثل الصور المرجعية)
-      const style = Math.random();
-      if (style < 0.42) addGhutra(0xffffff);
-      else if (style < 0.8) addGhutra(0xc0392b, true, true);
-      else { addEars(); } // بدون غطاء
-      // لحية عشوائية: سكسوكة سوداء / لحية كاملة / حليق
-      const beardCol = rnd([0x141414, 0x2d1e12, 0x3a2a1a]);
-      const bStyle = Math.random();
-      if (bStyle < 0.4) {
-        // سكسوكة + شنب (مثل صورة الشماغ الوردي)
-        const goat = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 8), mat(beardCol));
-        goat.rotation.x = Math.PI;
-        goat.position.set(0, 1.74, 0.34);
-        g.add(goat);
-        const mst = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.09, 0.08), mat(beardCol));
-        mst.position.set(0, 1.99, 0.45);
-        g.add(mst);
-      } else if (bStyle < 0.72) {
-        // لحية كاملة تحيط بالفك (مثل صورة العيون الخضراء)
-        const jaw = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.11, 8, 16, Math.PI), mat(beardCol));
-        jaw.rotation.z = Math.PI;
-        jaw.position.set(0, 2.06, 0.28);
-        jaw.scale.z = 0.6;
-        g.add(jaw);
-        const mst = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.1, 0.08), mat(beardCol));
-        mst.position.set(0, 1.99, 0.45);
-        g.add(mst);
-      }
     }
 
     // ظل دائري
@@ -536,10 +437,8 @@ window.S3D = (() => {
     shadow.position.y = 0.02;
     g.add(shadow);
 
-    if (vip === "khalil") g.scale.setScalar(0.72);
     g.traverse(o => { if (o.isMesh) o.castShadow = true; });
-    const height = (vip === "khalil" ? 0.72 : 1) * (vip === "salim" ? 3.1 : 2.95);
-    return { group: g, head, headMat, height, mouths };
+    return { group: g, head, headMat, height: 2.95, mouths };
   }
 
   /* ============================================================
@@ -708,7 +607,9 @@ window.S3D = (() => {
   }
 
   let salimTemplate = null;
-  const regularTemplates = {}; // { blueThobe, businessman, emeraldRobed } → THREE.Group بعد التحميل
+  // blueThobe, businessman, emeraldRobed, jollyPortly, omar (رجال) + littleBackpacker, thumbsUpHandyman (VIP)
+  // + veiledInBlack (نساء) → THREE.Group بعد التحميل
+  const regularTemplates = {};
   let blueThobeRig = null;     // { template (مجسّم متحرك), walkClip, runClip }
   let modelsLoadStarted = false;
 
@@ -730,6 +631,11 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.blueThobe = m; }, "models/blue_thobe.glb", "الثوب الأزرق");
     loadStatic((m) => { regularTemplates.businessman = m; }, "models/businessman.glb", "رجل الأعمال");
     loadStatic((m) => { regularTemplates.emeraldRobed = m; }, "models/emerald_robed.glb", "الجلباب الزمردي");
+    loadStatic((m) => { regularTemplates.jollyPortly = m; }, "models/jolly_portly.glb", "الرجل البشوش");
+    loadStatic((m) => { regularTemplates.omar = m; }, "models/omar.glb", "عمر");
+    loadStatic((m) => { regularTemplates.littleBackpacker = m; }, "models/little_backpacker.glb", "خليل");
+    loadStatic((m) => { regularTemplates.thumbsUpHandyman = m; }, "models/thumbs_up_handyman.glb", "أبو شاكر الفني");
+    loadStatic((m) => { regularTemplates.veiledInBlack = m; }, "models/veiled_in_black.glb", "المنقبة");
 
     // السيخ المتحرك (مشي/جري حقيقي) لشخصية الثوب الأزرق فقط — مجسّم منفصل بدون تكستر (مربوط بهيكل عظمي)
     if (typeof SkeletonUtils === "undefined") return;
@@ -743,6 +649,45 @@ window.S3D = (() => {
         if (blueThobeRig) blueThobeRig.runClip = gltf2.animations[0];
       }, undefined, (err) => console.warn("تعذر تحميل حركة الجري", err));
     }, undefined, (err) => console.warn("تعذر تحميل هيكل المشي المتحرك", err));
+  }
+
+  /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
+  const ABAYA_TINTS = [
+    { color: 0xffffff, emissive: 0x000000 }, // أسود أصلي
+    { color: 0xb5677a, emissive: 0x330010 }, // كستنائي
+    { color: 0x6f86b5, emissive: 0x001433 }, // كحلي
+    { color: 0x6fb590, emissive: 0x00330f }, // أخضر داكن
+    { color: 0x9b7ab5, emissive: 0x1c0033 }, // بنفسجي داكن
+    { color: 0xb59b7a, emissive: 0x241800 }, // بني داكن
+  ];
+
+  /* شخصية منقّبة من نموذج GLTF حقيقي، بلون عباءة عشوائي لكل زبونة (نفس النموذج، تنويع بالتلوين) */
+  function buildFemaleFromModel(c) {
+    const g = new THREE.Group();
+    const model = regularTemplates.veiledInBlack.clone(true);
+    g.add(model);
+    const tint = c._tint || (c._tint = ABAYA_TINTS[Math.floor(Math.random() * ABAYA_TINTS.length)]);
+    let headMat = null;
+    model.traverse((o) => {
+      if (o.isMesh) {
+        o.material = o.material.clone(); // مادة خاصة لكل نسخة كي لا يتغير لون بقية الزبونات
+        o.material.color.setHex(tint.color);
+        o.material.emissive.setHex(tint.emissive);
+        if (!headMat) headMat = o.material;
+      }
+    });
+    g.add(groundShadow());
+    return { group: g, head: null, headMat, height: MODEL_HEIGHT, mouths: null };
+  }
+
+  /* شكل مؤقت بسيط (بدون تفاصيل) يظهر فقط في الثانية الأولى النادرة قبل اكتمال تحميل النماذج */
+  function buildLoadingPlaceholder() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.45, 1.6, 4, 8), mat(0x9e9e9e));
+    body.position.y = 1.25;
+    g.add(body);
+    g.add(groundShadow());
+    return { group: g, head: null, headMat: body.material, height: MODEL_HEIGHT, mouths: null };
   }
 
   /* غلاف علوي فارغ: حلقة الرسم تكتب فوق group.position.y كل إطار (اهتزاز المشي)،
