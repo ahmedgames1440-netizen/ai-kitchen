@@ -247,10 +247,12 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 }
 .ov3d {
   position: absolute;
-  transform: translate(-50%, -100%);
+  /* ثابت بشريط علوي واحد (top محسوب بثابت 8px بالجافاسكربت) — يضمن ظهور الطلب
+     كاملاً دائماً بدل التعليق فوق الرأس اللي يعتمد على إسقاط قد يخرج عن الشاشة */
+  transform: translate(-50%, 0);
   pointer-events: auto;
   cursor: pointer;
-  background: rgba(15, 9, 35, .9);
+  background: rgba(15, 9, 35, .92);
   border: 2px solid rgba(255,255,255,.28);
   border-radius: 14px;
   padding: 6px 9px;
@@ -263,6 +265,16 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   gap: 4px;
   backdrop-filter: blur(2px);
   box-shadow: 0 4px 14px rgba(0,0,0,.5);
+  z-index: 6;
+}
+/* ذيل صغير يشير للأسفل نحو الشخصية عشان يبقى الربط البصري واضح */
+.ov3d::after {
+  content: "";
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: rgba(15, 9, 35, .92);
 }
 .ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,209,102,.35); }
 .ov3d.servable { border-color: var(--green); box-shadow: 0 0 14px rgba(46,204,113,.75); border-width: 3px; }
@@ -554,6 +566,19 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   color: #3a2200;
 }
 .u-buy:disabled { opacity: .4; }
+/* أزرار تعديل/حذف الأصناف المبتكرة بالذكاء الاصطناعي */
+.m-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.m-edit, .m-del {
+  border: none;
+  border-radius: 8px;
+  width: 30px; height: 30px;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.m-edit { background: var(--card2); }
+.m-del { background: rgba(255,107,107,.25); }
+.m-del:active, .m-edit:active { transform: scale(.92); }
 #ai-dish-card {
   background: #fff;
   color: #222;
@@ -607,4 +632,16 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   .customer .face { font-size: 32px; }
   .customer .order-bubble { font-size: 17px; }
   .tray-slot { width: 46px; height: 46px; font-size: 26px; }
+}
+
+/* بالوضع العرضي على الجوال، الارتفاع الكلي قليل — لازم منطقة الزبائن (المشهد
+   ثلاثي الأبعاد) تنكمش أكثر عشان شريط الصينية والكاونتر يضلوا ظاهرين دائماً
+   بدون الحاجة لتمرير الشاشة */
+@media (orientation: landscape) and (max-height: 520px) {
+  #customers-area { min-height: 110px; }
+  #tray-area { padding: 4px 10px; }
+  .tray-slot { width: 42px; height: 42px; }
+  #counter-area { padding: 6px 10px; }
+  .station .s-emoji { font-size: 24px; }
+  .station .s-img { width: 36px; height: 36px; }
 }

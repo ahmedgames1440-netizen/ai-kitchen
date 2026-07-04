@@ -202,17 +202,17 @@ function aiGenerateDish() {
 
 /* ---------- التطويرات: مستويات متصاعدة — البداية ~300 والسعر يقفز مع كل مستوى ---------- */
 const UPGRADES = [
-  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => Math.round(550 * Math.pow(1.6, l)) },
-  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى", max: 5, cost: l => Math.round(600 * Math.pow(1.7, l)) },
-  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => Math.round(650 * Math.pow(1.8, l)) },
-  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية لكل مستوى", max: 3, cost: l => Math.round(700 * Math.pow(1.9, l)) },
+  { id: "decor", emoji: "🪴", name: "ديكور فخم", desc: "+12% صبر للزباين لكل مستوى", max: 5, cost: l => Math.round(900 * Math.pow(1.7, l)) },
+  { id: "grill", emoji: "🔥", name: "معدات أسرع", desc: "تسريع الطبخ 12% لكل مستوى", max: 5, cost: l => Math.round(950 * Math.pow(1.8, l)) },
+  { id: "fame",  emoji: "📣", name: "حملة إعلانية", desc: "+10% بقشيش لكل مستوى", max: 5, cost: l => Math.round(1000 * Math.pow(1.9, l)) },
+  { id: "tray",  emoji: "🍽️", name: "صينية أكبر", desc: "+1 مكان بالصينية لكل مستوى", max: 3, cost: l => Math.round(1100 * Math.pow(2.0, l)) },
   { id: "falafel", emoji: "🧆", name: "فتح صنف: فلافل", desc: "إضافة صنف جديد للمطعم استثمار مكلف (يبيع بـ6 💵)", max: 1, cost: () => 800 },
   { id: "burger",  emoji: "🍔", name: "فتح صنف: برجر", desc: "الصنف الأغلى بالقائمة (يبيع بـ10 💵)", max: 1, cost: () => 1300 },
-  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(1000 * Math.pow(2.1, l)), req: { day: 6 } },
-  /* عناصر فاخرة — غالية ومقفلة بشروط صعبة */
-  { id: "soda", emoji: "🥤", name: "نافورة المشروبات الذاتية", desc: "المشروبات تجهز فورياً بدون انتظار!", max: 1, cost: () => 3800, req: { level: 5 } },
-  { id: "doubleOven", emoji: "♨️", name: "الفرن المزدوج الاحترافي", desc: "25% فرصة يطلع صنفان من كل طبخة — الثاني ببلاش!", max: 1, cost: () => 6000, req: { day: 10 } },
-  { id: "goldenSign", emoji: "🏅", name: "اللوحة الذهبية المرموقة", desc: "سمعة محصّنة: تقييمك لا ينزل أبداً تحت 3.0", max: 1, cost: () => 7500, req: { level: 8 } },
+  /* المميزات القوية اللي تساعد على العمل كثير — أسعارها أعلى بكثير (5000-9000+) */
+  { id: "robot",   emoji: "🤖", name: "مساعد آلي", desc: "م1: يطبخ كل 12ث — م2: كل 8ث — م3: كل 4ث", max: 3, cost: l => Math.round(5500 * Math.pow(1.8, l)), req: { day: 6 } },
+  { id: "soda", emoji: "🥤", name: "نافورة المشروبات الذاتية", desc: "المشروبات تجهز فورياً بدون انتظار!", max: 1, cost: () => 6500, req: { level: 5 } },
+  { id: "doubleOven", emoji: "♨️", name: "الفرن المزدوج الاحترافي", desc: "25% فرصة يطلع صنفان من كل طبخة — الثاني ببلاش!", max: 1, cost: () => 8000, req: { day: 10 } },
+  { id: "goldenSign", emoji: "🏅", name: "اللوحة الذهبية المرموقة", desc: "سمعة محصّنة: تقييمك لا ينزل أبداً تحت 3.0", max: 1, cost: () => 9000, req: { level: 8 } },
 ];
 function reqMet(u) {
   if (!u.req) return true;
@@ -274,15 +274,15 @@ function checkAchievements() {
 
 /* ---------- المزايا الذهبية: مستويات بالذهب النادر ---------- */
 const PERKS = [
-  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", max: 2, cost: l => 100 + l * 90,
+  { id: "freshPlus", emoji: "🧊", name: "صينية التبريد VIP", max: 2, cost: l => 320 + l * 220,
     desc: l => `الطازج ✨ يدوم ${(5 + (l + 1) * 3.5).toFixed(1)} ثانية (حالياً: ${(5 + l * 3.5).toFixed(1)})` },
-  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", max: 2, cost: l => 100 + l * 80,
+  { id: "coffeePro", emoji: "🫖", name: "دلة الضيافة الكبيرة", max: 2, cost: l => 320 + l * 200,
     desc: l => `القهوة كل ${(25 - (l + 1) * 6.5).toFixed(1)} ثانية (حالياً: ${(25 - l * 6.5).toFixed(1)})` },
-  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", max: 2, cost: l => 120 + l * 100,
+  { id: "vipMagnet", emoji: "👑", name: "السمعة الذهبية", max: 2, cost: l => 350 + l * 250,
     desc: () => "الشخصيات المميزة تزورك أكثر ولمرات أكثر باليوم" },
-  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", max: 2, cost: l => 100 + l * 80,
+  { id: "insurance", emoji: "🛡️", name: "تأمين تجاري", max: 2, cost: l => 320 + l * 200,
     desc: l => `غرامات الوزارة −${(l + 1) * 30}% (حالياً: −${l * 30}%)` },
-  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", max: 3, cost: l => 100 + l * 90,
+  { id: "extraTime", emoji: "⏳", name: "ساعات عمل أطول", max: 3, cost: l => 320 + l * 220,
     desc: l => `+${(l + 1) * 10} ثانية لكل يوم (حالياً: +${l * 10})` },
 ];
 const perkLv = (id) => (state.perks && state.perks[id]) || 0;
@@ -375,7 +375,7 @@ function confirmIAP() {
 const isVIP = () => !!(state.iap && state.iap.vip);
 
 /* ---------- حالة اللعبة ---------- */
-const SAVE_KEY = "ai_kitchen_save_v1";
+const SAVE_KEY = "ai_kitchen_save_v2"; // رُفع الإصدار عمداً لتصفير تقدم كل اللاعبين مع هذا التحديث
 let state = null;
 
 function freshState() {
@@ -384,6 +384,7 @@ function freshState() {
     xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
     complaints: 0, violations: 0, perks: {},
     license: { expiresDay: 6 },     // رخصة المطعم — تنتهي بعد اليوم 6 إذا ما جُدّدت
+    commReg: { expiresDay: 6 },     // السجل التجاري — يفحصه مفتش وزارة التجارة، تنتهي بعد اليوم 6 إذا ما جُدّد
     cleanliness: 100, cleaner: { expiresDay: 0, usedTrial: false }, muniViolations: 0,
     iap: {}, adCdUntil: 0, adToggle: false,
     records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
@@ -559,8 +560,10 @@ function runInspection() {
   renderCustomers();
   setTimeout(() => {
     if (!day.running || !day.customers.includes(insp)) return;
+    const commRegExpired = state.day > state.commReg.expiresDay;
     const hasComplaints = state.complaints > 0;
-    let valid = hasComplaints && Math.random() < 0.7;
+    const complaintValid = hasComplaints && Math.random() < 0.7;
+    let valid = commRegExpired || complaintValid;
     // 👑 عضوية VIP تسقط أول مخالفة كل يوم
     if (valid && isVIP() && !day.vipWaiverUsed) {
       day.vipWaiverUsed = true;
@@ -568,14 +571,15 @@ function runInspection() {
       toast("👑 عضوية VIP الذهبية أسقطت المخالفة — محاميك تكفّل بالموضوع!");
     }
     if (valid) {
-      let fine = 40 + state.day * 10;
+      let fine = commRegExpired ? 1000 : (40 + state.day * 10);
       if (perkLv("insurance")) fine = Math.round(fine * (1 - perkLv("insurance") * 0.3));
       fine = Math.min(fine, state.money);
       state.money -= fine;
       state.violations++;
       state.rating = clamp(state.rating - 0.3, 1, 5);
       day.fined += fine;
-      toast(`❌ ثبتت شكوى العميل! غرامة ${fine} 💵 + مخالفة رقم ${state.violations}${perkLv("insurance") ? " (🛡️ التأمين خفّض الغرامة)" : ""}`);
+      const reason = commRegExpired ? "السجل التجاري منتهي" : "ثبتت شكوى العميل";
+      toast(`❌ ${reason}! غرامة ${fine} 💵 + مخالفة رقم ${state.violations}${perkLv("insurance") ? " (🛡️ التأمين خفّض الغرامة)" : ""}`);
       sfx.wrong();
     } else {
       state.rating = clamp(state.rating + 0.15, 1, 5);
@@ -921,9 +925,13 @@ function startDay(endless = false) {
   }
   if (window.GameAudio) { GameAudio.setEnabled(state.music); GameAudio.start(); }
   if (day.event) setTimeout(() => toast(`${day.event.name} — ${day.event.desc}`), 700);
-  // زيارة مفاجئة من وزارة التجارة: شبه مؤكدة إذا فيه شكاوى، ونادرة بدونها
-  if (!endless && (state.complaints > 0 ? Math.random() < 0.75 : Math.random() < 0.08)) {
-    day.inspectionAt = day.timeLeft * (0.3 + Math.random() * 0.4);
+  // زيارة مفاجئة من وزارة التجارة: شبه مؤكدة إذا فيه شكاوى أو انتهى السجل التجاري، ونادرة بدون ذلك
+  if (!endless) {
+    const commRegExpired = state.day > state.commReg.expiresDay;
+    if (state.complaints > 0 || commRegExpired ? Math.random() < 0.75 : Math.random() < 0.08) {
+      day.inspectionAt = day.timeLeft * (0.3 + Math.random() * 0.4);
+    }
+    if (commRegExpired) setTimeout(() => toast("⚠️ السجل التجاري منتهي! جدّده من المتجر قبل ما تجيك وزارة التجارة"), 900);
   }
   // نظافة المطعم: تتراكم الأوساخ يومياً إلا إذا عندك اشتراك عامل نظافة فعّال
   if (state.day <= state.cleaner.expiresDay) state.cleanliness = 100;
@@ -1287,6 +1295,31 @@ function renderShop() {
     row1.appendChild(btn1);
     muniList.appendChild(row1);
 
+    // السجل التجاري (وزارة التجارة) — نفس نمط رخصة البلدية بالأعلى
+    const regDaysLeft = state.commReg.expiresDay - state.day;
+    const regExpired = regDaysLeft < 0;
+    const regRenewCost = 350;
+    const rowReg = document.createElement("div");
+    rowReg.className = "upgrade-row";
+    rowReg.innerHTML = `<span class="u-emoji">🗂️</span>
+      <span class="u-info"><span class="u-name">السجل التجاري ${regExpired ? "❌ منتهي!" : `(باقي ${regDaysLeft} يوم)`}</span><br>
+      <span class="u-desc">جدّده قبل ما ينتهي — وزارة التجارة تعطيك مخالفة 1000 💵 إذا انتهى وما جدّدته</span></span>`;
+    const btnReg = document.createElement("button");
+    btnReg.className = "u-buy";
+    btnReg.textContent = `💵 ${regRenewCost}`;
+    btnReg.disabled = state.money < regRenewCost;
+    btnReg.onclick = () => {
+      if (state.money < regRenewCost) return;
+      state.money -= regRenewCost;
+      state.commReg.expiresDay = state.day + 6;
+      sfx.levelup();
+      toast("🗂️ تم تجديد السجل التجاري لـ6 أيام إضافية!");
+      save();
+      renderShop();
+    };
+    rowReg.appendChild(btnReg);
+    muniList.appendChild(rowReg);
+
     const row2 = document.createElement("div");
     row2.className = "upgrade-row";
     const cleanerDaysLeft = state.cleaner.expiresDay - state.day;
@@ -1428,6 +1461,35 @@ function renderShop() {
       <span class="m-info"><span class="m-name">${d.name} ${d.ai ? "🤖" : ""}</span><br>
       <span class="m-desc">يبيع 💵 ${d.price} — مواده 🧾 ${d.cost || 2} (${d.mats || "مكونات أساسية"}) — ⏱️ ${(d.cook / 1000).toFixed(1)} ث${d.desc ? "<br>" + d.desc : ""}</span></span>
     `;
+    // الأطباق المبتكرة بالذكاء الاصطناعي فقط: يقدر يعدّل سعرها أو يحذفها
+    if (d.ai) {
+      const actions = document.createElement("span");
+      actions.className = "m-actions";
+      const editBtn = document.createElement("button");
+      editBtn.className = "m-edit"; editBtn.textContent = "✏️"; editBtn.title = "عدّل السعر";
+      editBtn.onclick = () => {
+        const newPrice = prompt(`سعر بيع "${d.name}" الحالي: ${d.price} 💵 — أدخل السعر الجديد:`, d.price);
+        if (newPrice === null) return;
+        const p = parseInt(newPrice, 10);
+        if (!Number.isFinite(p) || p < 1 || p > 999) { toast("⚠️ سعر غير صالح"); return; }
+        d.price = p;
+        toast(`✏️ تم تعديل سعر "${d.name}" إلى ${p} 💵`);
+        save();
+        renderShop();
+      };
+      const delBtn = document.createElement("button");
+      delBtn.className = "m-del"; delBtn.textContent = "🗑️"; delBtn.title = "احذف الصنف";
+      delBtn.onclick = () => {
+        if (!confirm(`متأكد تحذف "${d.name}" من القائمة نهائياً؟`)) return;
+        state.aiDishes = state.aiDishes.filter(x => x.id !== d.id);
+        toast(`🗑️ تم حذف "${d.name}" من القائمة`);
+        save();
+        renderShop();
+      };
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      row.appendChild(actions);
+    }
     ml.appendChild(row);
   }
 

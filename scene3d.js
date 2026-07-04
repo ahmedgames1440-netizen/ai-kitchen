@@ -85,7 +85,7 @@ window.S3D = (() => {
       g.fillText("A I   K I T C H E N", w / 2, 200);
     });
   }
-  function windowTexture() {
+  function windowTexture(withMoon = true) {
     return canvasTexture(256, 256, (g, w, h) => {
       const gr = g.createLinearGradient(0, 0, 0, h);
       gr.addColorStop(0, "#0d1440"); gr.addColorStop(1, "#251a4d");
@@ -94,10 +94,12 @@ window.S3D = (() => {
         g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.7})`;
         g.fillRect(Math.random() * w, Math.random() * h * 0.5, 2, 2);
       }
-      g.fillStyle = "#ffe9a8"; // هلال
-      g.beginPath(); g.arc(200, 48, 22, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#0d1440";
-      g.beginPath(); g.arc(210, 42, 20, 0, Math.PI * 2); g.fill();
+      if (withMoon) {
+        g.fillStyle = "#ffe9a8"; // هلال — بقمر واحد فقط بالمشهد كله (نافذة واحدة تحدده)
+        g.beginPath(); g.arc(200, 48, 22, 0, Math.PI * 2); g.fill();
+        g.fillStyle = "#0d1440";
+        g.beginPath(); g.arc(210, 42, 20, 0, Math.PI * 2); g.fill();
+      }
       for (let b = 0; b < 7; b++) { // أبراج المدينة
         const bw = 22 + Math.random() * 26, bh = 60 + Math.random() * 90, bx = b * 36;
         g.fillStyle = "#1a0f33";
@@ -106,6 +108,31 @@ window.S3D = (() => {
           for (let wx = bx + 4; wx < bx + bw - 6; wx += 10)
             if (Math.random() < 0.5) { g.fillStyle = "#ffd166"; g.fillRect(wx, wy, 5, 7); }
       }
+    });
+  }
+  /* منظر باب الخروج: شارع ليلي على مستوى الأرض (بدون قمر) — يختلف عن منظر النافذة العلوي كي لا يتكرر القمر */
+  function doorViewTexture() {
+    return canvasTexture(256, 256, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h);
+      gr.addColorStop(0, "#170f30"); gr.addColorStop(0.55, "#241a45"); gr.addColorStop(1, "#2f2255");
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let b = 0; b < 6; b++) { // أبراج بعيدة
+        const bw = 26 + Math.random() * 30, bh = 90 + Math.random() * 110, bx = b * 42;
+        g.fillStyle = "#1d1440";
+        g.fillRect(bx, h - bh, bw, bh);
+        for (let wy = h - bh + 8; wy < h - 8; wy += 14)
+          for (let wx = bx + 4; wx < bx + bw - 6; wx += 10)
+            if (Math.random() < 0.5) { g.fillStyle = "#ffd166"; g.fillRect(wx, wy, 5, 7); }
+      }
+      // أعمدة إنارة الشارع
+      for (const px of [48, 208]) {
+        g.fillStyle = "#0d0820"; g.fillRect(px - 2, h - 96, 4, 70);
+        g.fillStyle = "#ffe9a8"; g.shadowColor = "#ffe9a8"; g.shadowBlur = 18;
+        g.beginPath(); g.arc(px, h - 98, 7, 0, Math.PI * 2); g.fill();
+        g.shadowBlur = 0;
+      }
+      // الرصيف
+      g.fillStyle = "#100a24"; g.fillRect(0, h - 22, w, 22);
     });
   }
   /* نقشة الشماغ الأحمر (كروس-هاتش مثل الصور المرجعية) */
@@ -148,8 +175,8 @@ window.S3D = (() => {
       g.fillStyle = "#0e6b3a"; g.fillRect(0, 0, w, h);
       g.strokeStyle = "#ffd166"; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
       g.textAlign = "center"; g.fillStyle = "#ffffff";
-      g.font = "900 54px Cairo, Arial";
-      g.fillText("🚪 الخروج", w / 2, 78);
+      g.font = "900 72px Cairo, Arial";
+      g.fillText("🚪 الخروج", w / 2, 88);
     });
   }
 
@@ -165,6 +192,7 @@ window.S3D = (() => {
     if (vip === "edward") return regularTemplates.grandpaCane ? buildStaticFromModel(regularTemplates.grandpaCane) : buildLoadingPlaceholder();
     if (vip === "yousef") return regularTemplates.walkingWisdom ? buildStaticFromModel(regularTemplates.walkingWisdom) : buildLoadingPlaceholder();
     if (vip === "inspector") return regularTemplates.midnightElegance ? buildStaticFromModel(regularTemplates.midnightElegance) : buildLoadingPlaceholder();
+    if (vip === "samir") return regularTemplates.smilingMascot ? buildStaticFromModel(regularTemplates.smilingMascot) : buildLoadingPlaceholder();
     if (vip === "muniOfficer") return buildMunicipalityOfficer();
     if (female) {
       // زبونة: نموذج حقيقي دائماً من مجموعة متنوعة (منقّبة بألوان مختلفة، عباءة بوجه مكشوف، حجاب عصري، أو بدون حجاب)
@@ -175,7 +203,7 @@ window.S3D = (() => {
     }
     if (!vip) {
       // زبون عادي (رجل): نموذج GLTF حقيقي دائماً من مجموعة متنوعة
-      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "constructionExec", "grayKurta", "clockworkGentleman"]
+      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "constructionExec", "grayKurta", "clockworkGentleman", "cartoonBoy"]
         .filter((k) => regularTemplates[k]);
       if (!pool.length) return buildLoadingPlaceholder();
       const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -572,6 +600,8 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.constructionExec = m; }, "models/construction_exec.glb", "زبون (تنفيذي)");
     loadStatic((m) => { regularTemplates.grayKurta = m; }, "models/gray_kurta.glb", "زبون (كردتة رمادية)");
     loadStatic((m) => { regularTemplates.clockworkGentleman = m; }, "models/clockwork_gentleman.glb", "زبون (الساعاتي)");
+    loadStatic((m) => { regularTemplates.smilingMascot = m; }, "models/smiling_mascot.glb", "زبون (البشوش)");
+    loadStatic((m) => { regularTemplates.cartoonBoy = m; }, "models/cartoon_boy.glb", "زبون (الولد)");
     loadStatic((m) => { regularTemplates.walkingWisdom = m; }, "models/walking_wisdom.glb", "شيخ يوسف");
     loadStatic((m) => { regularTemplates.midnightElegance = m; }, "models/midnight_elegance.glb", "مفتش وزارة التجارة");
     loadStatic((m) => { regularTemplates.casualChic = m; }, "models/casual_chic.glb", "زبونة (عصرية)");
@@ -742,9 +772,9 @@ window.S3D = (() => {
     frame.castShadow = true;
     grp.add(frame);
 
-    // فتحة الباب: منظر ليلي خارجي يوحي بخروج حقيقي من المطعم
+    // فتحة الباب: منظر شارع ليلي على مستوى الأرض (بدون قمر — يختلف عن النوافذ)
     const opening = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 2.65),
-      new THREE.MeshBasicMaterial({ map: windowTexture() }));
+      new THREE.MeshBasicMaterial({ map: doorViewTexture() }));
     opening.position.set(0, 1.55, -0.11);
     grp.add(opening);
 
@@ -799,16 +829,17 @@ window.S3D = (() => {
     signGlow.position.set(0, 5.6, -2.2);
     scene.add(signGlow);
 
-    // نوافذ تطل على مدينة المستقبل ليلاً
-    const winTex = windowTexture();
+    // نوافذ تطل على مدينة المستقبل ليلاً — القمر يظهر بنافذة واحدة فقط كي لا يتكرر
+    let firstMoonWindow = true;
     for (const sx of [-6.8, 6.8]) {
       const frame = new THREE.Mesh(new THREE.BoxGeometry(2.9, 2.5, 0.12), mat(0x3a2a5a));
       frame.position.set(sx, 4.4, -3.12);
       scene.add(frame);
       const win = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.2),
-        new THREE.MeshBasicMaterial({ map: winTex }));
+        new THREE.MeshBasicMaterial({ map: windowTexture(firstMoonWindow) }));
       win.position.set(sx, 4.4, -3.05);
       scene.add(win);
+      firstMoonWindow = false;
     }
 
     // لوحة منيو معلقة
@@ -1191,15 +1222,15 @@ window.S3D = (() => {
           e.mouths.sad.visible = r <= 0.3;
         }
       }
-      // تموضع طبقة الفقاعات فوق الرأس — بحد أدنى يمنع خروجها من أعلى الشاشة
-      // (يحصل بالوضع العرضي حيث ارتفاع منطقة الزبائن يصير صغير نسبياً)
+      // تموضع طبقة الفقاعات: الأفقي (X) يتبع إسقاط موضع الشخصية، أما الرأسي فثابت
+      // دائماً بشريط علوي واحد — هذا يضمن ظهور الطلب كاملاً دائماً بأي وضع (عرضي/طولي)
+      // بدل الاعتماد على إسقاط ثلاثي الأبعاد قد يخرج عن حدود الشاشة حسب زاوية الكاميرا
       if (e.ov) {
         const v = new THREE.Vector3(g.position.x, e.height * g.scale.y + 0.15, g.position.z);
         v.project(camera);
-        const w = container.clientWidth, h = container.clientHeight;
-        const topPx = (-v.y * 0.5 + 0.5) * h;
+        const w = container.clientWidth;
         e.ov.style.left = ((v.x * 0.5 + 0.5) * w) + "px";
-        e.ov.style.top = Math.max(topPx, Math.min(105, h * 0.4)) + "px";
+        e.ov.style.top = "8px";
       }
     }
     renderer.render(scene, camera);
