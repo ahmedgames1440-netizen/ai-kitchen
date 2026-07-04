@@ -155,13 +155,29 @@ window.S3D = (() => {
   /* ---------- بناء شخصية كرتونية ---------- */
   function makeCharacter(c) {
     // العم سالم: نموذج GLTF حقيقي بدل الأشكال المبنية بالكود (مع سقوط احتياطي إذا لم يكتمل التحميل بعد)
-    if (c.vip === "salim" && salimTemplate) return buildSalimFromModel();
+    if (c.vip === "salim" && salimTemplate) return buildStaticFromModel(salimTemplate);
+
+    const vip = c.vip || null;
+    const female = c.gender === "f" && !vip;
+
+    // زبون عادي (رجل): فرصة استخدام نموذج GLTF حقيقي بدل الشكل المبني بالكود لتنويع بصري
+    if (!vip && !female) {
+      const pool = [];
+      if (regularTemplates.blueThobe) pool.push(blueThobeRig && blueThobeRig.runClip ? "blueThobeAnimated" : "blueThobe");
+      if (regularTemplates.businessman) pool.push("businessman");
+      if (regularTemplates.emeraldRobed) pool.push("emeraldRobed");
+      if (pool.length && Math.random() < 0.4) {
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        if (pick === "blueThobeAnimated") return buildBlueThobeAnimated();
+        if (pick === "blueThobe") return buildStaticFromModel(regularTemplates.blueThobe);
+        if (pick === "businessman") return buildStaticFromModel(regularTemplates.businessman);
+        if (pick === "emeraldRobed") return buildStaticFromModel(regularTemplates.emeraldRobed);
+      }
+    }
 
     const g = new THREE.Group();
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const skin = rnd(SKINS);
-    const vip = c.vip || null;
-    const female = c.gender === "f" && !vip;
 
     const bodyColor =
       female ? rnd([0x1a1a1a, 0x241b3a, 0x3d1626, 0x14251c]) : // عباءات
@@ -666,49 +682,107 @@ window.S3D = (() => {
   let floorMat = null, wallMat = null, clockHands = null, steam = [], robot = null;
   let leftDoorGroup = null, rightDoorGroup = null;
 
-  /* ---------- نموذج GLTF حقيقي (العم سالم) بدل الشخصية المبنية بالكود ---------- */
-  const SALIM_HEIGHT = 2.95; // نفس ارتفاع رأس بقية الشخصيات تقريباً (لتموضع فقاعة الحوار)
-  let salimTemplate = null, salimLoadStarted = false;
-  function preloadSalimModel() {
-    if (salimLoadStarted || typeof GLTFLoader === "undefined") return;
-    salimLoadStarted = true;
-    new GLTFLoader().load(
-      "models/old_gentleman.glb",
-      (gltf) => {
-        const model = gltf.scene;
-        // عاير المقياس والوضع مرة وحدة حسب الصندوق المحيط الحقيقي للنموذج
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        const scale = SALIM_HEIGHT / Math.max(size.y, 0.001);
-        model.scale.setScalar(scale);
-        const box2 = new THREE.Box3().setFromObject(model);
-        model.position.y -= box2.min.y; // تثبيت القدمين على الأرض (y=0)
-        model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-        salimTemplate = model;
-      },
-      undefined,
-      (err) => console.warn("تعذر تحميل نموذج العم سالم — استخدام النموذج الافتراضي", err)
-    );
+  /* ---------- نماذج GLTF حقيقية بدل بعض الشخصيات المبنية بالكود ---------- */
+  const MODEL_HEIGHT = 2.95; // نفس ارتفاع رأس بقية الشخصيات تقريباً (لتموضع فقاعة الحوار)
+
+  /* يعاير المقياس والوضع مرة وحدة حسب الصندوق المحيط الحقيقي للنموذج، ويثبّت القدمين على y=0 */
+  function autoScaleGround(model, targetHeight) {
+    const box = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const scale = targetHeight / Math.max(size.y, 0.001);
+    model.scale.setScalar(scale);
+    const box2 = new THREE.Box3().setFromObject(model);
+    model.position.y -= box2.min.y;
   }
 
-  /* شخصية العم سالم من نموذج GLTF حقيقي (مع سقوط احتياطي على الشكل المبني بالكود) */
-  function buildSalimFromModel() {
-    // غلاف علوي فارغ: حلقة الرسم تكتب فوق group.position.y كل إطار (اهتزاز المشي)،
-    // فلازم يبقى إزاحة "تثبيت القدمين على الأرض" على النموذج الابن لا الغلاف نفسه
-    const g = new THREE.Group();
-    const model = salimTemplate.clone(true);
-    g.add(model);
-    let headMat = null;
-    g.traverse((o) => { if (o.isMesh && !headMat) headMat = o.material; });
+  /* ظل دائري تحت القدمين (نفس أسلوب باقي الشخصيات) */
+  function groundShadow() {
     const shadow = new THREE.Mesh(
       new THREE.CircleGeometry(0.85, 20),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 })
     );
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.02;
-    g.add(shadow);
-    return { group: g, head: null, headMat, height: SALIM_HEIGHT, mouths: null };
+    return shadow;
+  }
+
+  let salimTemplate = null;
+  const regularTemplates = {}; // { blueThobe, businessman, emeraldRobed } → THREE.Group بعد التحميل
+  let blueThobeRig = null;     // { template (مجسّم متحرك), walkClip, runClip }
+  let modelsLoadStarted = false;
+
+  function preloadRealModels() {
+    if (modelsLoadStarted || typeof GLTFLoader === "undefined") return;
+    modelsLoadStarted = true;
+    const loader = new GLTFLoader();
+
+    const loadStatic = (onDone, url, label) => {
+      loader.load(url, (gltf) => {
+        const model = gltf.scene;
+        autoScaleGround(model, MODEL_HEIGHT);
+        model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+        onDone(model);
+      }, undefined, (err) => console.warn(`تعذر تحميل نموذج ${label} — استخدام الشكل الافتراضي`, err));
+    };
+
+    loadStatic((m) => { salimTemplate = m; }, "models/old_gentleman.glb", "العم سالم");
+    loadStatic((m) => { regularTemplates.blueThobe = m; }, "models/blue_thobe.glb", "الثوب الأزرق");
+    loadStatic((m) => { regularTemplates.businessman = m; }, "models/businessman.glb", "رجل الأعمال");
+    loadStatic((m) => { regularTemplates.emeraldRobed = m; }, "models/emerald_robed.glb", "الجلباب الزمردي");
+
+    // السيخ المتحرك (مشي/جري حقيقي) لشخصية الثوب الأزرق فقط — مجسّم منفصل بدون تكستر (مربوط بهيكل عظمي)
+    if (typeof SkeletonUtils === "undefined") return;
+    loader.load("models/blue_thobe_walk.glb", (gltf) => {
+      const rig = gltf.scene;
+      autoScaleGround(rig, MODEL_HEIGHT);
+      const tint = new THREE.MeshPhysicalMaterial({ color: 0x1e4d8c, roughness: 0.65, clearcoat: 0.2, clearcoatRoughness: 0.4 });
+      rig.traverse((o) => { if (o.isMesh) { o.material = tint; o.castShadow = true; } });
+      blueThobeRig = { template: rig, walkClip: gltf.animations[0], runClip: null };
+      loader.load("models/blue_thobe_run.glb", (gltf2) => {
+        if (blueThobeRig) blueThobeRig.runClip = gltf2.animations[0];
+      }, undefined, (err) => console.warn("تعذر تحميل حركة الجري", err));
+    }, undefined, (err) => console.warn("تعذر تحميل هيكل المشي المتحرك", err));
+  }
+
+  /* غلاف علوي فارغ: حلقة الرسم تكتب فوق group.position.y كل إطار (اهتزاز المشي)،
+     فلازم تبقى إزاحة "تثبيت القدمين على الأرض" على النموذج الابن لا الغلاف نفسه */
+  function buildStaticFromModel(template) {
+    const g = new THREE.Group();
+    const model = template.clone(true);
+    g.add(model);
+    let headMat = null;
+    g.traverse((o) => { if (o.isMesh && !headMat) headMat = o.material; });
+    g.add(groundShadow());
+    return { group: g, head: null, headMat, height: MODEL_HEIGHT, mouths: null };
+  }
+
+  /* شخصية "الثوب الأزرق": هيكل متحرك حقيقي (مشي/جري) أثناء الدخول والخروج،
+     ونموذج ثابت عالي التفصيل بالتكستر الحقيقي أثناء الوقوف والطلب */
+  function buildBlueThobeAnimated() {
+    const g = new THREE.Group();
+
+    const animRig = SkeletonUtils.clone(blueThobeRig.template);
+    g.add(animRig);
+    const mixer = new THREE.AnimationMixer(animRig);
+    const walkAction = mixer.clipAction(blueThobeRig.walkClip);
+    const runAction = blueThobeRig.runClip ? mixer.clipAction(blueThobeRig.runClip) : null;
+    walkAction.play();
+
+    const staticModel = regularTemplates.blueThobe.clone(true);
+    staticModel.visible = false;
+    g.add(staticModel);
+
+    let staticMat = null;
+    staticModel.traverse((o) => { if (o.isMesh && !staticMat) staticMat = o.material; });
+    let rigMat = null;
+    animRig.traverse((o) => { if (o.isMesh && !rigMat) rigMat = o.material; });
+
+    g.add(groundShadow());
+    return {
+      group: g, head: null, headMat: [rigMat, staticMat], height: MODEL_HEIGHT, mouths: null,
+      animRig, staticModel, mixer, walkAction, runAction, animPhase: "entering",
+    };
   }
 
   /* جدار جانبي عمودي بباب خروج — يواجه الكاميرا مباشرة (نفس اتجاه النوافذ الخلفية) */
@@ -989,7 +1063,7 @@ window.S3D = (() => {
       scene.add(rim);
 
       buildRoom();
-      preloadSalimModel();
+      preloadRealModels();
 
       raycaster = new THREE.Raycaster();
       pointer = new THREE.Vector2();
@@ -1028,6 +1102,13 @@ window.S3D = (() => {
     return -slotSpread + (2 * slotSpread * i) / (n - 1);
   }
 
+  /* تلوين مادة (أو أكثر) للتعبير عن المزاج — بعض الشخصيات (الثوب الأزرق) لها مادتان (هيكل متحرك + نموذج ثابت) */
+  function tintEmissive(e, hex) {
+    const col = new THREE.Color(hex);
+    const mats = Array.isArray(e.headMat) ? e.headMat : [e.headMat];
+    for (const m of mats) if (m) m.emissive = col;
+  }
+
   /* ---------- مزامنة الزبائن مع game.js ---------- */
   api.sync = function (customers) {
     const seen = new Set();
@@ -1064,11 +1145,21 @@ window.S3D = (() => {
     e.leaving = happy ? 1 : -1;
     e.leaveT = 0;
     e.leaveScale = e.group.scale.x || 1;
-    if (!happy) e.headMat.emissive = new THREE.Color(0x661111);
+    if (!happy) tintEmissive(e, 0x661111);
     if (e.mouths) {
       e.mouths.happy.visible = happy;
       e.mouths.mid.visible = false;
       e.mouths.sad.visible = !happy;
+    }
+    // شخصية الثوب الأزرق المتحركة: ارجع للهيكل المتحرك وشغّل مشي (راضٍ) أو جري (زعلان) عند الخروج
+    if (e.animRig) {
+      e.staticModel.visible = false;
+      e.animRig.visible = true;
+      e.animPhase = "leaving";
+      e.walkAction.stop();
+      if (e.runAction) e.runAction.stop();
+      const action = (!happy && e.runAction) ? e.runAction : e.walkAction;
+      action.reset().play();
     }
     if (e.ov) { e.ov.remove(); e.ov = null; }
     setTimeout(() => disposeChar(c.uid), 750);
@@ -1131,6 +1222,7 @@ window.S3D = (() => {
 
     for (const e of chars.values()) {
       e.t += dt;
+      if (e.mixer && e.animRig.visible) e.mixer.update(dt);
       const g = e.group;
       if (e.leaving) {
         // خروج: يمشي واقفاً نحو باب المطعم (سعيد يمين بثبات / زعلان يسار بخطوات سريعة)
@@ -1152,10 +1244,17 @@ window.S3D = (() => {
         const r = c ? c.patience / c.maxPatience : 1;
         if (r < 0.3) {
           g.rotation.z = Math.sin(e.t * 30) * 0.05;
-          e.headMat.emissive = new THREE.Color(0x551111);
+          tintEmissive(e, 0x551111);
         } else {
           g.rotation.z = 0;
-          e.headMat.emissive = new THREE.Color(0x000000);
+          tintEmissive(e, 0x000000);
+        }
+        // شخصية الثوب الأزرق: بمجرد وصوله لمكانه ينتقل من هيكل المشي المتحرك للنموذج الثابت المفصّل
+        if (e.animRig && e.animPhase === "entering" && Math.abs(g.position.x - e.slotX) < 0.05) {
+          e.animRig.visible = false;
+          e.staticModel.visible = true;
+          e.walkAction.stop();
+          e.animPhase = "standing";
         }
         // الفم يتبع المزاج
         if (e.mouths) {
