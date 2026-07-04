@@ -137,7 +137,7 @@ const CHAT_EVENTS = {
       { t: "إيه نظفناه أخيراً 😅", eff: 5 },
       { t: "المهم الأكل مو الشكل", eff: -5 } ] },
     { msg: "شرايك أجرب شي جديد المرة الجاية؟", replies: [
-      { t: "أبشر! عندنا أطباق يبتكرها الذكاء الاصطناعي 🤖", eff: 15 },
+      { t: "أبشر! عندنا أطباق جديدة نبتكرها أول بأول 🤖", eff: 15 },
       { t: "خلك على اللي تعرفه أحسن", eff: -5 },
       { t: "جرب اللي تبي، أنا أطبخ الكل 💪", eff: 10 } ] },
   ],
@@ -380,7 +380,7 @@ function freshState() {
     xp: 0, ach: {}, vipsPleased: [], freeDish: 0,
     complaints: 0, violations: 0, perks: {},
     license: { expiresDay: 6 },     // رخصة المطعم — تنتهي بعد اليوم 6 إذا ما جُدّدت
-    cleanliness: 100, hasCleaner: false, muniViolations: 0,
+    cleanliness: 100, cleaner: { expiresDay: 0, usedTrial: false }, muniViolations: 0,
     iap: {}, adCdUntil: 0, adToggle: false,
     records: { bestDayEarn: 0, maxCombo: 0, endlessBest: 0 },
     theme: "classic", themesOwned: ["classic"],
@@ -919,8 +919,8 @@ function startDay(endless = false) {
   if (!endless && (state.complaints > 0 ? Math.random() < 0.75 : Math.random() < 0.08)) {
     day.inspectionAt = day.timeLeft * (0.3 + Math.random() * 0.4);
   }
-  // نظافة المطعم: تتراكم الأوساخ يومياً إلا إذا عندك عامل نظافة دائم
-  if (state.hasCleaner) state.cleanliness = 100;
+  // نظافة المطعم: تتراكم الأوساخ يومياً إلا إذا عندك اشتراك عامل نظافة فعّال
+  if (state.day <= state.cleaner.expiresDay) state.cleanliness = 100;
   else state.cleanliness = Math.max(0, state.cleanliness - 18);
   // زيارة البلدية: مؤكدة إذا انتهت رخصة المطعم، ونادرة عشوائياً (تفقّد روتيني) غير كذا
   if (!endless) {
@@ -1191,14 +1191,14 @@ function aiAnalyze() {
   else if (day.served >= 4 && day.maxCombo <= 2) tips.push("🔥 كومبوك ضعيف — سلّم بسرعة وبدون أخطاء عشان يرتفع المضاعف حتى ×1.8.");
   if (!day.goalMet && day.earned > 0) tips.push(`🎯 نقصك ${day.goal - day.earned} 💵 عن الهدف — الهدف المحقق يعطيك +20% مكافأة و3 ذهب.`);
   if (day.wrongServes >= 3) tips.push(`🎯 سلّمت ${day.wrongServes} أصناف خاطئة — تأكد من فقاعة الطلب قبل التسليم، الناقد يعاقبك عليها أكثر.`);
-  if (day.perfect >= 3) tips.push(`${GOLD_ICON} ممتاز! ${day.perfect} تسليمات مثالية جابت لك ذهب. الذهب يفتح لك أطباق الذكاء الاصطناعي.`);
+  if (day.perfect >= 3) tips.push(`${GOLD_ICON} ممتاز! ${day.perfect} تسليمات مثالية جابت لك ذهب. الذهب يفتح لك أطباق جديدة.`);
   if (day.freshServes >= 5) tips.push(`✨ سلّمت ${day.freshServes} أصناف وهي طازجة — الزباين يحسون بالفرق والصبر يرتفع!`);
   else if (day.served >= 4 && day.freshServes === 0) tips.push("✨ ولا صنف انسلّم طازج — الصنف أول 5 ثوانٍ من جهوزيته يعطي الزبون دفعة صبر، لا تخزّن بالصينية.");
   if (day.chatBad > day.chatGood) tips.push("💬 ردودك على الزباين تحتاج لباقة أكثر — الرد الحلو يرفع صبرهم مجاناً!");
   else if (day.chatGood >= 2) tips.push("💬 ردودك على الزباين ممتازة، كسبت ولاءهم!");
 
   if (state.upgrades.grill === 0 && state.money >= 60) tips.push("🔥 عندك فلوس كافية لتطوير المعدات — الطبخ الأسرع = زباين أكثر رضا.");
-  if (state.aiDishes.length === 0 && state.gold >= 15) tips.push("🤖 عندك ذهب كافي! جرب مطبخ الذكاء الاصطناعي — الأطباق المبتكرة أسعارها أعلى.");
+  if (state.aiDishes.length === 0 && state.gold >= 15) tips.push("🤖 عندك ذهب كافي! جرب تبتكر طبق جديد — أسعارها أعلى من الأطباق العادية.");
 
   // مقارنة مع اليوم السابق
   const prev = state.history[state.history.length - 2];
@@ -1283,24 +1283,41 @@ function renderShop() {
 
     const row2 = document.createElement("div");
     row2.className = "upgrade-row";
+    const cleanerDaysLeft = state.cleaner.expiresDay - state.day;
+    const cleanerActive = cleanerDaysLeft >= 0;
+    const cleanerCost = 1500;
+    const canTrial = !state.cleaner.usedTrial && !cleanerActive;
     row2.innerHTML = `<span class="u-emoji">🧹</span>
-      <span class="u-info"><span class="u-name">نظافة المطعم: ${state.cleanliness}% ${state.hasCleaner ? "✅ عامل نظافة معيّن" : ""}</span><br>
-      <span class="u-desc">${state.hasCleaner ? "عامل النظافة يخلي مطعمك نظيف دائماً تلقائياً" : "بدون عامل نظافة تتراكم الأوساخ يومياً — والبلدية تعطيك مخالفة إذا لقتها متسخة"}</span></span>`;
+      <span class="u-info"><span class="u-name">نظافة المطعم: ${state.cleanliness}% ${cleanerActive ? `✅ الاشتراك فعّال (باقي ${cleanerDaysLeft} يوم)` : ""}</span><br>
+      <span class="u-desc">${canTrial ? "جرّب عامل النظافة مجاناً ليوم واحد، وبعدها اشترك أسبوعياً" : cleanerActive ? "عامل النظافة يخلي مطعمك نظيف تلقائياً طول مدة الاشتراك" : "اشتراك أسبوعي (7 أيام) — بدونه تتراكم الأوساخ يومياً والبلدية تعطيك مخالفة إذا لقتها متسخة"}</span></span>`;
     const btn2 = document.createElement("button");
     btn2.className = "u-buy";
-    const cleanerCost = 2000;
-    btn2.textContent = state.hasCleaner ? "✅ معيّن" : `💵 ${cleanerCost}`;
-    btn2.disabled = state.hasCleaner || state.money < cleanerCost;
-    btn2.onclick = () => {
-      if (state.hasCleaner || state.money < cleanerCost) return;
-      state.money -= cleanerCost;
-      state.hasCleaner = true;
-      state.cleanliness = 100;
-      sfx.levelup();
-      toast("🧹 وظّفت عامل نظافة — مطعمك بيضل نظيف تلقائياً من الحين!");
-      save();
-      renderShop();
-    };
+    if (canTrial) {
+      btn2.textContent = "🎁 يوم مجاني";
+      btn2.disabled = false;
+      btn2.onclick = () => {
+        state.cleaner.usedTrial = true;
+        state.cleaner.expiresDay = state.day;
+        state.cleanliness = 100;
+        sfx.levelup();
+        toast("🧹 جرّبت عامل النظافة مجاناً ليوم واحد!");
+        save();
+        renderShop();
+      };
+    } else {
+      btn2.textContent = cleanerActive ? "✅ مفعّل" : `💵 ${cleanerCost}`;
+      btn2.disabled = cleanerActive || state.money < cleanerCost;
+      btn2.onclick = () => {
+        if (cleanerActive || state.money < cleanerCost) return;
+        state.money -= cleanerCost;
+        state.cleaner.expiresDay = state.day + 6;
+        state.cleanliness = 100;
+        sfx.levelup();
+        toast("🧹 اشتركت بعامل النظافة لمدة أسبوع!");
+        save();
+        renderShop();
+      };
+    }
     row2.appendChild(btn2);
     muniList.appendChild(row2);
   }

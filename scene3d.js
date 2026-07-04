@@ -174,7 +174,7 @@ window.S3D = (() => {
     }
     if (!vip) {
       // زبون عادي (رجل): نموذج GLTF حقيقي دائماً من مجموعة متنوعة
-      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "omar", "constructionExec", "grayKurta", "clockworkGentleman"]
+      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "constructionExec", "grayKurta", "clockworkGentleman"]
         .filter((k) => regularTemplates[k]);
       if (!pool.length) return buildLoadingPlaceholder();
       const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -553,7 +553,6 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.businessman = m; }, "models/businessman.glb", "رجل الأعمال");
     loadStatic((m) => { regularTemplates.emeraldRobed = m; }, "models/emerald_robed.glb", "الجلباب الزمردي");
     loadStatic((m) => { regularTemplates.jollyPortly = m; }, "models/jolly_portly.glb", "الرجل البشوش");
-    loadStatic((m) => { regularTemplates.omar = m; }, "models/omar.glb", "عمر");
     loadStatic((m) => { regularTemplates.littleBackpacker = m; }, "models/little_backpacker.glb", "خليل");
     loadStatic((m) => { regularTemplates.thumbsUpHandyman = m; }, "models/thumbs_up_handyman.glb", "أبو شاكر الفني");
     loadStatic((m) => { regularTemplates.veiledInBlack = m; }, "models/veiled_in_black.glb", "المنقبة");
@@ -1179,13 +1178,15 @@ window.S3D = (() => {
           e.mouths.sad.visible = r <= 0.3;
         }
       }
-      // تموضع طبقة الفقاعات فوق الرأس
+      // تموضع طبقة الفقاعات فوق الرأس — بحد أدنى يمنع خروجها من أعلى الشاشة
+      // (يحصل بالوضع العرضي حيث ارتفاع منطقة الزبائن يصير صغير نسبياً)
       if (e.ov) {
         const v = new THREE.Vector3(g.position.x, e.height * g.scale.y + 0.15, g.position.z);
         v.project(camera);
         const w = container.clientWidth, h = container.clientHeight;
+        const topPx = (-v.y * 0.5 + 0.5) * h;
         e.ov.style.left = ((v.x * 0.5 + 0.5) * w) + "px";
-        e.ov.style.top = ((-v.y * 0.5 + 0.5) * h) + "px";
+        e.ov.style.top = Math.max(topPx, Math.min(105, h * 0.4)) + "px";
       }
     }
     renderer.render(scene, camera);
