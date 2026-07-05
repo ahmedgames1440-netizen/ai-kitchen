@@ -1233,9 +1233,24 @@ function aiAnalyze() {
    ============================================================ */
 let pendingDish = null;
 
+/* أيقونات أقسام المتجر ثلاثية الأبعاد: تستبدل الإيموجي فور اكتمال تحميل نموذجها */
+const SHOP_SECTION_ICON_KEYS = ["equipment", "licenses", "premium", "goldPerks", "aiDish", "menu", "settings"];
+function updateShopSectionIcons() {
+  if (!S3D.active || !S3D.sectionIcon) return;
+  for (const key of SHOP_SECTION_ICON_KEYS) {
+    const wrap = $("sicon-" + key)?.parentElement;
+    if (!wrap || wrap.classList.contains("loaded")) continue;
+    const url = S3D.sectionIcon(key);
+    if (!url) continue;
+    $("sicon-" + key).src = url;
+    wrap.classList.add("loaded");
+  }
+}
+
 function renderShop() {
   $("shop-money").textContent = `💵 ${state.money}`;
   $("shop-gold").innerHTML = `${GOLD_ICON} ${state.gold}`;
+  updateShopSectionIcons();
 
   const list = $("upgrades-list");
   list.innerHTML = "";
@@ -1918,3 +1933,10 @@ $("btn-sound").textContent = state.sound ? "🔊 المؤثرات: تعمل" : "
 updateMusicButtons();
 renderMenuScreen();
 showScreen("screen-menu");
+// أيقونات أقسام المتجر تكتمل تحميلها بالخلفية — نتفقّدها دورياً حتى تجهز كلها (يتوقف تلقائياً بعدها)
+const shopIconPoll = setInterval(() => {
+  updateShopSectionIcons();
+  if (SHOP_SECTION_ICON_KEYS.every(k => $("sicon-" + k)?.parentElement?.classList.contains("loaded"))) {
+    clearInterval(shopIconPoll);
+  }
+}, 1000);

@@ -540,7 +540,13 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 
 /* ===== المتجر ===== */
 .shop-wallet { text-align: center; font-weight: bold; font-size: 17px; margin-bottom: 10px; display: flex; justify-content: center; gap: 16px; }
-.shop-section-title { font-weight: bold; color: var(--accent2); margin: 16px 0 6px; }
+.shop-section-title { font-weight: bold; color: var(--accent2); margin: 16px 0 6px; display: flex; align-items: center; gap: 6px; }
+/* أيقونة القسم ثلاثية الأبعاد: تحل محل الإيموجي فور اكتمال تحميلها */
+.sicon-wrap { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; }
+.sicon-wrap .emoji-fallback { font-size: 20px; line-height: 1; }
+.sicon-wrap .section-icon-img { display: none; width: 30px; height: 30px; object-fit: contain; }
+.sicon-wrap.loaded .emoji-fallback { display: none; }
+.sicon-wrap.loaded .section-icon-img { display: block; }
 .upgrade-row, .menu-row {
   display: flex;
   align-items: center;
