@@ -1857,6 +1857,11 @@ function bindEvents() {
   $("btn-howto").onclick = () => showScreen("screen-howto");
   $("btn-howto-back").onclick = () => { renderMenuScreen(); showScreen("screen-menu"); };
 
+  // أكورديون أقسام المتجر: كل قسم يبدأ مطوياً، الضغط على عنوانه يوسّعه/يطويه
+  document.querySelectorAll(".shop-section-title").forEach((btn) => {
+    btn.onclick = () => btn.closest(".shop-section").classList.toggle("expanded");
+  });
+
   $("btn-report-shop").onclick = () => { renderShop(); showScreen("screen-shop"); };
   $("btn-next-day").onclick = () => startDay();
   $("btn-shop-back").onclick = () => {
