@@ -557,17 +557,12 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   cursor: pointer;
   text-align: right;
 }
-.shop-section-title .sec-name { flex: 1; }
-.shop-section-title .sec-chevron { font-size: 13px; color: var(--muted); transition: transform .2s; }
+.shop-section-title .sec-name { flex: 1; font-size: 20px; }
+.shop-section-title .sec-emoji { font-size: 24px; line-height: 1; }
+.shop-section-title .sec-chevron { font-size: 15px; color: var(--muted); transition: transform .2s; }
 .shop-section.expanded .shop-section-title .sec-chevron { transform: rotate(180deg); }
 .shop-section-content { display: none; padding: 0 10px 12px; }
 .shop-section.expanded .shop-section-content { display: block; }
-/* أيقونة القسم ثلاثية الأبعاد: تحل محل الإيموجي فور اكتمال تحميلها */
-.sicon-wrap { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; }
-.sicon-wrap .emoji-fallback { font-size: 20px; line-height: 1; }
-.sicon-wrap .section-icon-img { display: none; width: 30px; height: 30px; object-fit: contain; }
-.sicon-wrap.loaded .emoji-fallback { display: none; }
-.sicon-wrap.loaded .section-icon-img { display: block; }
 .upgrade-row, .menu-row {
   display: flex;
   align-items: center;

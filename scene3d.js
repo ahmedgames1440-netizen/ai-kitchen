@@ -525,36 +525,6 @@ window.S3D = (() => {
     } catch (e) { return null; }
   };
 
-  /* أيقونات أقسام المتجر (نفس أسلوب أيقونات الأصناف، لكن من نماذج ثابتة مسبقة التحميل) */
-  const shopIconCache = {};
-  api.sectionIcon = function (key) {
-    if (!api.active) return null;
-    if (shopIconCache[key]) return shopIconCache[key];
-    const template = shopIconTemplates[key];
-    if (!template) return null;
-    try {
-      if (!iconRenderer) {
-        iconRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-        iconRenderer.setSize(192, 192);
-        iconScene = new THREE.Scene();
-        iconScene.add(new THREE.HemisphereLight(0xffffff, 0x555577, 1.35));
-        const d = new THREE.DirectionalLight(0xffffff, 0.9);
-        d.position.set(2, 4, 3);
-        iconScene.add(d);
-        iconCam = new THREE.PerspectiveCamera(35, 1, 0.1, 10);
-        iconCam.position.set(0.72, 0.9, 1.3);
-        iconCam.lookAt(0, 0.26, 0);
-      }
-      const model = template.clone(true);
-      iconScene.add(model);
-      iconRenderer.render(iconScene, iconCam);
-      const url = iconRenderer.domElement.toDataURL("image/png");
-      iconScene.remove(model);
-      shopIconCache[key] = url;
-      return url;
-    } catch (e) { return null; }
-  };
-
   /* طيران الطلب من الكاونتر إلى الزبون */
   const flying = [];
   api.flyDish = function (dish, uid) {
@@ -603,8 +573,6 @@ window.S3D = (() => {
   const regularTemplates = {};
   // نماذج أطباق حقيقية (شاورما/بطاطس/مشروب) تحل محل المجسمات المبنية بالكود عند توفرها
   const dishTemplates = {};
-  // نماذج أيقونات أقسام المتجر (معدات/تراخيص/بريميوم/مزايا ذهبية/ابتكار أطباق/قائمة/إعدادات)
-  const shopIconTemplates = {};
   // أصناف الكاونتر الزخرفية: نحفظ موضعها لنستبدل المجسم المؤقت بالنموذج الحقيقي فور اكتمال تحميله
   const counterDisplays = {};
   function refreshCounterDisplay(k) {
@@ -690,33 +658,6 @@ window.S3D = (() => {
     loadDish("shawarma", "models/dish_shawarma.glb", "شاورما");
     loadDish("fries", "models/dish_fries.glb", "بطاطس");
     loadDish("drink", "models/dish_drink.glb", "مشروب");
-
-    // أيقونات ثلاثية الأبعاد لأقسام المتجر (نفس مقاس الأطباق تقريباً — عناصر صغيرة للعرض فقط)
-    const loadShopIcon = (key, url, label) => {
-      loader.load(url, (gltf) => {
-        const model = gltf.scene;
-        autoScaleGround(model, DISH_HEIGHT);
-        model.traverse((o) => {
-          if (o.isMesh) {
-            const mats = Array.isArray(o.material) ? o.material : [o.material];
-            for (const mmat of mats) {
-              if (!mmat) continue;
-              for (const mk of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]) {
-                if (mmat[mk]) mmat[mk].anisotropy = maxAniso;
-              }
-            }
-          }
-        });
-        shopIconTemplates[key] = model;
-      }, undefined, (err) => console.warn(`تعذر تحميل أيقونة ${label}`, err));
-    };
-    loadShopIcon("equipment", "models/icon_equipment.glb", "المعدات والديكور");
-    loadShopIcon("licenses", "models/icon_licenses.glb", "التراخيص والنظافة");
-    loadShopIcon("premium", "models/icon_premium.glb", "البريميوم");
-    loadShopIcon("goldPerks", "models/icon_goldperks.glb", "مزايا ذهبية");
-    loadShopIcon("aiDish", "models/icon_aidish.glb", "ابتكار أطباق جديدة");
-    loadShopIcon("menu", "models/icon_menu.glb", "قائمة الأكل الحالية");
-    loadShopIcon("settings", "models/icon_settings.glb", "الإعدادات");
   }
 
   /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
