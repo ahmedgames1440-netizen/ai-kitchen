@@ -1849,6 +1849,7 @@ function bindEvents() {
 
   $("btn-report-shop").onclick = () => { renderShop(); showScreen("screen-shop"); };
   $("btn-next-day").onclick = () => startDay();
+  $("btn-report-menu").onclick = () => { renderMenuScreen(); showScreen("screen-menu"); };
   $("btn-shop-back").onclick = () => {
     if (state.history.length && currentScreen === "screen-shop" && day && !day.running && day.served + day.angry > 0) {
       showScreen("screen-report");

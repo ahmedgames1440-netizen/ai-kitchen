@@ -541,7 +541,7 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 /* ===== المتجر ===== */
 .shop-wallet { text-align: center; font-weight: bold; font-size: 17px; margin-bottom: 10px; display: flex; justify-content: center; gap: 16px; }
 /* كل قسم من أقسام المتجر أكورديون قابل للطي: يبدأ مطوياً وتضغط عنوانه ليتوسّع */
-.shop-section { margin: 12px 0; background: rgba(0,0,0,.18); border-radius: 14px; overflow: hidden; }
+.shop-section { margin: 12px 0; background: rgba(0,0,0,.18); border: 2px solid var(--accent2); border-radius: 14px; overflow: hidden; box-shadow: 0 0 6px rgba(255,209,102,.25); }
 .shop-section-title {
   width: 100%;
   font: inherit;

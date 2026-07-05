@@ -191,9 +191,9 @@ window.S3D = (() => {
     if (vip === "fanni") return regularTemplates.thumbsUpHandyman ? buildStaticFromModel(regularTemplates.thumbsUpHandyman) : buildLoadingPlaceholder();
     if (vip === "edward") return regularTemplates.grandpaCane ? buildStaticFromModel(regularTemplates.grandpaCane) : buildLoadingPlaceholder();
     if (vip === "yousef") return regularTemplates.walkingWisdom ? buildStaticFromModel(regularTemplates.walkingWisdom) : buildLoadingPlaceholder();
-    if (vip === "inspector") return regularTemplates.midnightElegance ? buildStaticFromModel(regularTemplates.midnightElegance) : buildLoadingPlaceholder();
+    if (vip === "inspector") return regularTemplates.fieldInspectorCommerce ? buildStaticFromModel(regularTemplates.fieldInspectorCommerce) : buildLoadingPlaceholder();
     if (vip === "samir") return regularTemplates.smilingMascot ? buildStaticFromModel(regularTemplates.smilingMascot) : buildLoadingPlaceholder();
-    if (vip === "muniOfficer") return buildMunicipalityOfficer();
+    if (vip === "muniOfficer") return regularTemplates.fieldInspectorMuni ? buildStaticFromModel(regularTemplates.fieldInspectorMuni) : buildLoadingPlaceholder();
     if (female) {
       // زبونة: نموذج حقيقي دائماً من مجموعة متنوعة (منقّبة بألوان مختلفة، عباءة بوجه مكشوف، حجاب عصري، أو بدون حجاب)
       const pool = ["veiledInBlack", "midnightAbaya", "casualChicHijab", "casualChic"].filter((k) => regularTemplates[k]);
@@ -629,7 +629,8 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.smilingMascot = m; }, "models/smiling_mascot.glb", "زبون (البشوش)");
     loadStatic((m) => { regularTemplates.cartoonBoy = m; }, "models/cartoon_boy.glb", "زبون (الولد)");
     loadStatic((m) => { regularTemplates.walkingWisdom = m; }, "models/walking_wisdom.glb", "شيخ يوسف");
-    loadStatic((m) => { regularTemplates.midnightElegance = m; }, "models/midnight_elegance.glb", "مفتش وزارة التجارة");
+    loadStatic((m) => { regularTemplates.fieldInspectorCommerce = m; }, "models/field_inspector_commerce.glb", "مفتش وزارة التجارة");
+    loadStatic((m) => { regularTemplates.fieldInspectorMuni = m; }, "models/field_inspector_muni.glb", "موظف البلدية");
     loadStatic((m) => { regularTemplates.casualChic = m; }, "models/casual_chic.glb", "زبونة (عصرية)");
     loadStatic((m) => { regularTemplates.casualChicHijab = m; }, "models/casual_chic_hijab.glb", "زبونة (حجاب)");
     loadStatic((m) => { regularTemplates.midnightAbaya = m; }, "models/midnight_abaya.glb", "زبونة (عباءة)");
@@ -658,6 +659,36 @@ window.S3D = (() => {
     loadDish("shawarma", "models/dish_shawarma.glb", "شاورما");
     loadDish("fries", "models/dish_fries.glb", "بطاطس");
     loadDish("drink", "models/dish_drink.glb", "مشروب");
+
+    // لوحة جدارية ("جوعك؟ أكل") — ديكور ثابت خلف الزبائن في منتصف الجدار الخلفي،
+    // بين ارتفاع رؤوس الزبائن (~2.95) وأسفل لوحة النيون الرئيسية (~4.75)
+    loader.load("models/wall_sign_hungry.glb", (gltf) => {
+      const model = gltf.scene;
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const scale = 1.6 / Math.max(size.y, 0.001);
+      model.scale.setScalar(scale);
+      const box2 = new THREE.Box3().setFromObject(model);
+      const center = new THREE.Vector3();
+      box2.getCenter(center);
+      model.position.x += 0 - center.x;
+      model.position.y += 3.6 - center.y;
+      model.position.z += -3.05 - center.z;
+      model.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          for (const mmat of mats) {
+            if (!mmat) continue;
+            for (const mk of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]) {
+              if (mmat[mk]) mmat[mk].anisotropy = maxAniso;
+            }
+          }
+        }
+      });
+      scene.add(model);
+    }, undefined, (err) => console.warn("تعذر تحميل لوحة الجدار", err));
   }
 
   /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
@@ -709,101 +740,6 @@ window.S3D = (() => {
     g.traverse((o) => { if (o.isMesh && !headMat) headMat = o.material; });
     g.add(groundShadow());
     return { group: g, head: null, headMat, height: MODEL_HEIGHT, mouths: null };
-  }
-
-  /* موظف البلدية: بذلة كاكي/زيتونية رسمية + قبعة + شارة + لوحة تفتيش — مختلف بصرياً عن مفتش وزارة التجارة */
-  function buildMunicipalityOfficer() {
-    const g = new THREE.Group();
-    const skin = 0xdba876;
-    const uniform = 0x5d6b3f; // كاكي زيتوني
-
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.85, 1.9, 24), mat(uniform));
-    body.position.y = 0.95;
-    g.add(body);
-
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.28, 16), mat(skin));
-    neck.position.y = 1.92;
-    g.add(neck);
-    for (const side of [-1, 1]) {
-      const sh = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12), mat(uniform));
-      sh.position.set(side * 0.4, 1.76, 0.02);
-      g.add(sh);
-    }
-    for (const side of [-1, 1]) {
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.85, 14), mat(uniform));
-      arm.position.set(side * 0.58, 1.35, 0.05);
-      arm.rotation.z = side * 0.32;
-      g.add(arm);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), mat(skin));
-      hand.position.set(side * 0.72, 0.95, 0.08);
-      g.add(hand);
-    }
-
-    // شارة رسمية على الصدر
-    const badge = new THREE.Mesh(new THREE.CircleGeometry(0.1, 16), new THREE.MeshStandardMaterial({ color: 0xffd166, roughness: 0.3, metalness: 0.6 }));
-    badge.position.set(-0.28, 1.5, 0.44);
-    g.add(badge);
-
-    const headMat = mat(skin);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 22), headMat);
-    head.position.y = 2.15;
-    g.add(head);
-
-    const darkSkin = new THREE.Color(skin).multiplyScalar(0.82).getHex();
-    for (const sx of [-0.19, 0.19]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), mat(0xffffff));
-      white.position.set(sx, 2.24, 0.40);
-      white.scale.z = 0.55;
-      g.add(white);
-      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), mat(0x4e342e));
-      iris.position.set(sx, 2.24, 0.47);
-      g.add(iris);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), mat(0x0d0704));
-      pupil.position.set(sx, 2.24, 0.51);
-      g.add(pupil);
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.05), mat(0x2a1f14));
-      brow.position.set(sx, 2.42, 0.42);
-      brow.rotation.z = sx < 0 ? 0.12 : -0.12;
-      g.add(brow);
-    }
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(darkSkin));
-    nose.position.set(0, 2.12, 0.48);
-    nose.scale.set(0.9, 1.15, 0.9);
-    g.add(nose);
-
-    const my = 1.93, mz = 0.46;
-    const mMat = mat(0x7a3b2e);
-    const happy = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.028, 6, 12, Math.PI), mMat);
-    happy.rotation.z = Math.PI;
-    happy.position.set(0, my + 0.05, mz);
-    const mid = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.04), mMat);
-    mid.position.set(0, my, mz);
-    mid.visible = false;
-    const sad = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.028, 6, 12, Math.PI), mMat);
-    sad.position.set(0, my - 0.06, mz);
-    sad.visible = false;
-    g.add(happy); g.add(mid); g.add(sad);
-
-    // قبعة رسمية بمظلة
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.53, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x3f4a2c));
-    cap.position.y = 2.32;
-    g.add(cap);
-    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.04, 20), mat(0x2f3720));
-    brim.position.set(0, 2.2, 0.08);
-    g.add(brim);
-
-    // لوحة تفتيش بيده
-    const board = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.46, 0.05), new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.5 }));
-    board.position.set(0.78, 0.85, 0.14);
-    g.add(board);
-    const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.36), mat(0xf5f0e6));
-    paper.position.set(0.78, 0.85, 0.17);
-    g.add(paper);
-
-    const shadow = groundShadow();
-    g.add(shadow);
-    g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-    return { group: g, head, headMat, height: 2.95, mouths: { happy, mid, sad } };
   }
 
   /* جدار جانبي عمودي بباب خروج — يواجه الكاميرا مباشرة (نفس اتجاه النوافذ الخلفية) */
@@ -961,17 +897,18 @@ window.S3D = (() => {
       refreshCounterDisplay(k);
     }
 
-    // إضاءات معلقة دافئة (نقطية حقيقية)
+    // إضاءات معلقة دافئة (نقطية حقيقية) — بارتفاع يضمن ظهورها داخل إطار الكاميرا فعلياً
+    // (كانت أعلى بكثير من حدود الرؤية العلوية للكاميرا الثابتة، فتظهر مقصوصة/غير مرئية)
     for (const sx of [-3.5, 0, 3.5]) {
       const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 6), mat(0x222222));
-      cord.position.set(sx, 6.5, -0.5);
+      cord.position.set(sx, 5.55, -0.5);
       scene.add(cord);
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10),
         new THREE.MeshStandardMaterial({ color: 0xffe9a8, emissive: 0xd6a94f, emissiveIntensity: 1.4 }));
-      bulb.position.set(sx, 5.8, -0.5);
+      bulb.position.set(sx, 4.85, -0.5);
       scene.add(bulb);
       const pl = new THREE.PointLight(0xffd9a0, 0.65, 9);
-      pl.position.set(sx, 5.6, -0.3);
+      pl.position.set(sx, 4.65, -0.3);
       scene.add(pl);
     }
 
