@@ -408,6 +408,12 @@ window.S3D = (() => {
   }
 
   function makeDishModel(kind) {
+    // نماذج حقيقية (GLTF) تحل محل المبني بالكود لهذه الأصناف عند توفرها
+    if (dishTemplates[kind]) {
+      const g = new THREE.Group();
+      g.add(dishTemplates[kind].clone(true));
+      return g;
+    }
     const g = new THREE.Group();
     const add = (geo, color, x = 0, y = 0, z = 0, emissive = 0x000000) => {
       const m = new THREE.Mesh(geo, mat(color, emissive));
@@ -511,7 +517,10 @@ window.S3D = (() => {
       iconRenderer.render(iconScene, iconCam);
       const url = iconRenderer.domElement.toDataURL("image/png");
       iconScene.remove(model);
-      iconCache[key] = url;
+      // لا نخزّن أيقونة شاورما/بطاطس/مشروب مؤقتاً (مبنية بالكود) قبل اكتمال تحميل نموذجها
+      // الحقيقي بالخلفية — غير كذا تتجمّد الأيقونة على الشكل المؤقت طول الجلسة
+      const isPendingGltfDish = ["shawarma", "fries", "drink"].includes(key) && !dishTemplates[key];
+      if (!isPendingGltfDish) iconCache[key] = url;
       return url;
     } catch (e) { return null; }
   };
@@ -535,6 +544,7 @@ window.S3D = (() => {
 
   /* ---------- نماذج GLTF حقيقية بدل بعض الشخصيات المبنية بالكود ---------- */
   const MODEL_HEIGHT = 2.95; // نفس ارتفاع رأس بقية الشخصيات تقريباً (لتموضع فقاعة الحوار)
+  const DISH_HEIGHT = 0.72;  // نفس مقاس الأصناف المبنية بالكود تقريباً (شاورما/بطاطس/مشروب)
 
   /* يعاير المقياس والوضع مرة وحدة حسب الصندوق المحيط الحقيقي للنموذج، ويثبّت القدمين على y=0 */
   function autoScaleGround(model, targetHeight) {
@@ -561,6 +571,22 @@ window.S3D = (() => {
   let salimTemplate = null;
   // بقية الشخصيات (رجال/نساء VIP وعاديين) → THREE.Group بعد التحميل، كلها بنفس المفتاح المستخدم في makeCharacter
   const regularTemplates = {};
+  // نماذج أطباق حقيقية (شاورما/بطاطس/مشروب) تحل محل المجسمات المبنية بالكود عند توفرها
+  const dishTemplates = {};
+  // أصناف الكاونتر الزخرفية: نحفظ موضعها لنستبدل المجسم المؤقت بالنموذج الحقيقي فور اكتمال تحميله
+  const counterDisplays = {};
+  function refreshCounterDisplay(k) {
+    const d = counterDisplays[k];
+    if (!d) return;
+    if (d.mesh) scene.remove(d.mesh);
+    const m = makeDishModel(k);
+    m.scale.setScalar(1.15);
+    m.position.set(d.x, 1.03, 2.5);
+    m.rotation.y = d.rotY;
+    m.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    scene.add(m);
+    d.mesh = m;
+  }
   let modelsLoadStarted = false;
 
   function preloadRealModels() {
@@ -607,6 +633,31 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.casualChic = m; }, "models/casual_chic.glb", "زبونة (عصرية)");
     loadStatic((m) => { regularTemplates.casualChicHijab = m; }, "models/casual_chic_hijab.glb", "زبونة (حجاب)");
     loadStatic((m) => { regularTemplates.midnightAbaya = m; }, "models/midnight_abaya.glb", "زبونة (عباءة)");
+
+    // أطباق حقيقية (شاورما/بطاطس/مشروب) — نفس التحميل لكن بمقاس أصغر يناسب الطبق لا الشخصية
+    const loadDish = (key, url, label) => {
+      loader.load(url, (gltf) => {
+        const model = gltf.scene;
+        autoScaleGround(model, DISH_HEIGHT);
+        model.traverse((o) => {
+          if (o.isMesh) {
+            o.castShadow = true;
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            for (const mmat of mats) {
+              if (!mmat) continue;
+              for (const mk of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]) {
+                if (mmat[mk]) mmat[mk].anisotropy = maxAniso;
+              }
+            }
+          }
+        });
+        dishTemplates[key] = model;
+        refreshCounterDisplay(key); // استبدل عرض الكاونتر المؤقت بالنموذج الحقيقي فور اكتماله
+      }, undefined, (err) => console.warn(`تعذر تحميل طبق ${label} — استخدام الشكل الافتراضي`, err));
+    };
+    loadDish("shawarma", "models/dish_shawarma.glb", "شاورما");
+    loadDish("fries", "models/dish_fries.glb", "بطاطس");
+    loadDish("drink", "models/dish_drink.glb", "مشروب");
   }
 
   /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
@@ -902,15 +953,12 @@ window.S3D = (() => {
       steam.push(sp);
     }
 
-    // أصناف معروضة على الكاونتر
+    // أصناف معروضة على الكاونتر — نحفظ إحداثياتها عشان نستبدلها بالنموذج الحقيقي فور اكتمال تحميله
     const displays = [["burger", -4.4], ["fries", -5.6], ["drink", -6.7]];
     for (const [k, x] of displays) {
-      const m = makeDishModel(k);
-      m.scale.setScalar(1.15);
-      m.position.set(x, 1.03, 2.5);
-      m.rotation.y = Math.random() * Math.PI;
-      m.traverse(o => { if (o.isMesh) o.castShadow = true; });
-      scene.add(m);
+      const rotY = Math.random() * Math.PI;
+      counterDisplays[k] = { x, rotY, mesh: null };
+      refreshCounterDisplay(k);
     }
 
     // إضاءات معلقة دافئة (نقطية حقيقية)
