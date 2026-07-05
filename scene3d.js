@@ -85,6 +85,28 @@ window.S3D = (() => {
       g.fillText("A I   K I T C H E N", w / 2, 200);
     });
   }
+  /* لوحة حماسية خلف الزبائن: عبارة كبيرة وواضحة مرسومة بالكانفس (نفس أسلوب لوحة النيون
+     الرئيسية) بدل نموذج ثلاثي الأبعاد قد يخرج نصه غير واضح على التكستر */
+  function hypeSignTexture() {
+    return canvasTexture(1024, 320, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h);
+      gr.addColorStop(0, "#2a1547"); gr.addColorStop(1, "#180c2b");
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#ffd166"; g.lineWidth = 10;
+      g.strokeRect(16, 16, w - 32, h - 32);
+      g.strokeStyle = "#ff9f43"; g.lineWidth = 3;
+      g.strokeRect(32, 32, w - 64, h - 64);
+      g.textAlign = "center";
+      g.shadowColor = "#ffd166"; g.shadowBlur = 36;
+      g.fillStyle = "#ffe9a8";
+      g.font = "900 92px Cairo, Arial";
+      g.fillText("أفضل مطعم في المدينة!", w / 2, h / 2 + 32);
+      g.shadowBlur = 0;
+      g.font = "64px Arial";
+      g.fillText("🏆", 110, h / 2 + 30);
+      g.fillText("🏆", w - 110, h / 2 + 30);
+    });
+  }
   function windowTexture(withMoon = true) {
     return canvasTexture(256, 256, (g, w, h) => {
       const gr = g.createLinearGradient(0, 0, 0, h);
@@ -659,36 +681,6 @@ window.S3D = (() => {
     loadDish("shawarma", "models/dish_shawarma.glb", "شاورما");
     loadDish("fries", "models/dish_fries.glb", "بطاطس");
     loadDish("drink", "models/dish_drink.glb", "مشروب");
-
-    // لوحة جدارية ("جوعك؟ أكل") — ديكور ثابت خلف الزبائن في منتصف الجدار الخلفي،
-    // بين ارتفاع رؤوس الزبائن (~2.95) وأسفل لوحة النيون الرئيسية (~4.75)
-    loader.load("models/wall_sign_hungry.glb", (gltf) => {
-      const model = gltf.scene;
-      const box = new THREE.Box3().setFromObject(model);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const scale = 1.6 / Math.max(size.y, 0.001);
-      model.scale.setScalar(scale);
-      const box2 = new THREE.Box3().setFromObject(model);
-      const center = new THREE.Vector3();
-      box2.getCenter(center);
-      model.position.x += 0 - center.x;
-      model.position.y += 3.6 - center.y;
-      model.position.z += -3.05 - center.z;
-      model.traverse((o) => {
-        if (o.isMesh) {
-          o.castShadow = true;
-          const mats = Array.isArray(o.material) ? o.material : [o.material];
-          for (const mmat of mats) {
-            if (!mmat) continue;
-            for (const mk of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]) {
-              if (mmat[mk]) mmat[mk].anisotropy = maxAniso;
-            }
-          }
-        }
-      });
-      scene.add(model);
-    }, undefined, (err) => console.warn("تعذر تحميل لوحة الجدار", err));
   }
 
   /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
@@ -815,6 +807,12 @@ window.S3D = (() => {
     const signGlow = new THREE.PointLight(0xff9f43, 1.6, 9);
     signGlow.position.set(0, 5.6, -2.2);
     scene.add(signGlow);
+
+    // لوحة حماسية كبيرة وواضحة خلف الزبائن، بين ارتفاع رؤوسهم وأسفل لوحة النيون الرئيسية
+    const hypeSign = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 1.44),
+      new THREE.MeshBasicMaterial({ map: hypeSignTexture() }));
+    hypeSign.position.set(0, 3.65, -3.05);
+    scene.add(hypeSign);
 
     // نوافذ تطل على مدينة المستقبل ليلاً — القمر يظهر بنافذة واحدة فقط كي لا يتكرر
     let firstMoonWindow = true;
