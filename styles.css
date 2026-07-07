@@ -239,17 +239,23 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   height: 100% !important;
   display: block;
 }
+/* شريط تذاكر الطلبات: صف أفقي ثابت أعلى منطقة الزبائن، منفصل تماماً عن مواضع
+   المجسمات ثلاثية الأبعاد — يمنع أي تداخل بين فقاعتين أو تغطية على شخصية الزبون،
+   بغض النظر عن عدد الزبائن أو زاوية الكاميرا */
 #overlay3d {
   position: absolute;
-  inset: 0;
+  top: 4px; left: 4px; right: 4px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 6px;
   pointer-events: none;
   z-index: 5;
 }
 .ov3d {
-  position: absolute;
-  /* ثابت بشريط علوي واحد (top محسوب بثابت 8px بالجافاسكربت) — يضمن ظهور الطلب
-     كاملاً دائماً بدل التعليق فوق الرأس اللي يعتمد على إسقاط قد يخرج عن الشاشة */
-  transform: translate(-50%, 0);
+  position: relative;
   pointer-events: auto;
   cursor: pointer;
   background: rgba(15, 9, 35, .92);
@@ -266,15 +272,6 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   backdrop-filter: blur(2px);
   box-shadow: 0 4px 14px rgba(0,0,0,.5);
   z-index: 6;
-}
-/* ذيل صغير يشير للأسفل نحو الشخصية عشان يبقى الربط البصري واضح */
-.ov3d::after {
-  content: "";
-  position: absolute;
-  top: 100%; left: 50%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-top-color: rgba(15, 9, 35, .92);
 }
 .ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,209,102,.35); }
 .ov3d.servable { border-color: var(--green); box-shadow: 0 0 14px rgba(46,204,113,.75); border-width: 3px; }

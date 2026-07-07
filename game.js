@@ -1238,7 +1238,9 @@ function renderShop() {
   $("shop-gold").innerHTML = `${GOLD_ICON} ${state.gold}`;
 
   const list = $("upgrades-list");
+  const decorList = $("decor-list");
   list.innerHTML = "";
+  decorList.innerHTML = "";
   for (const u of UPGRADES) {
     const lvl = state.upgrades[u.id] || 0;
     const row = document.createElement("div");
@@ -1264,7 +1266,8 @@ function renderShop() {
       renderShop();
     };
     row.appendChild(btn);
-    list.appendChild(row);
+    // "ديكور فخم" ينتمي لقسم الديكور الجديد، وباقي الترقيات تبقى بقسم المعدات
+    (u.id === "decor" ? decorList : list).appendChild(row);
   }
 
   // الرخصة والنظافة (البلدية)
@@ -1447,7 +1450,7 @@ function renderShop() {
       renderShop();
     };
     row.appendChild(btn);
-    list.appendChild(row);
+    decorList.appendChild(row);
   }
 
   // القائمة الحالية

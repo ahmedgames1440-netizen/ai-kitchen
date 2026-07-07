@@ -1087,6 +1087,8 @@ window.S3D = (() => {
       }
       e.cust = c;
       e.slotX = slotX(i, Math.max(customers.length, 1));
+      // ترتيب الفقاعة بصف الأيقونات يطابق ترتيب وقوف الزبون فعلياً (يسار→يمين)
+      if (e.ov) e.ov.style.order = Math.round(e.slotX * 100);
     });
     // الزبائن اللي راحوا بدون leave (نهاية اليوم مثلاً)
     for (const [uid, e] of chars) {
@@ -1205,16 +1207,9 @@ window.S3D = (() => {
           e.mouths.sad.visible = r <= 0.3;
         }
       }
-      // تموضع طبقة الفقاعات: الأفقي (X) يتبع إسقاط موضع الشخصية، أما الرأسي فثابت
-      // دائماً بشريط علوي واحد — هذا يضمن ظهور الطلب كاملاً دائماً بأي وضع (عرضي/طولي)
-      // بدل الاعتماد على إسقاط ثلاثي الأبعاد قد يخرج عن حدود الشاشة حسب زاوية الكاميرا
-      if (e.ov) {
-        const v = new THREE.Vector3(g.position.x, e.height * g.scale.y + 0.15, g.position.z);
-        v.project(camera);
-        const w = container.clientWidth;
-        e.ov.style.left = ((v.x * 0.5 + 0.5) * w) + "px";
-        e.ov.style.top = "8px";
-      }
+      // ملاحظة: فقاعة الطلب (e.ov) ما عادت تتموضع بإسقاط ثلاثي الأبعاد — صارت عنصر
+      // عادي داخل صف أفقي (flex) ثابت أعلى الشاشة (#overlay3d بالـCSS)، فما تتصادم
+      // فقاعتان مع بعض ولا تخرج عن حدود الشاشة مهما كانت زاوية الكاميرا أو عدد الزبائن
     }
     renderer.render(scene, camera);
   }
