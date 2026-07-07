@@ -239,20 +239,20 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   height: 100% !important;
   display: block;
 }
-/* شريط تذاكر الطلبات: صف أفقي ثابت أعلى منطقة الزبائن، منفصل تماماً عن مواضع
-   المجسمات ثلاثية الأبعاد — يمنع أي تداخل بين فقاعتين أو تغطية على شخصية الزبون،
-   بغض النظر عن عدد الزبائن أو زاوية الكاميرا */
+/* شريط تذاكر الطلبات: صف مستقل بمساحته الخاصة، خارج منطقة العرض ثلاثي الأبعاد
+   تماماً (مو طبقة فوقها) — عشان منطقة الزبائن تاخذ ارتفاعها كاملاً لعرض
+   المجسمات دائماً، بغض النظر عن عدد الزبائن أو طول الطلبات */
 #overlay3d {
-  position: absolute;
-  top: 4px; left: 4px; right: 4px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
   align-content: flex-start;
   gap: 6px;
-  pointer-events: none;
-  z-index: 5;
+  padding: 4px 6px;
+  max-height: 40vh;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 .ov3d {
   position: relative;
@@ -671,4 +671,10 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   #counter-area { padding: 6px 10px; }
   .station .s-emoji { font-size: 24px; }
   .station .s-img { width: 36px; height: 36px; }
+  /* شريط التذاكر بأصغر مساحة ممكنة بالوضع العرضي الضيق — الأولوية لظهور الزبائن أنفسهم */
+  #overlay3d { max-height: 28vh; padding: 2px 6px; gap: 4px; }
+  .ov3d { padding: 4px 7px; min-width: 84px; gap: 2px; }
+  .ov3d .ov-name { font-size: 11px; }
+  .ov3d .order-bubble { max-height: 60px; padding: 3px 5px; }
+  .ov3d .order-bubble img { width: 24px; height: 24px; }
 }
