@@ -15,6 +15,19 @@ window.S3D = (() => {
   let lastT = 0;
   let spitMeat = null;   // سيخ الشاورما الدوار
 
+  /* خلفية المطعم المصوّرة (بدل الديكور الإجرائي المبني بالكود):
+     الصورة تنقسم لطبقتين HTML حول الكانفس الشفاف — الجدار واللافتة خلف
+     الزبائن، وشريط الكاونتر فوقهم بصرياً (قدامهم) عشان يبان وقوفهم وراءه.
+     PHOTO_CUT: موضع الحافة الخلفية لسطح الكاونتر داخل الصورة (نسبة من ارتفاعها).
+     PHOTO_SEAM: موضع نفس الحافة على الشاشة — مطابق لمكان حافة الكاونتر
+     الإجرائي القديم في إطار الكاميرا الثابتة (يخفي الأقدام فقط، مو الجسم). */
+  const PHOTO_BG = true;
+  const PHOTO_URL = "bg_photo.jpg";
+  const PHOTO_W = 1536, PHOTO_H = 1024;
+  const PHOTO_CUT = 0.615;
+  const PHOTO_SEAM = 0.77;
+  let bgWallLayer = null, bgCounterLayer = null;
+
   const api = {
     active: false,
     onCustomerClick: null,   // تحدد من game.js
@@ -774,6 +787,53 @@ window.S3D = (() => {
   }
 
   function buildRoom() {
+    if (!PHOTO_BG) buildProceduralRoom();
+
+    // إضاءات معلقة دافئة (نقطية) — تبقى مع الخلفية المصوّرة لأنها تنوّر الشخصيات
+    for (const sx of [-3.5, 0, 3.5]) {
+      if (!PHOTO_BG) {
+        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 6), mat(0x222222));
+        cord.position.set(sx, 5.55, -0.5);
+        scene.add(cord);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10),
+          new THREE.MeshStandardMaterial({ color: 0xffe9a8, emissive: 0xd6a94f, emissiveIntensity: 1.4 }));
+        bulb.position.set(sx, 4.85, -0.5);
+        scene.add(bulb);
+      }
+      const pl = new THREE.PointLight(0xffd9a0, 0.65, 9);
+      pl.position.set(sx, 4.65, -0.3);
+      scene.add(pl);
+    }
+
+    // المساعد الآلي (يظهر عند شرائه) — عنصر لعب، يبقى مع الخلفية المصوّرة
+    // (موقعه خلف حافة الكاونتر بالصورة فيبان واقف وراءه بشكل طبيعي)
+    robot = new THREE.Group();
+    const rBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 0.62, 14),
+      new THREE.MeshStandardMaterial({ color: 0xdfe6e9, roughness: 0.3, metalness: 0.6 }));
+    rBody.position.y = 0.32;
+    robot.add(rBody);
+    const rHead = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0xb2bec3, roughness: 0.3, metalness: 0.6 }));
+    rHead.position.y = 0.85;
+    robot.add(rHead);
+    const rEye = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00b8d4, emissiveIntensity: 2 }));
+    rEye.position.set(0, 0.87, 0.21);
+    robot.add(rEye);
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.22, 6), mat(0x636e72));
+    ant.position.y = 1.12;
+    robot.add(ant);
+    const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0xff5252, emissive: 0xd32f2f, emissiveIntensity: 2 }));
+    antTip.position.y = 1.25;
+    robot.add(antTip);
+    robot.position.set(4.6, 1.02, 2.5);
+    robot.visible = false;
+    robot.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    scene.add(robot);
+  }
+
+  function buildProceduralRoom() {
     // أرضية خشبية بتكستر حقيقي
     const woodTex = woodTexture();
     woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
@@ -895,46 +955,6 @@ window.S3D = (() => {
       refreshCounterDisplay(k);
     }
 
-    // إضاءات معلقة دافئة (نقطية حقيقية) — بارتفاع يضمن ظهورها داخل إطار الكاميرا فعلياً
-    // (كانت أعلى بكثير من حدود الرؤية العلوية للكاميرا الثابتة، فتظهر مقصوصة/غير مرئية)
-    for (const sx of [-3.5, 0, 3.5]) {
-      const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 6), mat(0x222222));
-      cord.position.set(sx, 5.55, -0.5);
-      scene.add(cord);
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10),
-        new THREE.MeshStandardMaterial({ color: 0xffe9a8, emissive: 0xd6a94f, emissiveIntensity: 1.4 }));
-      bulb.position.set(sx, 4.85, -0.5);
-      scene.add(bulb);
-      const pl = new THREE.PointLight(0xffd9a0, 0.65, 9);
-      pl.position.set(sx, 4.65, -0.3);
-      scene.add(pl);
-    }
-
-    // المساعد الآلي (يظهر عند شرائه)
-    robot = new THREE.Group();
-    const rBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 0.62, 14),
-      new THREE.MeshStandardMaterial({ color: 0xdfe6e9, roughness: 0.3, metalness: 0.6 }));
-    rBody.position.y = 0.32;
-    robot.add(rBody);
-    const rHead = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0xb2bec3, roughness: 0.3, metalness: 0.6 }));
-    rHead.position.y = 0.85;
-    robot.add(rHead);
-    const rEye = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.02),
-      new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00b8d4, emissiveIntensity: 2 }));
-    rEye.position.set(0, 0.87, 0.21);
-    robot.add(rEye);
-    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.22, 6), mat(0x636e72));
-    ant.position.y = 1.12;
-    robot.add(ant);
-    const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6),
-      new THREE.MeshStandardMaterial({ color: 0xff5252, emissive: 0xd32f2f, emissiveIntensity: 2 }));
-    antTip.position.y = 1.25;
-    robot.add(antTip);
-    robot.position.set(4.6, 1.02, 2.5);
-    robot.visible = false;
-    robot.traverse(o => { if (o.isMesh) o.castShadow = true; });
-    scene.add(robot);
   }
 
   /* واجهات للتحكم من اللعبة */
@@ -991,6 +1011,23 @@ window.S3D = (() => {
       renderer.domElement.id = "canvas3d";
       container.prepend(renderer.domElement);
       maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+      // طبقتا الخلفية المصوّرة حول الكانفس الشفاف:
+      // الجدار خلف الزبائن + شريط الكاونتر قدامهم (يحجب أقدامهم مثل الكاونتر القديم)
+      if (PHOTO_BG) {
+        bgWallLayer = document.createElement("div");
+        bgCounterLayer = document.createElement("div");
+        for (const el of [bgWallLayer, bgCounterLayer]) {
+          el.style.position = "absolute";
+          el.style.inset = "0";
+          el.style.backgroundImage = "url(" + PHOTO_URL + ")";
+          el.style.backgroundRepeat = "no-repeat";
+          el.style.pointerEvents = "none";
+        }
+        container.insertBefore(bgWallLayer, renderer.domElement); // خلف الكانفس
+        container.appendChild(bgCounterLayer);                    // فوق الكانفس
+        bgCounterLayer.style.clipPath = "inset(" + (PHOTO_SEAM * 100) + "% 0 0 0)";
+      }
 
       scene = new THREE.Scene();
       scene.fog = new THREE.Fog(0x1a1035, 16, 34);
@@ -1050,6 +1087,24 @@ window.S3D = (() => {
     // حرّك بابي الخروج مع تغيّر عرض الشاشة كي يبقيا عند حافة منطقة الوقوف
     if (leftDoorGroup) leftDoorGroup.position.x = -(slotSpread + 2.7);
     if (rightDoorGroup) rightDoorGroup.position.x = slotSpread + 2.7;
+
+    // تموضع الخلفية المصوّرة: مقياس موحّد (بدون تشويه) يضمن أن حافة الكاونتر
+    // بالصورة (PHOTO_CUT) تقع بالضبط عند خط الحافة على الشاشة (PHOTO_SEAM)،
+    // مع تغطية كامل العرض وكامل ما تحت الخط — والباقي يُقص من الأطراف.
+    if (PHOTO_BG && bgWallLayer) {
+      const scale = Math.max(
+        w / PHOTO_W,
+        (PHOTO_SEAM * h) / (PHOTO_CUT * PHOTO_H),
+        ((1 - PHOTO_SEAM) * h) / ((1 - PHOTO_CUT) * PHOTO_H)
+      );
+      const dispW = PHOTO_W * scale, dispH = PHOTO_H * scale;
+      const offX = (w - dispW) / 2;
+      const offY = PHOTO_SEAM * h - PHOTO_CUT * dispH;
+      for (const el of [bgWallLayer, bgCounterLayer]) {
+        el.style.backgroundSize = dispW + "px " + dispH + "px";
+        el.style.backgroundPosition = offX + "px " + offY + "px";
+      }
+    }
   }
 
   function slotX(i, n) {
