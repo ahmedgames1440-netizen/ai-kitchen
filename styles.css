@@ -254,27 +254,41 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   overflow-y: auto;
   flex-shrink: 0;
 }
+/* كبسولة عمودية متوهجة بحدود مزدوجة (حلقة بيضاء + توهج وردي) على خلفية شبه
+   شفافة — وجه المزاج الكبير أعلاها يعطي إحساس فوري بحالة الزبون دون الحاجة
+   لتعبيرات وجه على المجسم نفسه (النماذج الجاهزة واللوحات المسطحة بلا حركة وجه) */
 .ov3d {
   position: relative;
   pointer-events: auto;
   cursor: pointer;
-  background: rgba(15, 9, 35, .92);
-  border: 2px solid rgba(255,255,255,.28);
-  border-radius: 14px;
-  padding: 6px 9px;
-  min-width: 96px;
-  max-width: 165px;
+  background: rgba(10, 4, 22, .5);
+  border: 2px solid rgba(255,255,255,.55);
+  border-radius: 28px;
+  padding: 10px 10px 8px;
+  min-width: 88px;
+  max-width: 150px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  backdrop-filter: blur(2px);
-  box-shadow: 0 4px 14px rgba(0,0,0,.5);
+  gap: 3px;
+  backdrop-filter: blur(3px);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.14), 0 0 16px rgba(255,140,205,.4), 0 4px 14px rgba(0,0,0,.5);
   z-index: 6;
 }
-.ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,209,102,.35); }
-.ov3d.servable { border-color: var(--green); box-shadow: 0 0 14px rgba(46,204,113,.75); border-width: 3px; }
+.ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 0 4px rgba(255,209,102,.22), 0 0 14px rgba(255,209,102,.5); }
+.ov3d.servable { border-color: var(--green); box-shadow: 0 0 0 4px rgba(46,204,113,.25), 0 0 16px rgba(46,204,113,.75); border-width: 3px; }
+.ov3d .ov-mood-face { font-size: 32px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.ov3d .ov-urgent {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  color: var(--red);
+  font-weight: 900;
+  font-size: 11px;
+  text-shadow: 0 0 6px rgba(255,107,107,.85);
+}
+.ov3d.urgent .ov-urgent { display: flex; }
 .ov3d .ov-name { font-size: 13px; font-weight: bold; white-space: nowrap; color: #fff; }
 .ov3d .ov-type { color: var(--accent2); font-weight: bold; font-size: 11px; }
 /* صف الأصناف بدون خلفية بيضاء — الأيقونات نفسها شفافة (PNG مرندرة بـalpha)
@@ -321,7 +335,8 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   background: rgba(80,10,10,.85);
   animation: combopulse 1s infinite;
 }
-.ov3d .patience-bar { width: 100%; height: 6px; }
+.ov3d .patience-bar { width: 72%; height: 5px; border-radius: 999px; background: rgba(255,255,255,.15); margin-top: 2px; overflow: hidden; }
+.ov3d .patience-fill { border-radius: 999px; }
 .customer {
   flex: 1;
   max-width: 130px;
@@ -674,8 +689,11 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   .station .s-img { width: 36px; height: 36px; }
   /* شريط التذاكر بأصغر مساحة ممكنة بالوضع العرضي الضيق — الأولوية لظهور الزبائن أنفسهم */
   #overlay3d { max-height: 15vh; padding: 2px 6px; gap: 4px; }
-  .ov3d { padding: 3px 6px; min-width: 76px; gap: 2px; }
+  .ov3d { padding: 5px 6px 4px; min-width: 76px; gap: 1px; border-radius: 20px; }
+  .ov3d .ov-mood-face { font-size: 22px; }
+  .ov3d .ov-urgent { font-size: 9px; }
   .ov3d .ov-name { font-size: 10px; }
   .ov3d .order-bubble { max-height: 40px; padding: 2px 3px; }
   .ov3d .order-bubble img { width: 20px; height: 20px; }
+  .ov3d .patience-bar { height: 4px; }
 }

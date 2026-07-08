@@ -1628,7 +1628,9 @@ function renderCustomers3D() {
       !!(selected && c.order.some(o => !o.done && o.dish.id === day.tray[day.selectedTray].dish.id)));
     ov.classList.toggle("vip", !!c.isVip);
     ov.innerHTML = `
-      <div class="ov-name">${c.chatPending ? "💬 " : ""}${c.name} <span class="ov-type">${c.type.label}</span> <span class="ov-mood"></span></div>
+      <div class="ov-mood-face">${moodFace(c)}</div>
+      <div class="ov-urgent">⚡ مستعجل</div>
+      <div class="ov-name">${c.chatPending ? "💬 " : ""}${c.name} <span class="ov-type">${c.type.label}</span></div>
       <div class="order-bubble">${c.order.map(o => {
         const ic = S3D.dishIcon ? S3D.dishIcon(o.dish) : null;
         return `<span class="oitem ${o.done ? "done" : ""}">${ic ? `<img src="${ic}" alt="${o.dish.name}">` : o.dish.emoji}</span>`;
@@ -1663,10 +1665,10 @@ function updatePatienceBars() {
       setTimeout(() => beep(988, 0.12, "square", 0.12), 130);
     }
     c.el.classList.toggle("urgent", r < 0.25);
-    // الوضع ثلاثي الأبعاد: إيموجي مزاج صغير بالفقاعة (المجسم نفسه يهتز ويحمرّ)
-    const moodOv = c.el.querySelector(".ov-mood");
-    if (moodOv) {
-      moodOv.textContent = r > 0.6 ? "" : (r > 0.3 ? "😕" : "😡");
+    // الوضع ثلاثي الأبعاد: وجه المزاج الكبير أعلى الفقاعة (المجسم نفسه يهتز ويحمرّ زيادة)
+    const moodFaceEl = c.el.querySelector(".ov-mood-face");
+    if (moodFaceEl) {
+      moodFaceEl.textContent = moodFace(c);
       continue;
     }
     // الوضع 2D الاحتياطي

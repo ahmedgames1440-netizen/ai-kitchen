@@ -233,15 +233,16 @@ window.S3D = (() => {
     if (vip === "samir") return regularTemplates.smilingMascot ? buildStaticFromModel(regularTemplates.smilingMascot) : buildLoadingPlaceholder();
     if (vip === "muniOfficer") return regularTemplates.fieldInspectorMuni ? buildStaticFromModel(regularTemplates.fieldInspectorMuni) : buildLoadingPlaceholder();
     if (female) {
-      // زبونة: نموذج حقيقي دائماً من مجموعة متنوعة (منقّبة بألوان مختلفة، عباءة بوجه مكشوف، حجاب عصري، أو بدون حجاب)
-      const pool = ["veiledInBlack", "midnightAbaya", "casualChicHijab", "casualChic"].filter((k) => regularTemplates[k]);
+      // زبونة: نموذج حقيقي دائماً من مجموعة متنوعة (عباءة بوجه مكشوف، حجاب عصري، بدون حجاب، أو لوحة مسطحة)
+      const pool = ["midnightAbaya", "casualChicHijab", "casualChic", "spriteGirl"].filter((k) => regularTemplates[k]);
       if (!pool.length) return buildLoadingPlaceholder();
       const pick = pool[Math.floor(Math.random() * pool.length)];
-      return pick === "veiledInBlack" ? buildFemaleFromModel(c) : buildStaticFromModel(regularTemplates[pick]);
+      return buildStaticFromModel(regularTemplates[pick]);
     }
     if (!vip) {
       // زبون عادي (رجل): نموذج GLTF حقيقي دائماً من مجموعة متنوعة
-      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "constructionExec", "grayKurta", "clockworkGentleman", "cartoonBoy"]
+      const pool = ["blueThobe", "businessman", "emeraldRobed", "jollyPortly", "constructionExec", "grayKurta", "clockworkGentleman", "cartoonBoy",
+        "spriteElderCardigan", "spriteYoungHoodie", "spriteBoyBlue", "spriteElderCapVest", "spriteElderWhiteThobe", "spritePilot", "spriteConstruction", "spriteThobeJolly", "spritePlump"]
         .filter((k) => regularTemplates[k]);
       if (!pool.length) return buildLoadingPlaceholder();
       const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -530,12 +531,19 @@ window.S3D = (() => {
     return g;
   }
 
-  /* أيقونات الأصناف: نرندر المجسم في مشهد صغير ونحوله لصورة */
+  /* أيقونات الأصناف: نرندر المجسم في مشهد صغير ونحوله لصورة —
+     ما عدا هذه الأصناف: لها صور جاهزة عالية الجودة (شفافة الخلفية) بدل الرندر الإجرائي */
+  const STATIC_DISH_ICONS = {
+    burger: "models/dish_icons/burger.png",
+    falafel: "models/dish_icons/falafel.png",
+    shawarma: "models/dish_icons/shawarma.png",
+  };
   const iconCache = {};
   let iconRenderer = null, iconScene = null, iconCam = null;
   api.dishIcon = function (dish) {
     if (!api.active) return null;
     const key = dishKind(dish);
+    if (STATIC_DISH_ICONS[key]) return STATIC_DISH_ICONS[key];
     if (iconCache[key]) return iconCache[key];
     try {
       if (!iconRenderer) {
@@ -659,7 +667,6 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.jollyPortly = m; }, "models/jolly_portly.glb", "الرجل البشوش");
     loadStatic((m) => { regularTemplates.littleBackpacker = m; }, "models/little_backpacker.glb", "خليل");
     loadStatic((m) => { regularTemplates.thumbsUpHandyman = m; }, "models/thumbs_up_handyman.glb", "أبو شاكر الفني");
-    loadStatic((m) => { regularTemplates.veiledInBlack = m; }, "models/veiled_in_black.glb", "المنقبة");
     loadStatic((m) => { regularTemplates.grandpaCane = m; }, "models/grandpa_cane.glb", "الخواجة إدوارد");
     loadStatic((m) => { regularTemplates.constructionExec = m; }, "models/construction_exec.glb", "زبون (تنفيذي)");
     loadStatic((m) => { regularTemplates.grayKurta = m; }, "models/gray_kurta.glb", "زبون (كردتة رمادية)");
@@ -672,6 +679,27 @@ window.S3D = (() => {
     loadStatic((m) => { regularTemplates.casualChic = m; }, "models/casual_chic.glb", "زبونة (عصرية)");
     loadStatic((m) => { regularTemplates.casualChicHijab = m; }, "models/casual_chic_hijab.glb", "زبونة (حجاب)");
     loadStatic((m) => { regularTemplates.midnightAbaya = m; }, "models/midnight_abaya.glb", "زبونة (عباءة)");
+
+    // شخصيات "لوحة مسطحة" (صور شفافة الخلفية) — تُحمَّل كتكستر لا كنموذج GLTF
+    const texLoader = new THREE.TextureLoader();
+    const loadSprite = (key, url, label) => {
+      texLoader.load(url, (tex) => {
+        if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = maxAniso;
+        const img = tex.image;
+        regularTemplates[key] = { isSprite: true, texture: tex, aspect: img.width / img.height };
+      }, undefined, (err) => console.warn(`تعذر تحميل صورة ${label}`, err));
+    };
+    loadSprite("spriteElderCardigan", "models/sprites/sprite_elder_cardigan.png", "زبون (كارديجان)");
+    loadSprite("spriteYoungHoodie", "models/sprites/sprite_young_hoodie.png", "زبون (هودي)");
+    loadSprite("spriteBoyBlue", "models/sprites/sprite_boy_blue.png", "زبون (ولد)");
+    loadSprite("spriteElderCapVest", "models/sprites/sprite_elder_cap_vest.png", "زبون (قبعة وصدرية)");
+    loadSprite("spriteElderWhiteThobe", "models/sprites/sprite_elder_white_thobe.png", "زبون (ثوب أبيض)");
+    loadSprite("spritePilot", "models/sprites/sprite_pilot.png", "زبون (طيار)");
+    loadSprite("spriteConstruction", "models/sprites/sprite_construction.png", "زبون (بناء)");
+    loadSprite("spriteThobeJolly", "models/sprites/sprite_thobe_jolly.png", "زبون (ثوب بشوش)");
+    loadSprite("spritePlump", "models/sprites/sprite_plump_blue_shirt.png", "زبون (قميص أزرق)");
+    loadSprite("spriteGirl", "models/sprites/sprite_girl_cream_blouse.png", "زبونة (بلوزة كريمية)");
 
     // أطباق حقيقية (شاورما/بطاطس/مشروب) — نفس التحميل لكن بمقاس أصغر يناسب الطبق لا الشخصية
     const loadDish = (key, url, label) => {
@@ -699,33 +727,19 @@ window.S3D = (() => {
     loadDish("drink", "models/dish_drink.glb", "مشروب");
   }
 
-  /* ألوان عباءة متنوعة للمنقبة (تلوين حقيقي: مضروب بالتكستر + لمسة توهج خفيفة على الظل) */
-  const ABAYA_TINTS = [
-    { color: 0xffffff, emissive: 0x000000 }, // أسود أصلي
-    { color: 0xb5677a, emissive: 0x330010 }, // كستنائي
-    { color: 0x6f86b5, emissive: 0x001433 }, // كحلي
-    { color: 0x6fb590, emissive: 0x00330f }, // أخضر داكن
-    { color: 0x9b7ab5, emissive: 0x1c0033 }, // بنفسجي داكن
-    { color: 0xb59b7a, emissive: 0x241800 }, // بني داكن
-  ];
-
-  /* شخصية منقّبة من نموذج GLTF حقيقي، بلون عباءة عشوائي لكل زبونة (نفس النموذج، تنويع بالتلوين) */
-  function buildFemaleFromModel(c) {
+  /* شخصيات "لوحة مسطحة" (billboard sprite): صورة PNG شفافة الخلفية على مستطيل يواجه
+     الكاميرا تلقائياً (THREE.Sprite) — بما إن كاميرا اللعبة ثابتة لا تدور أبداً، هذا
+     يبدو بصرياً مطابقاً لنموذج مجسم حقيقي بدون الحاجة لنمذجة three ثلاثية الأبعاد */
+  function buildSpriteFromTemplate(template) {
     const g = new THREE.Group();
-    const model = regularTemplates.veiledInBlack.clone(true);
-    g.add(model);
-    const tint = c._tint || (c._tint = ABAYA_TINTS[Math.floor(Math.random() * ABAYA_TINTS.length)]);
-    let headMat = null;
-    model.traverse((o) => {
-      if (o.isMesh) {
-        o.material = o.material.clone(); // مادة خاصة لكل نسخة كي لا يتغير لون بقية الزبونات
-        o.material.color.setHex(tint.color);
-        o.material.emissive.setHex(tint.emissive);
-        if (!headMat) headMat = o.material;
-      }
-    });
+    const spriteMat = new THREE.SpriteMaterial({ map: template.texture, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.center.set(0.5, 0); // ترسية أسفل الصورة عند القدمين (y=0) بدل منتصفها
+    const h = MODEL_HEIGHT;
+    sprite.scale.set(h * template.aspect, h, 1);
+    g.add(sprite);
     g.add(groundShadow());
-    return { group: g, head: null, headMat, height: MODEL_HEIGHT, mouths: null };
+    return { group: g, head: null, headMat: spriteMat, height: MODEL_HEIGHT, mouths: null };
   }
 
   /* شكل مؤقت بسيط (بدون تفاصيل) يظهر فقط في الثانية الأولى النادرة قبل اكتمال تحميل النماذج */
@@ -741,6 +755,7 @@ window.S3D = (() => {
   /* غلاف علوي فارغ: حلقة الرسم تكتب فوق group.position.y كل إطار (اهتزاز المشي)،
      فلازم تبقى إزاحة "تثبيت القدمين على الأرض" على النموذج الابن لا الغلاف نفسه */
   function buildStaticFromModel(template) {
+    if (template && template.isSprite) return buildSpriteFromTemplate(template);
     const g = new THREE.Group();
     const model = template.clone(true);
     g.add(model);
@@ -1126,6 +1141,21 @@ window.S3D = (() => {
         el.style.backgroundSize = dispW + "px " + dispH + "px";
         el.style.backgroundPosition = offX + "px " + offY + "px";
       }
+    }
+
+    // تكبير بصري ثابت النسبة: كاميرا اللعبة ذات زاوية رؤية رأسية ثابتة، فحجم
+    // الشخصية بالبكسل يتناسب تقريباً مع ارتفاع الحاوية h — بالوضع العرضي (h صغير
+    // جداً) تصير الشخصيات صغيرة رغم أنها تاخذ نفس النسبة من الشاشة. نعوّض بتكبير
+    // (CSS transform) موحّد على الكانفس وطبقتي الخلفية معاً، بنفس نقطة الأصل
+    // (أسفل المنتصف) — فتبقى محاذاة حافة الكاونتر بالصورة صحيحة تماماً كما هي،
+    // فقط "مكبّرة" ومقصوصة بحدود الحاوية (overflow:hidden).
+    const REF_H = 340; // ارتفاع مرجعي (بكسل) تُحسب عنده الشخصيات بحجمها الطبيعي
+    const zoom = h < REF_H ? Math.min(2, REF_H / h) : 1;
+    const zoomStyle = zoom > 1.001 ? `scale(${zoom.toFixed(3)})` : "";
+    for (const el of [renderer.domElement, bgWallLayer, bgCounterLayer]) {
+      if (!el) continue;
+      el.style.transformOrigin = "50% 100%";
+      el.style.transform = zoomStyle;
     }
   }
 
