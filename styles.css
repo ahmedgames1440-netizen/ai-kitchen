@@ -286,17 +286,25 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 }
 .ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(255,209,102,.45), 0 3px 10px rgba(0,0,0,.45); }
 .ov3d.servable { border-color: var(--green); box-shadow: 0 0 0 3px rgba(46,204,113,.55), 0 3px 10px rgba(0,0,0,.45); }
-/* قلب "مؤشر" صبر: قلب أبيض شبه شفاف (خلفية/إطار ثابت) + قلب أحمر فوقه مقصوص
-   بـclip-path حسب نسبة الصبر المتبقية — يفرغ من الأعلى للأسفل تدريجياً وبسلاسة
-   (transition على القص نفسه) بدل قفزة مفاجئة بين 3 إيموجي مختلفة */
-.ov3d .ov-heart-wrap { position: relative; width: 22px; height: 22px; }
-.ov3d .ov-heart-bg, .ov3d .ov-heart-fill {
-  position: absolute; inset: 0;
-  font-size: 22px; line-height: 1;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+/* مؤشر الصبر: شريط رفيع عائم فوق الفقاعة (خارجها بصرياً — العنصر ابن للفقاعة
+   لكن يتموضع مطلقاً فوق حدها العلوي) — يتقلص ويتلون أخضر→برتقالي→أحمر من game.js */
+.ov3d .ov-patience {
+  position: absolute;
+  top: -12px; left: 8%; right: 8%;
+  height: 7px;
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,.45);
 }
-.ov3d .ov-heart-bg { opacity: .35; }
-.ov3d .ov-heart-fill { clip-path: inset(0% 0 0 0); transition: clip-path .3s linear; }
+.ov3d .ov-patience-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--green);
+  border-radius: 999px;
+  transition: width .3s linear;
+}
 .ov3d .ov-chat-hint { position: absolute; top: -9px; right: -6px; font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .ov3d .ov-name { font-size: 12px; font-weight: bold; white-space: nowrap; color: #fff; }
 .ov3d .ov-type { color: var(--accent2); font-weight: bold; font-size: 11px; }
@@ -798,8 +806,7 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   .station .s-price { display: none; }
   /* فقاعات أصغر بالوضع العرضي الضيق — الأولوية لظهور الزبائن أنفسهم */
   .ov3d { padding: 4px 5px 4px; min-width: 50px; max-width: 96px; gap: 1px; border-radius: 13px; }
-  .ov3d .ov-heart-wrap { width: 17px; height: 17px; }
-  .ov3d .ov-heart-bg, .ov3d .ov-heart-fill { font-size: 17px; }
+  .ov3d .ov-patience { top: -10px; height: 6px; }
   .ov3d .ov-name { font-size: 10px; }
   .ov3d .order-bubble { max-height: 50px; }
   .ov3d .order-bubble img { width: 22px; height: 22px; }

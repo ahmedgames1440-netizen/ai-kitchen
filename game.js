@@ -1633,7 +1633,7 @@ function renderCustomers3D() {
         const ic = S3D.dishIcon ? S3D.dishIcon(o.dish) : null;
         return `<span class="oitem ${o.done ? "done" : ""}">${ic ? `<img src="${ic}" alt="${o.dish.name}">` : o.dish.emoji}</span>`;
       }).join("")}</div>
-      <div class="ov-heart-wrap"><span class="ov-heart-bg">🤍</span><span class="ov-heart-fill">❤️</span></div>
+      <div class="ov-patience"><div class="ov-patience-fill"></div></div>
     `;
     ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
     c.el = ov;
@@ -1663,10 +1663,11 @@ function updatePatienceBars() {
       setTimeout(() => beep(988, 0.12, "square", 0.12), 130);
     }
     c.el.classList.toggle("urgent", r < 0.25);
-    // الوضع ثلاثي الأبعاد: قلب "مؤشر" يفرغ تدريجياً (مقصوص clip-path) بدل شريط تقدّم
-    const heartFill = c.el.querySelector(".ov-heart-fill");
-    if (heartFill) {
-      heartFill.style.clipPath = `inset(${((1 - r) * 100).toFixed(1)}% 0 0 0)`;
+    // الوضع ثلاثي الأبعاد: مؤشر صبر شريطي خارج الفقاعة (فوقها) يتقلص ويتلون حسب الصبر
+    const patFill = c.el.querySelector(".ov-patience-fill");
+    if (patFill) {
+      patFill.style.width = (r * 100).toFixed(1) + "%";
+      patFill.style.background = r > 0.5 ? "var(--green)" : r > 0.25 ? "var(--accent)" : "var(--red)";
       continue;
     }
     // الوضع 2D الاحتياطي
