@@ -18,14 +18,17 @@ window.S3D = (() => {
   /* خلفية المطعم المصوّرة (بدل الديكور الإجرائي المبني بالكود):
      الصورة تنقسم لطبقتين HTML حول الكانفس الشفاف — الجدار واللافتة خلف
      الزبائن، وشريط الكاونتر فوقهم بصرياً (قدامهم) عشان يبان وقوفهم وراءه.
-     PHOTO_CUT: موضع الحافة الخلفية لسطح الكاونتر داخل الصورة (نسبة من ارتفاعها).
-     PHOTO_SEAM: موضع نفس الحافة على الشاشة — مطابق لمكان حافة الكاونتر
-     الإجرائي القديم في إطار الكاميرا الثابتة (يخفي الأقدام فقط، مو الجسم). */
+     PHOTO_CUT: موضع الحافة الخلفية لسطح الكاونتر داخل الصورة (نسبة من ارتفاعها) —
+     قِيست يدوياً بالبكسل (~610/1024).
+     PHOTO_SEAM: الموضع على الشاشة (نسبة ارتفاع) اللي يبان عنده جسم الزبون مقطوعاً —
+     محسوبة فعلياً بإسقاط نقطة على ارتفاع ~0.75 وحدة (أعلى الفخذ) بنفس كاميرا اللعبة
+     (0,3.3,9 تنظر لـ0,2.05,0 بزاوية رأسية 42°) — عشان يبان واقف خلف الكاونتر فعلاً
+     لا واقف فوقه (كان مضبوط سابقاً على ~0.77 اللي ما يغطي إلا القدم بالكاد). */
   const PHOTO_BG = true;
   const PHOTO_URL = "bg_photo.jpg";
   const PHOTO_W = 1536, PHOTO_H = 1024;
-  const PHOTO_CUT = 0.615;
-  const PHOTO_SEAM = 0.77;
+  const PHOTO_CUT = 0.596;
+  const PHOTO_SEAM = 0.68;
   let bgWallLayer = null, bgCounterLayer = null;
 
   const api = {
@@ -1061,7 +1064,18 @@ window.S3D = (() => {
       pointer = new THREE.Vector2();
       renderer.domElement.addEventListener("click", onCanvasClick);
 
-      new ResizeObserver(resize).observe(container);
+      // نجمّع أحداث الـResizeObserver عبر مؤقّت قصير بدل تنفيذ resize() فوراً
+      // على كل نبضة — الجوال يطلق عشرات أحداث resize متتالية أثناء ظهور/اختفاء
+      // شريط عنوان المتصفح عند التمرير، وكل نبضة كانت تعيد حساب وتموضع خلفية
+      // الصورة الكبيرة، فيسبب تلعثم/اهتزاز مرئي واضح. نستخدم setTimeout لا
+      // requestAnimationFrame لأن rAF يتوقف تماماً بالتبويبات غير الظاهرة/النشطة،
+      // وأي resize يحصل فيها (مثلاً استعادة تبويب) لازم ينفّذ رغم ذلك.
+      let resizeTimer = null;
+      const throttledResize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resize, 80);
+      };
+      new ResizeObserver(throttledResize).observe(container);
       resize();
 
       api.active = true;
@@ -1075,9 +1089,17 @@ window.S3D = (() => {
     }
   };
 
+  let lastResizeW = 0, lastResizeH = 0;
   function resize() {
     if (!renderer) return;
     const w = container.clientWidth || 1, h = container.clientHeight || 1;
+    // أول resize() بيُستدعى فوراً بنفس تيك تفعيل شاشة اللعب (قبل ما يخلص المتصفح
+    // حساب تخطيط الفليكس)، فأحياناً clientWidth/Height يرجعوا شبه صفر لحظياً —
+    // لو صار كذا ما نثبّت هالقياس الفاسد، نجرب مرة ثانية بعد لحظة بسيطة بدل ما
+    // تعلق خلفية الصورة على مقياس خاطئ للجلسة كلها.
+    if (w < 10 || h < 10) { setTimeout(resize, 60); return; }
+    if (w === lastResizeW && h === lastResizeH) return; // ما تغيّر شي فعلياً — تفادي إعادة حساب بلا داعي
+    lastResizeW = w; lastResizeH = h;
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -1164,7 +1186,10 @@ window.S3D = (() => {
       e.mouths.sad.visible = !happy;
     }
     if (e.ov) { e.ov.remove(); e.ov = null; }
-    setTimeout(() => disposeChar(c.uid), 750);
+    // نمهله وقت أطول (كان 750ms) عشان يكمل مشيته للباب الجانبي فعلياً ويصغر
+    // تدريجياً قبل ما يختفي — كان يُحذف بعد نص ثانية بس وهو لسا عند نص حجمه
+    // تقريباً، فيبان كأنه يختفي فجأة بمنتصف الطريق بدل ما يخرج من الباب.
+    setTimeout(() => disposeChar(c.uid), 1500);
   };
 
   function disposeChar(uid) {
