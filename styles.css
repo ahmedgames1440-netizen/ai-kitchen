@@ -771,17 +771,31 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   .tray-slot { width: 46px; height: 46px; font-size: 26px; }
 }
 
-/* بالوضع العرضي على الجوال، الارتفاع الكلي قليل — لازم منطقة الزبائن (المشهد
-   ثلاثي الأبعاد) تنكمش أقل من قبل (كانت 110px بس تخلي الشخصيات صغيرة جداً،
-   لأن ارتفاعها على الشاشة يعتمد على ارتفاع الحاوية فقط بغض النظر عن العرض) —
-   نعوّض المساحة بتضييق شريط تذاكر الطلبات فوقها بدل تصغير منطقة العرض نفسها */
+/* بالوضع العرضي على الجوال، الارتفاع الكلي قليل جداً (بعض الأجهزة ~360-375px
+   فقط) — لو مجموع ارتفاع كل الأشرطة (علوي/فرعي/الزبائن/الصينية/الكاونتر) تجاوز
+   الشاشة، فليكس-بوكس ينكمش (flex-shrink) العناصر تلقائياً بصمت لأقل من ارتفاع
+   محتواها الطبيعي بدل ما تفيض بوضوح — فتنزل أسماء/أسعار محطات الكاونتر تحت حافة
+   الشاشة المرئية فعلياً (تحتاج تمرير لرؤيتها، مستحيل أثناء اللعب الفعلي).
+   الحل: تضييق متزن لكل شريط عدا منطقة الزبائن (تبقى بأكبر مساحة ممكنة — لا
+   نصغّرها هي، لأن الشخصيات تصير صغيرة جداً — نعوّض المساحة من بقية الأشرطة). */
 @media (orientation: landscape) and (max-height: 520px) {
-  #customers-area { min-height: 190px; }
-  #tray-area { padding: 4px 10px; }
-  .tray-slot { width: 42px; height: 42px; }
-  #counter-area { padding: 6px 10px; }
-  .station .s-emoji { font-size: 24px; }
-  .station .s-img { width: 36px; height: 36px; }
+  #topbar { padding: 4px 8px; gap: 3px; font-size: 12px; }
+  .stat { padding: 3px 6px; }
+  #subbar { padding: 3px 10px; gap: 6px; }
+  #customers-area { min-height: 178px; }
+  #tray-area { padding: 4px 10px; gap: 6px; }
+  .tray-label { font-size: 11px; }
+  .tray-slot { width: 38px; height: 38px; font-size: 22px; }
+  .tray-slot img { width: 30px; height: 30px; }
+  .tray-slot.trash { width: 32px; height: 32px; font-size: 17px; }
+  .coffee-btn { width: 38px; height: 38px; font-size: 18px; }
+  #counter-area { padding: 4px 10px; gap: 6px; }
+  .station { padding: 4px 3px; min-width: 48px; }
+  .station .s-emoji { font-size: 22px; }
+  .station .s-img { width: 28px; height: 28px; }
+  .station .s-name { font-size: 10px; margin-top: 1px; }
+  /* السعر ثانوي واللاعب أصلاً يعرفه من المتجر — نخفيه هنا فقط لتوفير الارتفاع الحرج */
+  .station .s-price { display: none; }
   /* فقاعات أصغر بالوضع العرضي الضيق — الأولوية لظهور الزبائن أنفسهم */
   .ov3d { padding: 4px 5px 4px; min-width: 50px; max-width: 96px; gap: 1px; border-radius: 13px; }
   .ov3d .ov-heart-wrap { width: 17px; height: 17px; }
