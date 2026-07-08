@@ -573,31 +573,111 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 .ai-title { font-weight: bold; color: #a29bfe; margin-bottom: 6px; }
 #ai-analysis .tip { margin: 4px 0; }
 
-/* ===== المتجر ===== */
-.shop-wallet { text-align: center; font-weight: bold; font-size: 17px; margin-bottom: 10px; display: flex; justify-content: center; gap: 16px; }
-/* كل قسم من أقسام المتجر أكورديون قابل للطي: يبدأ مطوياً وتضغط عنوانه ليتوسّع */
-.shop-section { margin: 12px 0; background: rgba(0,0,0,.18); border: 2px solid var(--accent2); border-radius: 14px; overflow: hidden; box-shadow: 0 0 6px rgba(255,209,102,.25); }
+/* ===== المتجر — لوحة خشبية فاخرة بحواف ذهبية ===== */
+/* عنوان الشاشة كلوحة خشبية معلّقة: تدرّج بني غامق + إطار ذهبي مزدوج + أيقونة
+   طاهي معلّقة أعلاها، بدل نص عادي بسيط */
+#screen-shop .panel h2 {
+  position: relative;
+  background: linear-gradient(180deg, #4a3018, #2a1808);
+  border: 3px solid var(--accent2);
+  border-radius: 20px;
+  padding: 26px 16px 14px;
+  margin: 20px 0 14px;
+  box-shadow: 0 0 0 4px rgba(255,209,102,.16), 0 6px 16px rgba(0,0,0,.5), inset 0 0 18px rgba(0,0,0,.45);
+  font-size: 23px;
+  letter-spacing: .3px;
+  text-shadow: 0 2px 0 rgba(0,0,0,.5), 0 0 12px rgba(255,209,102,.4);
+}
+#screen-shop .panel h2::before {
+  content: "👨‍🍳";
+  position: absolute;
+  top: -28px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 38px;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.6));
+}
+/* محفظتا العملة: كبسولتان داكنتان بحدود ذهبية بدل نص عادي */
+.shop-wallet { text-align: center; margin-bottom: 14px; display: flex; justify-content: center; gap: 12px; }
+.shop-wallet span {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: linear-gradient(180deg, #2a1c4a, #1a1030);
+  border: 2px solid var(--accent2);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-weight: 900;
+  font-size: 16px;
+  box-shadow: 0 0 8px rgba(255,209,102,.3), inset 0 1px 0 rgba(255,255,255,.08);
+}
+/* كل قسم من أقسام المتجر أكورديون قابل للطي: يبدأ مطوياً وتضغط عنوانه ليتوسّع —
+   الصف نفسه بطاقة بنفسجية غامقة فاخرة بحدود ذهبية، أيقونة كل قسم بشارة دائرية
+   متوهجة بلون مميّز حسب data-section، وسهم ذهبي دائري بدل نص سهم عادي */
+.shop-section {
+  margin: 14px 0;
+  background: linear-gradient(180deg, #372a5c, #241748);
+  border: 2px solid var(--accent2);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 0 0 3px rgba(255,209,102,.12), 0 4px 10px rgba(0,0,0,.4);
+}
 .shop-section-title {
   width: 100%;
   font: inherit;
-  font-weight: bold;
-  color: var(--accent2);
+  font-weight: 900;
+  color: #fff;
   background: none;
   border: none;
   padding: 10px 12px;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   cursor: pointer;
   text-align: right;
 }
-.shop-section-title .sec-name { flex: 1; font-size: 20px; }
-.shop-section-title .sec-emoji { font-size: 24px; line-height: 1; }
-.shop-section-title .sec-chevron { font-size: 15px; color: var(--muted); transition: transform .2s; }
+.shop-section-title:active { background: rgba(255,255,255,.05); }
+.shop-section-title .sec-name { flex: 1; font-size: 19px; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+/* شارة الأيقونة: مربّع مدوّر بتدرّج لوني يميّز كل قسم + حلقة ذهبية + توهج خفيف */
+.shop-section-title .sec-emoji {
+  flex-shrink: 0;
+  width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 25px;
+  line-height: 1;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #8d6e4a, #5a4228);
+  box-shadow: 0 0 0 2px var(--accent2), 0 0 10px rgba(255,209,102,.35), inset 0 2px 3px rgba(255,255,255,.15);
+}
+.shop-section[data-section="decor"] .sec-emoji { background: linear-gradient(145deg, #5cb87a, #2e7d4a); }
+.shop-section[data-section="licenses"] .sec-emoji { background: linear-gradient(145deg, #7c94b0, #3f5570); }
+.shop-section[data-section="premium"] .sec-emoji { background: linear-gradient(145deg, #4fc3e8, #1a6fa8); }
+.shop-section[data-section="goldPerks"] .sec-emoji { background: linear-gradient(145deg, #ffe082, #d69a1f); }
+.shop-section[data-section="aiDish"] .sec-emoji { background: linear-gradient(145deg, #8f7cf0, #4a3aa8); }
+.shop-section[data-section="menu"] .sec-emoji { background: linear-gradient(145deg, #d9b98a, #8a6a3f); }
+.shop-section[data-section="settings"] .sec-emoji { background: linear-gradient(145deg, #9aa3b5, #565f70); }
+/* السهم: دائرة ذهبية صغيرة بدل نص سهم مجرّد، تدور مع فتح/طي القسم */
+.shop-section-title .sec-chevron {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: #3a2200;
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,.4);
+  transition: transform .2s;
+}
 .shop-section.expanded .shop-section-title .sec-chevron { transform: rotate(180deg); }
 .shop-section-content { display: none; padding: 0 10px 12px; }
 .shop-section.expanded .shop-section-content { display: block; }
+/* زر الرجوع: كبسولة حمراء بارزة بدل مستطيل عادي داكن */
+#btn-shop-back {
+  background: linear-gradient(180deg, #ff8a80, var(--red));
+  color: #400;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 #a33;
+  margin-top: 18px;
+}
+#btn-shop-back:active { box-shadow: 0 1px 0 #a33; }
 .upgrade-row, .menu-row {
   display: flex;
   align-items: center;
