@@ -249,47 +249,54 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   justify-content: center;
   align-content: flex-start;
   gap: 6px;
-  padding: 4px 6px;
-  max-height: 40vh;
-  overflow-y: auto;
+  padding: 4px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
   flex-shrink: 0;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent);
 }
 /* كبسولة عمودية متوهجة بحدود مزدوجة (حلقة بيضاء + توهج وردي) على خلفية شبه
    شفافة — وجه المزاج الكبير أعلاها يعطي إحساس فوري بحالة الزبون دون الحاجة
-   لتعبيرات وجه على المجسم نفسه (النماذج الجاهزة واللوحات المسطحة بلا حركة وجه) */
+   لتعبيرات وجه على المجسم نفسه (النماذج الجاهزة واللوحات المسطحة بلا حركة وجه).
+   صف واحد فقط بتمرير أفقي (لا التفاف لصفين) — عشان الشريط ما ياكل نص الشاشة
+   مهما زاد عدد الزبائن؛ ارتفاعه ثابت دائماً بارتفاع بطاقة وحدة. */
 .ov3d {
   position: relative;
   pointer-events: auto;
   cursor: pointer;
   background: rgba(10, 4, 22, .5);
   border: 2px solid rgba(255,255,255,.55);
-  border-radius: 28px;
-  padding: 10px 10px 8px;
-  min-width: 88px;
-  max-width: 150px;
+  border-radius: 24px;
+  padding: 7px 9px 6px;
+  min-width: 82px;
+  max-width: 138px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+  scroll-snap-align: center;
   backdrop-filter: blur(3px);
   box-shadow: 0 0 0 4px rgba(255,255,255,.14), 0 0 16px rgba(255,140,205,.4), 0 4px 14px rgba(0,0,0,.5);
   z-index: 6;
 }
 .ov3d.vip { border-color: var(--accent2); box-shadow: 0 0 0 4px rgba(255,209,102,.22), 0 0 14px rgba(255,209,102,.5); }
 .ov3d.servable { border-color: var(--green); box-shadow: 0 0 0 4px rgba(46,204,113,.25), 0 0 16px rgba(46,204,113,.75); border-width: 3px; }
-.ov3d .ov-mood-face { font-size: 32px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
-.ov3d .ov-urgent {
-  display: none;
-  align-items: center;
-  gap: 2px;
-  color: var(--red);
-  font-weight: 900;
-  font-size: 11px;
-  text-shadow: 0 0 6px rgba(255,107,107,.85);
+/* وميض ⚡ صغير بزاوية الوجه بدل سطر نص منفصل — يوفّر ارتفاع البطاقة، والاهتزاز
+   الأحمر (urgentshake) يبقى هو المؤشر الرئيسي للاستعجال */
+.ov3d .ov-mood-face { position: relative; font-size: 24px; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.ov3d.urgent .ov-mood-face::after {
+  content: "⚡";
+  position: absolute;
+  top: -4px; left: -8px;
+  font-size: 13px;
+  filter: drop-shadow(0 0 3px #000);
 }
-.ov3d.urgent .ov-urgent { display: flex; }
-.ov3d .ov-name { font-size: 13px; font-weight: bold; white-space: nowrap; color: #fff; }
+.ov3d .ov-name { font-size: 12px; font-weight: bold; white-space: nowrap; color: #fff; }
 .ov3d .ov-type { color: var(--accent2); font-weight: bold; font-size: 11px; }
 /* صف الأصناف بدون خلفية بيضاء — الأيقونات نفسها شفافة (PNG مرندرة بـalpha)
    ولها drop-shadow يخليها واضحة فوق أي خلفية، فتبان "طايفة" ملتصقة بالبطاقة
@@ -298,20 +305,20 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  font-size: 17px;
-  padding: 2px 4px;
-  min-height: 34px;
-  max-height: 76px;
+  font-size: 15px;
+  padding: 1px 3px;
+  min-height: 26px;
+  max-height: 30px;
   overflow: hidden;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: transparent;
   border: none;
   box-shadow: none;
 }
 .ov3d .order-bubble img {
-  width: 30px; height: 30px;
+  width: 24px; height: 24px;
   display: block;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)) saturate(1.3) contrast(1.1);
 }
@@ -436,6 +443,11 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
 .tray-slot.trash:active { transform: scale(.92); background: rgba(255,107,107,.2); }
 
 /* ===== الكاونتر ===== */
+/* لما تتوفر أصناف كثيرة (فلافل/برجر مفتوحين + أطباق مبتكرة) تفيض المحطات عن
+   عرض الشاشة، وبما إن الصفحة RTL فالفائض ينسحب خارج الحافة اليسرى بصمت بدون
+   أي مؤشر تمرير — يخلي بعض الأيقونات (زي كوب المشروب) تختفي هناك بلا ما ينتبه
+   اللاعب إنه يقدر يمرر لها. نعالجها بحافة متلاشية (mask) توحي فيه محتوى إضافي،
+   مع تمرير ناعم بـsnap، وتصغير أدنى عرض للمحطة عشان يتقلل احتمال الفيضان أصلاً. */
 #counter-area {
   display: flex;
   gap: 8px;
@@ -443,10 +455,14 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, #4e342e, #3e2723);
   overflow-x: auto;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 14px), transparent);
 }
 .station {
   flex: 1;
-  min-width: 76px;
+  min-width: 58px;
+  scroll-snap-align: center;
   background: var(--card);
   border: none;
   border-radius: 14px;
@@ -691,7 +707,6 @@ body.fire #stat-combo { background: linear-gradient(90deg, #ff6b35, #f7c531); co
   #overlay3d { max-height: 15vh; padding: 2px 6px; gap: 4px; }
   .ov3d { padding: 5px 6px 4px; min-width: 76px; gap: 1px; border-radius: 20px; }
   .ov3d .ov-mood-face { font-size: 22px; }
-  .ov3d .ov-urgent { font-size: 9px; }
   .ov3d .ov-name { font-size: 10px; }
   .ov3d .order-bubble { max-height: 40px; padding: 2px 3px; }
   .ov3d .order-bubble img { width: 20px; height: 20px; }

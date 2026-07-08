@@ -47,7 +47,7 @@ const sfx = {
 /* ---------- الأطباق الأساسية ---------- */
 /* لكل صنف تكلفة مواد خام (خبز، مايونيز، كاتشب…) تُخصم عند بدء الطبخ */
 const BASE_DISHES = [
-  { id: "shawarma", emoji: "🌯", name: "شاورما",  price: 8,  cook: 3500, cost: 3, mats: "خبز صاج + دجاج + ثومية" },
+  { id: "shawarma", emoji: "🌯", name: "شاورما",  price: 8,  cook: 1500, cost: 3, mats: "خبز صاج + دجاج + ثومية" },
   { id: "fries",    emoji: "🍟", name: "بطاطس",   price: 5,  cook: 3000, cost: 2, mats: "بطاطس + زيت + كاتشب" },
   { id: "drink",    emoji: "🥤", name: "مشروب",   price: 3,  cook: 900,  cost: 1, mats: "عبوة + ثلج" },
 ];
@@ -1629,7 +1629,6 @@ function renderCustomers3D() {
     ov.classList.toggle("vip", !!c.isVip);
     ov.innerHTML = `
       <div class="ov-mood-face">${moodFace(c)}</div>
-      <div class="ov-urgent">⚡ مستعجل</div>
       <div class="ov-name">${c.chatPending ? "💬 " : ""}${c.name} <span class="ov-type">${c.type.label}</span></div>
       <div class="order-bubble">${c.order.map(o => {
         const ic = S3D.dishIcon ? S3D.dishIcon(o.dish) : null;
