@@ -1633,7 +1633,7 @@ function renderCustomers3D() {
         const ic = S3D.dishIcon ? S3D.dishIcon(o.dish) : null;
         return `<span class="oitem ${o.done ? "done" : ""}">${ic ? `<img src="${ic}" alt="${o.dish.name}">` : o.dish.emoji}</span>`;
       }).join("")}</div>
-      <div class="ov-heart">❤️</div>
+      <div class="ov-heart-wrap"><span class="ov-heart-bg">🤍</span><span class="ov-heart-fill">❤️</span></div>
     `;
     ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
     c.el = ov;
@@ -1663,11 +1663,10 @@ function updatePatienceBars() {
       setTimeout(() => beep(988, 0.12, "square", 0.12), 130);
     }
     c.el.classList.toggle("urgent", r < 0.25);
-    // الوضع ثلاثي الأبعاد: قلب يمثّل صبر الزبون بدل شريط تقدّم (يتقلّص ويتغيّر لونه)
-    const heartEl = c.el.querySelector(".ov-heart");
-    if (heartEl) {
-      heartEl.textContent = r > 0.5 ? "❤️" : r > 0.25 ? "🧡" : "💔";
-      heartEl.style.transform = `scale(${(0.75 + r * 0.35).toFixed(2)})`;
+    // الوضع ثلاثي الأبعاد: قلب "مؤشر" يفرغ تدريجياً (مقصوص clip-path) بدل شريط تقدّم
+    const heartFill = c.el.querySelector(".ov-heart-fill");
+    if (heartFill) {
+      heartFill.style.clipPath = `inset(${((1 - r) * 100).toFixed(1)}% 0 0 0)`;
       continue;
     }
     // الوضع 2D الاحتياطي

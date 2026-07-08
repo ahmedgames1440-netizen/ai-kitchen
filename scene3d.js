@@ -770,11 +770,15 @@ window.S3D = (() => {
   function buildDoorGroup() {
     const grp = new THREE.Group();
 
-    // جدار جانبي عريض يحيط بالمطعم من هذا الطرف
-    const sideWall = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 8.5), wallMat);
-    sideWall.position.set(0, 4, -0.6);
-    sideWall.receiveShadow = true;
-    grp.add(sideWall);
+    // جدار جانبي عريض يحيط بالمطعم من هذا الطرف — فقط بالديكور الإجرائي (يعتمد
+    // على wallMat اللي ما تُبنى إلا بذاك الوضع)؛ مع الخلفية المصوّرة الصورة نفسها
+    // تغطي الجدران فما نحتاج جدار إضافي هنا، بس نبقي الباب نفسه ظاهر فوقها
+    if (!PHOTO_BG && wallMat) {
+      const sideWall = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 8.5), wallMat);
+      sideWall.position.set(0, 4, -0.6);
+      sideWall.receiveShadow = true;
+      grp.add(sideWall);
+    }
 
     // إطار الباب الخشبي
     const frameMat = new THREE.MeshStandardMaterial({ color: 0x6d4c2f, roughness: 0.6 });
@@ -788,6 +792,22 @@ window.S3D = (() => {
       new THREE.MeshBasicMaterial({ map: doorViewTexture() }));
     opening.position.set(0, 1.55, -0.11);
     grp.add(opening);
+
+    // لوح الباب الخشبي الفعلي — يغطي الفتحة وهو مغلق، ويدور حول مفصلة عند
+    // حافته (Group منفصل بدل تدوير حول المنتصف) لما يفتح مع دخول/خروج زبون
+    const doorPivot = new THREE.Group();
+    doorPivot.position.set(-0.72, 1.55, -0.07);
+    const doorPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 2.6, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0x4e3624, roughness: 0.55 })
+    );
+    doorPanel.position.set(0.7, 0, 0); // حافة اللوح عند المفصلة، وباقيه يمتد ليغطي الفتحة
+    doorPanel.castShadow = true;
+    doorPivot.add(doorPanel);
+    grp.add(doorPivot);
+    grp.userData.doorPivot = doorPivot;
+    grp.userData.doorAngle = 0;
+    grp.userData.doorTarget = 0;
 
     // عتبة الباب
     const sill = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.09, 0.32),
@@ -807,6 +827,16 @@ window.S3D = (() => {
 
   function buildRoom() {
     if (!PHOTO_BG) buildProceduralRoom();
+
+    // بابا الخروج الجانبيان — يبقيان مع الخلفية المصوّرة أيضاً (كانا يُبنيان فقط
+    // بالديكور الإجرائي القديم فما كانا يظهران إطلاقاً بالوضع الحالي) عشان يبان
+    // فتحهما وإغلاقهما فعلياً مع دخول/خروج الزبائن
+    leftDoorGroup = buildDoorGroup();
+    leftDoorGroup.position.x = -(slotSpread + 2.7);
+    scene.add(leftDoorGroup);
+    rightDoorGroup = buildDoorGroup();
+    rightDoorGroup.position.x = slotSpread + 2.7;
+    scene.add(rightDoorGroup);
 
     // إضاءات معلقة دافئة (نقطية) — تبقى مع الخلفية المصوّرة لأنها تنوّر الشخصيات
     for (const sx of [-3.5, 0, 3.5]) {
@@ -869,14 +899,6 @@ window.S3D = (() => {
     wall.position.set(0, 5, -3.2);
     wall.receiveShadow = true;
     scene.add(wall);
-
-    // جداران جانبيان بباب خروج حقيقي — الزبون يمشي نحوهما ليخرج فعلياً من المطعم
-    leftDoorGroup = buildDoorGroup();
-    leftDoorGroup.position.x = -(slotSpread + 2.7);
-    scene.add(leftDoorGroup);
-    rightDoorGroup = buildDoorGroup();
-    rightDoorGroup.position.x = slotSpread + 2.7;
-    scene.add(rightDoorGroup);
 
     // لوحة نيون بنص عربي حقيقي
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.9),
@@ -1190,6 +1212,27 @@ window.S3D = (() => {
     e.ov.style.top = topPct + "%";
   }
 
+  /* حالة الأبواب: الباب اليسار يفتح مع أي زبون لسا يمشي لمكانه (كل الدخول يبدأ من
+     أقصى اليسار خارج الشاشة) أو خروج زعلان (يسار)، واليمين يفتح مع خروج سعيد فقط —
+     نفحص كل الزبائن كل إطار ونحدّد الحالة المطلوبة، ثم ندوّر لوح كل باب بنعومة نحوها */
+  const DOOR_OPEN_ANGLE = 1.75;
+  function updateDoorTargets() {
+    let leftOpen = false, rightOpen = false;
+    for (const e of chars.values()) {
+      if (e.leaving > 0) rightOpen = true;
+      else if (e.leaving < 0) leftOpen = true;
+      else if (Math.abs(e.slotX - e.group.position.x) > 0.06) leftOpen = true;
+    }
+    if (leftDoorGroup) leftDoorGroup.userData.doorTarget = leftOpen ? -DOOR_OPEN_ANGLE : 0;
+    if (rightDoorGroup) rightDoorGroup.userData.doorTarget = rightOpen ? DOOR_OPEN_ANGLE : 0;
+  }
+  function animateDoor(doorGroup, dt) {
+    if (!doorGroup || !doorGroup.userData.doorPivot) return;
+    const ud = doorGroup.userData;
+    ud.doorAngle += (ud.doorTarget - ud.doorAngle) * Math.min(1, dt * 5);
+    ud.doorPivot.rotation.y = ud.doorAngle;
+  }
+
   /* تلوين مادة (أو أكثر) للتعبير عن المزاج — بعض الشخصيات (الثوب الأزرق) لها مادتان (هيكل متحرك + نموذج ثابت) */
   function tintEmissive(e, hex) {
     const col = new THREE.Color(hex);
@@ -1348,6 +1391,9 @@ window.S3D = (() => {
       // الفقاعات ببعض؛ ونحدّها (clamp) داخل updateOverlayPosition احتياطاً فقط
       updateOverlayPosition(e);
     }
+    updateDoorTargets();
+    animateDoor(leftDoorGroup, dt);
+    animateDoor(rightDoorGroup, dt);
     renderer.render(scene, camera);
   }
 
