@@ -1628,13 +1628,12 @@ function renderCustomers3D() {
       !!(selected && c.order.some(o => !o.done && o.dish.id === day.tray[day.selectedTray].dish.id)));
     ov.classList.toggle("vip", !!c.isVip);
     ov.innerHTML = `
-      <div class="ov-mood-face">${moodFace(c)}</div>
-      <div class="ov-name">${c.chatPending ? "💬 " : ""}${c.name} <span class="ov-type">${c.type.label}</span></div>
+      ${c.chatPending ? '<div class="ov-chat-hint">💬</div>' : ""}
       <div class="order-bubble">${c.order.map(o => {
         const ic = S3D.dishIcon ? S3D.dishIcon(o.dish) : null;
         return `<span class="oitem ${o.done ? "done" : ""}">${ic ? `<img src="${ic}" alt="${o.dish.name}">` : o.dish.emoji}</span>`;
       }).join("")}</div>
-      <div class="patience-bar"><div class="patience-fill" style="width:${(c.patience / c.maxPatience) * 100}%"></div></div>
+      <div class="ov-heart">❤️</div>
     `;
     ov.onclick = (e) => { e.stopPropagation(); serveTrayItem(c); };
     c.el = ov;
@@ -1664,10 +1663,11 @@ function updatePatienceBars() {
       setTimeout(() => beep(988, 0.12, "square", 0.12), 130);
     }
     c.el.classList.toggle("urgent", r < 0.25);
-    // الوضع ثلاثي الأبعاد: وجه المزاج الكبير أعلى الفقاعة (المجسم نفسه يهتز ويحمرّ زيادة)
-    const moodFaceEl = c.el.querySelector(".ov-mood-face");
-    if (moodFaceEl) {
-      moodFaceEl.textContent = moodFace(c);
+    // الوضع ثلاثي الأبعاد: قلب يمثّل صبر الزبون بدل شريط تقدّم (يتقلّص ويتغيّر لونه)
+    const heartEl = c.el.querySelector(".ov-heart");
+    if (heartEl) {
+      heartEl.textContent = r > 0.5 ? "❤️" : r > 0.25 ? "🧡" : "💔";
+      heartEl.style.transform = `scale(${(0.75 + r * 0.35).toFixed(2)})`;
       continue;
     }
     // الوضع 2D الاحتياطي

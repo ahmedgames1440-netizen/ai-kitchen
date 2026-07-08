@@ -8,6 +8,7 @@
 window.S3D = (() => {
   let renderer, scene, camera, container, overlayLayer;
   let raycaster, pointer;
+  let ovProjVec; // متجه مساعد لإسقاط نقطة رأس كل زبون على الشاشة (فقاعة الطلب الملتصقة)
   let maxAniso = 1; // أقصى تصفية أنيزوتروبية مدعومة — تُحسب بعد إنشاء الـrenderer
   const chars = new Map();   // uid -> { group, ov, head, t, slotX, entering, leaving, height, baseTint }
   let slotSpread = 4.2;
@@ -1047,6 +1048,13 @@ window.S3D = (() => {
         bgCounterLayer.style.clipPath = "inset(" + (PHOTO_SEAM * 100) + "% 0 0 0)";
       }
 
+      // طبقة فقاعات الزبائن (#overlay3d) كانت عنصراً مستقلاً خارج الحاوية بالـHTML —
+      // ننقلها هنا لتصير آخر طبقة داخل الحاوية (فوق كل شيء، حتى كاونتر المقدمة)
+      // عشان نقدر نموضعها بالبكسل فوق رأس كل زبون بإسقاط ثلاثي الأبعاد حي
+      if (overlayLayer && overlayLayer.parentElement !== container) {
+        container.appendChild(overlayLayer);
+      }
+
       scene = new THREE.Scene();
       scene.fog = new THREE.Fog(0x1a1035, 16, 34);
       camera = new THREE.PerspectiveCamera(42, 1, 0.1, 60);
@@ -1077,6 +1085,7 @@ window.S3D = (() => {
 
       raycaster = new THREE.Raycaster();
       pointer = new THREE.Vector2();
+      ovProjVec = new THREE.Vector3();
       renderer.domElement.addEventListener("click", onCanvasClick);
 
       // نجمّع أحداث الـResizeObserver عبر مؤقّت قصير بدل تنفيذ resize() فوراً
@@ -1162,6 +1171,23 @@ window.S3D = (() => {
   function slotX(i, n) {
     if (n <= 1) return 0;
     return -slotSpread + (2 * slotSpread * i) / (n - 1);
+  }
+
+  /* يموضع فقاعة الزبون (e.ov) فوق رأسه بالضبط — إسقاط حقيقي لنقطة أعلى رأس
+     المجسم على شاشة الكاميرا كل إطار (لا تقريب)، مع تحديد أقصى/أدنى (clamp)
+     يبقيها ضمن حدود منطقة الزبائن دائماً حتى لو وقف الزبون قرب حافة الشاشة. */
+  function updateOverlayPosition(e) {
+    if (!e.ov || !container || !ovProjVec) return;
+    const w = container.clientWidth, h = container.clientHeight;
+    if (w < 10 || h < 10) return;
+    ovProjVec.set(e.group.position.x, (e.height || MODEL_HEIGHT) * 1.04, 0);
+    ovProjVec.project(camera);
+    let leftPct = (ovProjVec.x * 0.5 + 0.5) * 100;
+    let topPct = (1 - (ovProjVec.y * 0.5 + 0.5)) * 100;
+    leftPct = Math.min(90, Math.max(10, leftPct));
+    topPct = Math.min(60, Math.max(4, topPct));
+    e.ov.style.left = leftPct + "%";
+    e.ov.style.top = topPct + "%";
   }
 
   /* تلوين مادة (أو أكثر) للتعبير عن المزاج — بعض الشخصيات (الثوب الأزرق) لها مادتان (هيكل متحرك + نموذج ثابت) */
@@ -1317,9 +1343,10 @@ window.S3D = (() => {
           e.mouths.sad.visible = r <= 0.3;
         }
       }
-      // ملاحظة: فقاعة الطلب (e.ov) ما عادت تتموضع بإسقاط ثلاثي الأبعاد — صارت عنصر
-      // عادي داخل صف أفقي (flex) ثابت أعلى الشاشة (#overlay3d بالـCSS)، فما تتصادم
-      // فقاعتان مع بعض ولا تخرج عن حدود الشاشة مهما كانت زاوية الكاميرا أو عدد الزبائن
+      // فقاعة الطلب تلتصق فوق رأس الزبون فعلياً عبر إسقاط حي كل إطار — الكاميرا
+      // ثابتة دائماً هنا (لا تدور) وslotX أصلاً يباعد الزبائن أفقياً، فما تتصادم
+      // الفقاعات ببعض؛ ونحدّها (clamp) داخل updateOverlayPosition احتياطاً فقط
+      updateOverlayPosition(e);
     }
     renderer.render(scene, camera);
   }
