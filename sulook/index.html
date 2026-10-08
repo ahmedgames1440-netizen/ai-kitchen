@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b4a37">
+<title>نظام رصد السلوك المتميز</title>
+<style>
+/* Layout: sticky deep-green header band with a geometric star lattice, tab rail below it,
+   then a single centered working column (max 1180px) of task panels. */
+:root {
+  --bg: #f2f5f1;
+  --surface: #ffffff;
+  --surface-2: #e9efe9;
+  --ink: #15221c;
+  --muted: #5a6a62;
+  --line: #d5dfd8;
+  --brand: #0f6b4f;
+  --brand-ink: #ffffff;
+  --brand-soft: #dcefe5;
+  --gold: #a87a1f;
+  --gold-soft: #f6ebd3;
+  --danger: #b3261e;
+  --danger-soft: #fbe5e2;
+  --hero: #0b4a37;
+  --hero-ink: #f3faf6;
+  --hero-muted: #a9d3c0;
+  --shadow: 0 1px 2px rgb(16 40 30 / .06), 0 4px 16px rgb(16 40 30 / .06);
+  --f-display: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --f-body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --r: 12px;
+  --r-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1512; --surface: #141f1b; --surface-2: #1a2924; --ink: #e5eee9; --muted: #9bada4;
+    --line: #2a3b34; --brand: #45c193; --brand-ink: #05211a; --brand-soft: #173a2e;
+    --gold: #e1b75c; --gold-soft: #3a2f17; --danger: #f28b82; --danger-soft: #3d1e1b;
+    --hero: #0f2c23; --hero-ink: #eaf6f0; --hero-muted: #8fbfa9;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 4px 16px rgb(0 0 0 / .25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1512; --surface: #141f1b; --surface-2: #1a2924; --ink: #e5eee9; --muted: #9bada4;
+  --line: #2a3b34; --brand: #45c193; --brand-ink: #05211a; --brand-soft: #173a2e;
+  --gold: #e1b75c; --gold-soft: #3a2f17; --danger: #f28b82; --danger-soft: #3d1e1b;
+  --hero: #0f2c23; --hero-ink: #eaf6f0; --hero-muted: #8fbfa9;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 4px 16px rgb(0 0 0 / .25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.num { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.3; }
+p { margin: 0; }
+
+/* Header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--hero); color: var(--hero-ink); box-shadow: var(--shadow); }
+.top::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.2'%3E%3Cpath d='M28 6l6.4 15.6L50 28l-15.6 6.4L28 50l-6.4-15.6L6 28l15.6-6.4z'/%3E%3Crect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/%3E%3Crect x='16' y='16' width='24' height='24'/%3E%3C/g%3E%3C/svg%3E");
+}
+.top-in { position: relative; max-width: 1180px; margin: 0 auto; padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.seal { width: 46px; height: 46px; flex: none; border-radius: 50%; display: grid; place-items: center; background: rgb(255 255 255 / .1); border: 1.5px solid rgb(255 255 255 / .35); }
+.seal svg { width: 26px; height: 26px; }
+.brand h1 { font-size: 1.35rem; color: var(--hero-ink); }
+.brand p { color: var(--hero-muted); font-size: .85rem; }
+.top-meta { display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--hero-muted); flex-wrap: wrap; }
+.pill-h { border: 1px solid rgb(255 255 255 / .25); border-radius: 999px; padding: 3px 12px; color: var(--hero-ink); white-space: nowrap; }
+.tabs { position: relative; max-width: 1180px; margin: 0 auto; padding: 0 12px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; display: flex; align-items: center; gap: 8px; background: none; border: 0; color: var(--hero-muted); padding: 10px 14px 12px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 500; }
+.tab svg { width: 18px; height: 18px; }
+.tab:hover { color: var(--hero-ink); }
+.tab[aria-selected="true"] { color: var(--hero-ink); border-bottom-color: var(--gold); }
+.tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+/* Shell */
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 60px; display: grid; gap: 18px; }
+.banner { max-width: 1180px; margin: 12px auto 0; padding-inline: 16px; }
+.banner > div { background: var(--gold-soft); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 14px; font-size: .9rem; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; }
+.panel-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.panel-h h2 { font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+.panel-h h2 svg { width: 20px; height: 20px; color: var(--brand); }
+.sub { color: var(--muted); font-size: .88rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 18px; align-items: start; }
+.grid-main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+@media (max-width: 900px) { .grid-main { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: grid; gap: 12px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row > .grow { flex: 1 1 200px; min-width: 0; }
+.spacer { flex: 1; }
+
+/* Controls */
+label.f { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); font-weight: 500; min-width: 0; }
+.in, select.in, textarea.in { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 12px; color: var(--ink); min-width: 0; }
+textarea.in { resize: vertical; min-height: 90px; }
+.in:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: transparent; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: var(--r-sm); padding: 9px 16px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 600; white-space: nowrap; color: var(--ink); }
+.btn svg { width: 17px; height: 17px; }
+.btn:hover { background: var(--surface-2); }
+.btn:focus-visible, .chip:focus-visible, .stu:focus-visible, .beh:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.btn.pri { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.gold { background: var(--gold-soft); border-color: transparent; color: var(--ink); }
+.btn.dng { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+.btn.ghost { background: none; border-color: transparent; color: var(--muted); padding: 6px 10px; }
+.btn.ghost:hover { color: var(--ink); background: var(--surface-2); }
+.btn.sm { padding: 5px 10px; font-size: .84rem; }
+.btn.lg { padding: 12px 22px; font-size: 1.02rem; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.chip:hover { border-color: var(--brand); }
+.chip[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.chip .x { border: 0; background: none; color: inherit; cursor: pointer; padding: 0 2px; font-size: 1rem; line-height: 1; opacity: .7; }
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; font-weight: 600; border-radius: 999px; padding: 1px 9px; background: var(--brand-soft); color: var(--brand); white-space: nowrap; }
+.tag.gold { background: var(--gold-soft); color: var(--gold); }
+.tag.muted { background: var(--surface-2); color: var(--muted); }
+.step { display: grid; gap: 10px; padding-block: 14px; border-top: 1px dashed var(--line); }
+.step:first-of-type { border-top: 0; padding-top: 0; }
+.step-h { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.step-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: .82rem; background: var(--brand-soft); color: var(--brand); flex: none; }
+
+/* Official form header */
+.form-head { border: 2px solid var(--hero); border-radius: var(--r); padding: 18px 20px; background: var(--surface); display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; position: relative; }
+:root[data-theme="dark"] .form-head { border-color: var(--brand); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .form-head { border-color: var(--brand); } }
+.form-head .r { font-size: .85rem; color: var(--muted); line-height: 1.7; }
+.form-head .l { font-size: .85rem; color: var(--muted); text-align: left; line-height: 1.7; }
+.form-head .c { text-align: center; display: grid; justify-items: center; gap: 6px; }
+.form-head .c .medal { width: 54px; height: 54px; border-radius: 50%; background: var(--hero); color: var(--gold); display: grid; place-items: center; }
+:root[data-theme="dark"] .form-head .c .medal { background: var(--brand-soft); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .form-head .c .medal { background: var(--brand-soft); } }
+.form-head .c .medal svg { width: 30px; height: 30px; }
+.form-head h2 { font-size: 1.3rem; color: var(--ink); }
+@media (max-width: 640px) { .form-head { grid-template-columns: 1fr; } .form-head .l { text-align: center; } .form-head .r { text-align: center; } .form-head .c { order: -1; } }
+
+/* Students picker */
+.stu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 8px; }
+.stu { display: flex; align-items: center; gap: 10px; text-align: start; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-sm); padding: 8px 10px; cursor: pointer; min-width: 0; }
+.stu:hover { border-color: var(--brand); }
+.stu .box { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--line); flex: none; display: grid; place-items: center; }
+.stu .box svg { width: 14px; height: 14px; opacity: 0; }
+.stu[aria-pressed="true"] { background: var(--brand-soft); border-color: var(--brand); }
+.stu[aria-pressed="true"] .box { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.stu[aria-pressed="true"] .box svg { opacity: 1; }
+.stu .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.beh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 8px; }
+.beh { display: flex; align-items: center; gap: 10px; text-align: start; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r-sm); padding: 10px 12px; cursor: pointer; min-width: 0; }
+.beh:hover { border-color: var(--gold); }
+.beh .t { flex: 1; min-width: 0; font-weight: 500; line-height: 1.4; }
+.beh .p { flex: none; font-weight: 700; color: var(--gold); background: var(--gold-soft); border-radius: 8px; padding: 2px 8px; font-size: .85rem; }
+.beh[aria-pressed="true"] { border-color: var(--gold); box-shadow: inset 0 0 0 1.5px var(--gold); background: var(--gold-soft); }
+.savebar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface-2); border-radius: var(--r-sm); padding: 12px 14px; }
+.savebar .sum { flex: 1 1 220px; min-width: 0; font-size: .92rem; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 2px; }
+.stat .k { color: var(--muted); font-size: .85rem; }
+.stat .v { font-family: var(--f-display); font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat .v small { font-size: .9rem; color: var(--muted); font-family: var(--f-body); font-weight: 500; }
+.stat.hl { background: var(--hero); border-color: var(--hero); color: var(--hero-ink); }
+.stat.hl .k { color: var(--hero-muted); }
+
+/* Lists */
+.feed { display: grid; gap: 0; }
+.feed-i { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
+.feed-i:first-child { border-top: 0; }
+.dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-soft); color: var(--gold); font-weight: 700; font-size: .85rem; }
+.feed-i .b { min-width: 0; }
+.feed-i .b strong { font-weight: 600; }
+.feed-i .m { color: var(--muted); font-size: .8rem; }
+.names { font-size: .88rem; overflow-wrap: anywhere; }
+.rank { display: grid; gap: 6px; }
+.rank-i { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: var(--r-sm); }
+.rank-i:nth-child(odd) { background: var(--surface-2); }
+.rank-i .pos { font-family: var(--f-display); font-weight: 700; text-align: center; color: var(--muted); }
+.rank-i.lead .pos { color: var(--gold); }
+.rank-i .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars { display: grid; gap: 8px; }
+.bar-r { display: grid; grid-template-columns: minmax(0, 1fr) 2fr auto; gap: 10px; align-items: center; font-size: .86rem; }
+.bar-r .lb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-t { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.bar-t > i { display: block; height: 100%; background: var(--gold); border-radius: 999px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .ax { fill: var(--muted); font-size: 11px; font-family: var(--f-body); }
+.chart .gl { stroke: var(--line); stroke-width: 1; }
+.chart .br { fill: var(--brand); }
+.chart .br.today { fill: var(--gold); }
+.chart .vl { fill: var(--ink); font-size: 11px; font-weight: 600; font-family: var(--f-body); }
+
+/* Tables */
+.tbl-w { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-sm); }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { padding: 8px 10px; text-align: start; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { background: var(--surface-2); font-weight: 600; color: var(--muted); font-size: .8rem; position: sticky; top: 0; }
+td.n, th.n { text-align: center; font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-2); }
+.tot { font-weight: 700; color: var(--brand); }
+
+/* Empty, modal, toast */
+.empty { text-align: center; padding: 26px 16px; color: var(--muted); display: grid; gap: 8px; justify-items: center; }
+.empty svg { width: 40px; height: 40px; color: var(--line); }
+.empty strong { color: var(--ink); font-family: var(--f-display); font-weight: 600; font-size: 1.05rem; }
+.checklist { display: grid; gap: 8px; }
+.ck { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.ck .st { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; flex: none; }
+.ck.done .st { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.ck.done .st svg { width: 14px; height: 14px; }
+.ck .grow { flex: 1; min-width: 0; }
+.ck.done .grow { color: var(--muted); text-decoration: line-through; }
+.modal { position: fixed; inset: 0; z-index: 50; background: rgb(8 20 15 / .55); display: grid; place-items: center; padding: 16px; }
+.modal-c { background: var(--surface); color: var(--ink); border-radius: var(--r); width: min(100%, 640px); max-height: 88vh; overflow: auto; padding: 20px; display: grid; gap: 14px; box-shadow: var(--shadow); }
+.modal-c.narrow { width: min(100%, 420px); }
+.toast { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); inset-inline: 0; display: grid; justify-items: center; pointer-events: none; z-index: 60; padding-inline: 16px; }
+.toast > div { background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 500; box-shadow: var(--shadow); pointer-events: auto; display: flex; gap: 12px; align-items: center; max-width: 100%; }
+.toast > div.err { background: var(--danger); color: #fff; }
+.toast button { background: none; border: 0; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.list-row { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--r-sm); background: var(--surface-2); flex-wrap: wrap; }
+.list-row .grow { flex: 1 1 180px; min-width: 0; }
+.ro-note { font-size: .85rem; color: var(--muted); background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 12px; }
+@media (prefers-reduced-motion: no-preference) {
+  .view-in { animation: rise .25s ease-out; }
+  @keyframes rise { from { transform: translateY(4px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div dir="rtl" lang="ar">
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <span class="seal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.2 17 22l-5-3-5 3 1.5-8.8"/><path d="m12 5.2.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 7.3l2-.3z"/></svg></span>
+      <div><h1>نظام رصد السلوك المتميز</h1><p id="schoolLine">جارٍ تحميل بيانات المدرسة…</p></div>
+    </div>
+    <div class="top-meta">
+      <span class="pill-h num" id="semPill">—</span>
+      <span class="pill-h num" id="hijri"></span>
+      <span id="who"></span>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="أقسام المنصة">
+    <button class="tab" role="tab" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>لوحة المتابعة</button>
+    <button class="tab" role="tab" data-v="record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.2 17 22l-5-3-5 3 1.5-8.8"/></svg>رصد السلوك</button>
+    <button class="tab" role="tab" data-v="students"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>الطلاب والفصول</button>
+    <button class="tab" role="tab" data-v="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>التقارير والنماذج</button>
+    <button class="tab" role="tab" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>إعدادات المدرسة</button>
+  </nav>
+</header>
+<div class="banner" id="banner"></div>
+<main class="wrap" id="view"></main>
+<div id="modal"></div>
+<div class="toast" id="toast" aria-live="polite"></div>
+</div>
+
+<script>
+(() => {
+document.documentElement.setAttribute('dir', 'rtl');
+const STANDALONE = !(window.claude && typeof window.claude.use === 'function');
+const LS_KEY = 'sulook-data-v1';
+function persist() {
+  if (!STANDALONE) return;
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ cfg: S.cfg, students: S.students, records: S.records })); }
+  catch (e) { toast('تعذّر الحفظ على هذا الجهاز. خذ نسخة احتياطية الآن.', { err: true }); }
+}
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (d) { if (d.cfg) { S.cfg = d.cfg; S.cfgExists = true; } S.students = d.students || []; S.records = d.records || []; }
+  } catch (e) {}
+  if (!S.cfg) { S.cfg = JSON.parse(JSON.stringify(DEFAULT_CFG)); Object.assign(S.cfg, { school: 'المتوسطة الثالثة بأملج', admin: 'الإدارة العامة للتعليم بمنطقة تبوك', head1: 'المملكة العربية السعودية', head2: 'وزارة التعليم' }); }
+}
+document.documentElement.setAttribute('lang', 'ar');
+
+/* ---------- Icons ---------- */
+const I = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
+  dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  medal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.2 17 22l-5-3-5 3 1.5-8.8"/><path d="m12 5.2.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 7.3l2-.3z"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1 0-4h2M18 9h2a2 2 0 0 0 0-4h-2M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0z"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16V11M12 16V7M17 16v-3"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  school: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  award: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14z" transform="translate(0 1) scale(.85) translate(2 0)"/><path d="M8.2 13.9 7 23l5-3 5 3-1.2-9.1"/></svg>'
+};
+
+/* ---------- Defaults ---------- */
+const SEM_NAMES = ['الفصل الدراسي الأول', 'الفصل الدراسي الثاني', 'الفصل الدراسي الثالث'];
+const DEFAULT_BEHAVIORS = [
+  ['المشاركة في الإذاعة المدرسية', 2],
+  ['المشاركة الفاعلة في الأنشطة المدرسية', 2],
+  ['المشاركة في الأعمال التطوعية وخدمة المجتمع', 3],
+  ['التعاون مع الزملاء والمعلمين', 1],
+  ['المحافظة على نظافة المدرسة وممتلكاتها', 1],
+  ['الانضباط والالتزام بالحضور المبكر', 1],
+  ['تقديم مبادرة أو مقترح مميز', 3],
+  ['تحقيق مركز في مسابقة أو منافسة', 4],
+  ['عضوية مجلس الطلاب أو اللجان المدرسية', 2],
+  ['المشاركة في البرامج والحملات التوعوية', 2],
+  ['التميز في القدوة الحسنة والأخلاق', 2],
+  ['مساعدة زميل في التحصيل الدراسي', 2]
+].map(([name, pts], i) => ({ id: 'b' + (i + 1), name, pts }));
+const DEFAULT_CFG = {
+  school: '', admin: '', head1: '', head2: '', principal: '', deputy: '',
+  grades: [
+    { id: 'g1', name: 'الأول المتوسط', classes: [] },
+    { id: 'g2', name: 'الثاني المتوسط', classes: [] },
+    { id: 'g3', name: 'الثالث المتوسط', classes: [] }
+  ],
+  semesters: [{ id: 's1', name: 'الفصل الدراسي الأول', year: '1448' }],
+  active: 's1',
+  behaviors: DEFAULT_BEHAVIORS
+};
+
+/* ---------- State ---------- */
+const S = {
+  db: null, user: null, dl: null, me: null, canWrite: true, canAdmin: true, live: false,
+  cfg: null, cfgExists: false, students: [], records: [], names: {},
+  view: 'home', loaded: { cfg: false, students: false, records: false },
+  rec: { grade: '', cls: '', sel: new Set(), bid: '', date: todayISO(), note: '', q: '' },
+  st: { grade: '', cls: '', q: '' },
+  rp: { sem: '', grade: '', cls: '', from: '', to: '', sort: 'pts' },
+  confirm: {}
+};
+const cfg = () => S.cfg || DEFAULT_CFG;
+
+/* ---------- Utils ---------- */
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function todayISO(d = new Date()) { const z = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+function parseISO(s) { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); }
+let hijriFmt, hijriShort, dayFmt;
+try {
+  hijriFmt = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' });
+  hijriShort = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'short' });
+  dayFmt = new Intl.DateTimeFormat('ar-SA-u-nu-latn', { weekday: 'short' });
+} catch (e) { hijriFmt = hijriShort = dayFmt = { format: d => d.toLocaleDateString() }; }
+const hijri = iso => { try { return hijriFmt.format(parseISO(iso)); } catch (e) { return iso; } };
+function ago(ts) {
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1) return 'الآن';
+  if (m < 60) return 'قبل ' + m + ' د';
+  const h = Math.round(m / 60);
+  if (h < 24) return 'قبل ' + h + ' س';
+  return hijri(todayISO(new Date(ts)));
+}
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const gradeOf = id => cfg().grades.find(g => g.id === id);
+const gradeName = id => gradeOf(id)?.name || '—';
+const semOf = id => cfg().semesters.find(s => s.id === id);
+const semLabel = id => { const s = semOf(id); return s ? s.name + ' ' + s.year + 'هـ' : '—'; };
+const stuById = id => S.students.find(s => s.id === id);
+const byName = (a, b) => a.name.localeCompare(b.name, 'ar');
+function plural(n, one, two, few, many) { n = Number(n); if (n === 1) return one; if (n === 2) return two; if (n >= 3 && n <= 10) return n + ' ' + few; return n + ' ' + many; }
+
+/* ---------- Toast & modal ---------- */
+let toastT;
+function toast(msg, opts = {}) {
+  const el = document.getElementById('toast');
+  el.innerHTML = '<div class="' + (opts.err ? 'err' : '') + '"><span>' + esc(msg) + '</span>' + (opts.undo ? '<button data-act="toast-undo">تراجع</button>' : '') + '</div>';
+  S.toastUndo = opts.undo || null;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.innerHTML = ''; S.toastUndo = null; }, opts.undo ? 6000 : 3200);
+}
+function errMsg(e) {
+  const c = e && e.code;
+  if (c === 'invalid_argument') return 'ليست لديك صلاحية لهذا التعديل، أو أن البيانات غير صالحة.';
+  if (c === 'quota_exceeded') return 'امتلأت سعة قاعدة البيانات. احذف سجلات قديمة ثم أعد المحاولة.';
+  if (c === 'resource_exhausted') return 'طلبات كثيرة في وقت قصير. انتظر لحظة ثم أعد المحاولة.';
+  if (c === 'revoked') return 'تغيّرت صلاحية وصولك. أعد فتح المنصة.';
+  return 'تعذّر الحفظ مؤقتاً. تحقق من الاتصال وأعد المحاولة.';
+}
+function openModal(html, narrow) {
+  const m = document.getElementById('modal');
+  m.innerHTML = '<div class="modal" data-act="modal-bg"><div class="modal-c' + (narrow ? ' narrow' : '') + '" role="dialog" aria-modal="true">' + html + '</div></div>';
+  const f = m.querySelector('input, textarea, select, button.pri');
+  if (f) f.focus();
+}
+function closeModal() { document.getElementById('modal').innerHTML = ''; S.modalCtx = null; }
+function ask(title, body, okLabel, fn) {
+  S.confirmFn = fn;
+  openModal('<h3>' + esc(title) + '</h3><p class="sub">' + esc(body) + '</p><div class="row"><span class="spacer"></span><button class="btn" data-act="modal-close">إلغاء</button><button class="btn dng" data-act="confirm-ok">' + esc(okLabel) + '</button></div>', true);
+}
+
+/* ---------- Data layer ---------- */
+let cfgChain = Promise.resolve();
+function saveCfg(next, msg) {
+  S.cfg = next; S.cfgExists = true;
+  render();
+  if (!S.db) { persist(); if (msg) toast(msg); return Promise.resolve(); }
+  const snap = JSON.parse(JSON.stringify(next));
+  cfgChain = cfgChain.then(() => S.db.doc('config/school').set(snap)).then(() => { if (msg) toast(msg); }).catch(e => toast(errMsg(e), { err: true }));
+  return cfgChain;
+}
+async function addDoc(col, data) {
+  if (!S.db) { const d = { id: uid(), ...data }; (col === 'students' ? S.students : S.records).push(d); persist(); render(); return d.id; }
+  const ref = S.db.collection(col).doc();
+  await ref.set(data);
+  return ref.id;
+}
+async function setDoc(col, id, data) {
+  if (!S.db) { const arr = col === 'students' ? S.students : S.records; const i = arr.findIndex(x => x.id === id); if (i >= 0) arr[i] = { id, ...data }; else arr.push({ id, ...data }); persist(); render(); return; }
+  await S.db.doc(col + '/' + id).set(data);
+}
+async function delDoc(col, id) {
+  if (!S.db) { const arr = col === 'students' ? S.students : S.records; const i = arr.findIndex(x => x.id === id); if (i >= 0) arr.splice(i, 1); persist(); render(); return; }
+  await S.db.doc(col + '/' + id).delete();
+}
+const strip = o => { const { id, ...rest } = o; return rest; };
+
+/* ---------- Derived ---------- */
+function semRecords(sem) { return S.records.filter(r => r.sem === (sem || cfg().active)); }
+function totals(recs) {
+  const t = new Map();
+  for (const r of recs) for (const sid of r.sids || []) {
+    const e = t.get(sid) || { pts: 0, n: 0, by: {} };
+    e.pts += Number(r.pts) || 0; e.n += 1; e.by[r.bid] = (e.by[r.bid] || 0) + 1;
+    t.set(sid, e);
+  }
+  return t;
+}
+function classesOf(gid) { return gradeOf(gid)?.classes || []; }
+
+/* ---------- Render root ---------- */
+let pendingRender = false;
+function render(force) {
+  const ae = document.activeElement;
+  const view = document.getElementById('view');
+  if (!force && ae && view.contains(ae) && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.type !== 'checkbox') { pendingRender = true; renderChrome(); return; }
+  pendingRender = false;
+  renderChrome();
+  const fn = { home: vHome, record: vRecord, students: vStudents, reports: vReports, settings: vSettings }[S.view] || vHome;
+  const scroll = window.scrollY;
+  view.innerHTML = fn();
+  window.scrollTo(0, scroll);
+  resolveNames();
+}
+document.addEventListener('focusout', () => { setTimeout(() => { if (pendingRender) render(); }, 0); });
+
+function renderChrome() {
+  const c = cfg();
+  document.getElementById('schoolLine').textContent = c.school ? c.school + (c.admin ? ' · ' + c.admin : '') : 'أكمل بيانات المدرسة من الإعدادات';
+  document.getElementById('semPill').textContent = semLabel(c.active);
+  document.getElementById('hijri').textContent = hijri(todayISO());
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.v === S.view)));
+  const who = document.getElementById('who');
+  who.innerHTML = S.me && S.me.name ? '<span class="pill-h">' + esc(S.me.name) + (S.canAdmin ? ' · مشرف' : (S.canWrite ? ' · معلم' : ' · اطلاع')) + '</span>' : '';
+  const b = document.getElementById('banner');
+  let msg = '';
+  if (STANDALONE) msg = 'البيانات تُحفظ على هذا الجهاز وهذا المتصفح فقط. خذ نسخة احتياطية بانتظام من «إعدادات المدرسة».';
+  else if (!S.live) msg = 'وضع المعاينة: البيانات لا تُحفظ هنا. افتح المنصة من رابطها في Claude لتفعيل الحفظ السحابي المشترك.';
+  else if (!S.canWrite) msg = 'صلاحيتك للاطلاع فقط. اطلب من مالك المنصة منحك صلاحية «مساهم» لتتمكن من الرصد.';
+  b.innerHTML = msg ? '<div>' + esc(msg) + '</div>' : '';
+}
+
+/* ---------- Names of recorders ---------- */
+async function resolveNames() {
+  if (!S.user) return;
+  const ids = [...new Set(S.records.map(r => r.by).filter(Boolean))].filter(id => !(id in S.names));
+  if (!ids.length) return;
+  ids.forEach(id => S.names[id] = '');
+  try {
+    const ps = await S.user.profiles(ids);
+    let changed = false;
+    for (const id of ids) { const n = ps[id]?.name || ''; if (n) { S.names[id] = n; changed = true; } }
+    if (changed) render();
+  } catch (e) { /* names stay blank */ }
+}
+const recName = id => (id && S.names[id]) || 'معلم';
+
+/* ---------- Shared bits ---------- */
+function formHead(title) {
+  const c = cfg();
+  return '<section class="form-head">' +
+    '<div class="r">' + [c.head1, c.head2, c.admin].filter(Boolean).map(esc).join('<br>') + '</div>' +
+    '<div class="c"><div class="medal">' + I.medal + '</div><h2>' + esc(title) + '</h2><p class="sub num">' + esc(semLabel(c.active)) + '</p></div>' +
+    '<div class="l">' + esc(c.school || 'اسم المدرسة') + '</div></section>';
+}
+function emptyBox(title, text, btn) {
+  return '<div class="empty">' + I.medal + '<strong>' + esc(title) + '</strong><p>' + esc(text) + '</p>' + (btn || '') + '</div>';
+}
+function gradeOpts(sel, all) {
+  return (all ? '<option value="">' + esc(all) + '</option>' : '') + cfg().grades.map(g => '<option value="' + esc(g.id) + '"' + (g.id === sel ? ' selected' : '') + '>' + esc(g.name) + '</option>').join('');
+}
+function classOpts(gid, sel, all) {
+  return (all ? '<option value="">' + esc(all) + '</option>' : '') + classesOf(gid).map(c => '<option value="' + esc(c) + '"' + (c === sel ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
+}
+function feedItem(r, canUndo) {
+  const names = (r.sids || []).map(id => stuById(id)?.name).filter(Boolean);
+  const shown = names.slice(0, 3).map(esc).join('، ') + (names.length > 3 ? ' و' + (names.length - 3) + ' آخرين' : '');
+  return '<div class="feed-i"><span class="dot num">+' + esc(r.pts) + '</span><div class="b"><strong>' + esc(r.bname) + '</strong>' +
+    '<div class="names">' + (shown || '<span class="sub">طلاب محذوفون</span>') + '</div>' +
+    '<div class="m num">' + esc(gradeName(r.grade)) + (r.cls ? ' / ' + esc(r.cls) : '') + ' · ' + esc(recName(r.by)) + ' · ' + esc(ago(r.ts)) + '</div>' +
+    (r.note ? '<div class="m">ملاحظة: ' + esc(r.note) + '</div>' : '') + '</div>' +
+    (canUndo ? '<button class="btn ghost sm" data-act="rec-del" data-id="' + esc(r.id) + '" title="حذف الرصد">' + I.trash + '</button>' : '<span></span>') + '</div>';
+}
+function recent24() { const cut = Date.now() - 864e5; return S.records.filter(r => (r.ts || 0) >= cut).sort((a, b) => b.ts - a.ts); }
+function canDelRec(r) { return S.canWrite && (S.canAdmin || !r.by || r.by === S.me?.id); }
+
+/* ---------- View: Home ---------- */
+function vHome() {
+  const c = cfg();
+  const recs = semRecords();
+  const tot = totals(recs);
+  const entries = recs.reduce((a, r) => a + (r.sids?.length || 0), 0);
+  const pts = recs.reduce((a, r) => a + (r.sids?.length || 0) * (Number(r.pts) || 0), 0);
+  const hasClasses = c.grades.some(g => g.classes.length);
+  const steps = [
+    [!!c.school, 'أدخل اسم المدرسة وبيانات الترويسة', 'settings', 'الإعدادات'],
+    [hasClasses, 'أضف الفصول (أ، ب، ج…) لكل صف', 'students', 'الفصول'],
+    [S.students.length > 0, 'أضف الطلاب أو استوردهم دفعة واحدة', 'students', 'الطلاب'],
+    [recs.length > 0, 'سجّل أول رصد لسلوك متميز', 'record', 'ارصد الآن']
+  ];
+  const doneAll = steps.every(s => s[0]);
+  let h = '<div class="view-in stack" style="gap:18px">';
+  if (!doneAll) {
+    h += '<section class="panel"><div class="panel-h"><h2>' + I.list + 'خطوات تجهيز المنصة</h2><span class="sub">' + steps.filter(s => s[0]).length + ' من 4</span></div><div class="checklist">' +
+      steps.map(s => '<div class="ck' + (s[0] ? ' done' : '') + '"><span class="st">' + (s[0] ? I.check : '') + '</span><span class="grow">' + esc(s[1]) + '</span>' + (s[0] ? '' : '<button class="btn sm" data-act="go" data-v="' + s[2] + '">' + esc(s[3]) + '</button>') + '</div>').join('') + '</div></section>';
+  }
+  h += '<section class="stats">' +
+    '<div class="stat hl"><span class="k">درجات السلوك المتميز المرصودة</span><span class="v num">' + pts + '</span></div>' +
+    '<div class="stat"><span class="k">مرات الرصد هذا الفصل</span><span class="v num">' + entries + '</span></div>' +
+    '<div class="stat"><span class="k">طلاب حصلوا على رصد</span><span class="v num">' + tot.size + ' <small>من ' + S.students.length + '</small></span></div>' +
+    '<div class="stat"><span class="k">رصود آخر 24 ساعة</span><span class="v num">' + recent24().reduce((a, r) => a + (r.sids?.length || 0), 0) + '</span></div></section>';
+
+  h += '<div class="grid-2">';
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.chart + 'الرصد خلال آخر 14 يوماً</h2><span class="sub">عدد الطلاب المرصودين يومياً</span></div>' + dailyChart(recs) + '</section>';
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.trophy + 'لوحة الشرف</h2><span class="sub">الأعلى درجات هذا الفصل</span></div>' + leaderboard(tot) + '</section>';
+  h += '</div><div class="grid-2">';
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.medal + 'أكثر السلوكيات رصداً</h2></div>' + behaviorBars(recs) + '</section>';
+  const r24 = recent24();
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.clock + 'السلوكيات خلال آخر 24 ساعة</h2>' + (S.canWrite ? '<button class="btn pri sm" data-act="go" data-v="record">' + I.plus + 'رصد جديد</button>' : '') + '</div>' +
+    (r24.length ? '<div class="feed">' + r24.slice(0, 8).map(r => feedItem(r, canDelRec(r))).join('') + '</div>' : emptyBox('لا رصود اليوم', 'كل سلوك متميز تسجّله يظهر هنا فوراً لجميع المعلمين.')) + '</section>';
+  h += '</div></div>';
+  return h;
+}
+function dailyChart(recs) {
+  const days = [];
+  for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(todayISO(d)); }
+  const counts = days.map(d => recs.filter(r => r.date === d).reduce((a, r) => a + (r.sids?.length || 0), 0));
+  const max = Math.max(4, ...counts);
+  const step = max <= 8 ? 2 : Math.ceil(max / 4 / 5) * 5;
+  const top = Math.ceil(max / step) * step;
+  const W = 620, H = 200, L = 30, R = 8, T = 18, B = 34, cw = (W - L - R) / 14, bw = Math.min(26, cw * .6);
+  const y = v => T + (H - T - B) * (1 - v / top);
+  let s = '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="عدد الرصود اليومية">';
+  for (let v = 0; v <= top; v += step) s += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="ax" x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+  // RTL reading: newest day on the left edge, oldest on the right
+  days.forEach((d, i) => {
+    const x = W - R - cw * (i + 1) + (cw - bw) / 2;
+    const v = counts[i];
+    const isToday = i === 13;
+    if (v > 0) s += '<rect class="br' + (isToday ? ' today' : '') + '" x="' + x + '" y="' + y(v) + '" width="' + bw + '" height="' + (y(0) - y(v)) + '" rx="4"/><text class="vl" x="' + (x + bw / 2) + '" y="' + (y(v) - 5) + '" text-anchor="middle">' + v + '</text>';
+    const dt = parseISO(d);
+    s += '<text class="ax" x="' + (x + bw / 2) + '" y="' + (H - 18) + '" text-anchor="middle">' + esc(dayFmt.format(dt)) + '</text>';
+    s += '<text class="ax" x="' + (x + bw / 2) + '" y="' + (H - 4) + '" text-anchor="middle">' + esc(hijriShort.format(dt).split(' ')[0]) + '</text>';
+  });
+  return s + '</svg></div>';
+}
+function leaderboard(tot) {
+  const arr = [...tot.entries()].map(([id, e]) => ({ s: stuById(id), ...e })).filter(x => x.s).sort((a, b) => b.pts - a.pts || b.n - a.n).slice(0, 10);
+  if (!arr.length) return emptyBox('لوحة الشرف فارغة', 'تظهر هنا أسماء الطلاب الأعلى درجات بمجرد بدء الرصد.');
+  return '<div class="rank">' + arr.map((x, i) => '<div class="rank-i' + (i < 3 ? ' lead' : '') + '"><span class="pos num">' + (i + 1) + '</span><span class="nm"><button class="btn ghost sm" style="padding:0;font-weight:600" data-act="stu-open" data-id="' + esc(x.s.id) + '">' + esc(x.s.name) + '</button> <span class="sub">' + esc(gradeName(x.s.grade)) + (x.s.cls ? ' / ' + esc(x.s.cls) : '') + '</span></span><span class="tag gold num">' + x.pts + ' درجة</span></div>').join('') + '</div>';
+}
+function behaviorBars(recs) {
+  const m = new Map();
+  for (const r of recs) m.set(r.bname, (m.get(r.bname) || 0) + (r.sids?.length || 0));
+  const arr = [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 7);
+  if (!arr.length) return emptyBox('لا بيانات بعد', 'يتوزع هنا الرصد على أنواع السلوك المتميز.');
+  const max = arr[0][1];
+  return '<div class="bars">' + arr.map(([n, v]) => '<div class="bar-r"><span class="lb" title="' + esc(n) + '">' + esc(n) + '</span><span class="bar-t"><i style="width:' + Math.max(4, v / max * 100) + '%"></i></span><span class="num">' + v + '</span></div>').join('') + '</div>';
+}
+
+/* ---------- View: Record ---------- */
+function vRecord() {
+  const c = cfg(), R = S.rec;
+  if (R.grade && !gradeOf(R.grade)) R.grade = '';
+  if (!R.grade) R.grade = (c.grades.find(g => g.classes.length) || c.grades[0])?.id || '';
+  if (R.cls && !classesOf(R.grade).includes(R.cls)) R.cls = '';
+  const tot = totals(semRecords());
+  let h = '<div class="view-in stack" style="gap:18px">' + formHead('نموذج رصد درجات السلوك المتميز');
+  h += '<div class="grid-main"><section class="panel">';
+  if (!S.canWrite) h += '<p class="ro-note" style="margin-bottom:12px">صلاحيتك للاطلاع فقط، لذلك زر الحفظ معطّل.</p>';
+  // Step 1
+  h += '<div class="step"><div class="step-h"><span class="step-n">1</span>اختر الصف والفصل</div><div class="chips">' +
+    c.grades.map(g => '<button class="chip" data-act="rec-grade" data-id="' + esc(g.id) + '" aria-pressed="' + (g.id === R.grade) + '">' + esc(g.name) + '</button>').join('') + '</div>';
+  const cls = classesOf(R.grade);
+  h += cls.length ? '<div class="chips"><button class="chip" data-act="rec-cls" data-id="" aria-pressed="' + (R.cls === '') + '">كل الفصول</button>' + cls.map(x => '<button class="chip" data-act="rec-cls" data-id="' + esc(x) + '" aria-pressed="' + (x === R.cls) + '">فصل ' + esc(x) + '</button>').join('') + '</div>'
+    : '<p class="sub">لا توجد فصول لهذا الصف بعد. <button class="btn ghost sm" data-act="go" data-v="students">أضف فصلاً</button></p>';
+  h += '</div>';
+  // Step 2
+  const pool = S.students.filter(s => s.grade === R.grade && (!R.cls || s.cls === R.cls)).sort(byName);
+  const q = R.q.trim();
+  const list = q ? pool.filter(s => s.name.includes(q) || (s.nid || '').includes(q)) : pool;
+  for (const id of [...R.sel]) if (!stuById(id)) R.sel.delete(id);
+  h += '<div class="step"><div class="step-h"><span class="step-n">2</span>حدّد الطلاب <span class="tag num">' + R.sel.size + ' محدد</span></div>';
+  if (!pool.length) h += emptyBox('لا يوجد طلاب في هذا الاختيار', 'أضف طلاب هذا الفصل من قسم «الطلاب والفصول» ثم ارجع للرصد.', '<button class="btn" data-act="go" data-v="students">' + I.plus + 'إضافة طلاب</button>');
+  else {
+    h += '<div class="row"><input class="in grow" id="rec-q" data-bind="rec.q" placeholder="ابحث باسم الطالب أو رقم الهوية" value="' + esc(R.q) + '"><button class="btn sm" data-act="rec-all">تحديد الكل</button><button class="btn sm ghost" data-act="rec-none">إلغاء التحديد</button></div>';
+    h += '<div class="stu-grid">' + list.map(s => '<button class="stu" data-act="rec-stu" data-id="' + esc(s.id) + '" aria-pressed="' + R.sel.has(s.id) + '"><span class="box">' + I.check + '</span><span class="nm">' + esc(s.name) + '</span>' + (tot.get(s.id) ? '<span class="tag gold num">' + tot.get(s.id).pts + '</span>' : '') + (R.cls ? '' : '<span class="tag muted">' + esc(s.cls || '') + '</span>') + '</button>').join('') + '</div>';
+    if (!list.length) h += '<p class="sub">لا نتائج مطابقة للبحث.</p>';
+  }
+  h += '</div>';
+  // Step 3
+  h += '<div class="step"><div class="step-h"><span class="step-n">3</span>اختر السلوك المتميز</div><div class="beh-grid">' +
+    c.behaviors.map(b => '<button class="beh" data-act="rec-beh" data-id="' + esc(b.id) + '" aria-pressed="' + (b.id === R.bid) + '"><span class="t">' + esc(b.name) + '</span><span class="p num">+' + esc(b.pts) + '</span></button>').join('') + '</div></div>';
+  // Step 4
+  const beh = c.behaviors.find(b => b.id === R.bid);
+  h += '<div class="step"><div class="step-h"><span class="step-n">4</span>التاريخ والملاحظة ثم الحفظ</div>' +
+    '<div class="row"><label class="f" style="flex:0 1 200px">تاريخ الرصد<input type="date" class="in num" id="rec-date" data-bind="rec.date" value="' + esc(R.date) + '" max="' + todayISO() + '"></label>' +
+    '<label class="f grow">ملاحظة (اختياري)<input class="in" id="rec-note" data-bind="rec.note" maxlength="200" placeholder="مثال: قدّم فقرة الإذاعة يوم الأحد" value="' + esc(R.note) + '"></label></div>' +
+    '<p class="sub num">' + esc(hijri(R.date)) + '</p>' +
+    '<div class="savebar"><div class="sum">' + (beh && R.sel.size ? 'سيُرصد «<strong>' + esc(beh.name) + '</strong>» لـ <strong class="num">' + R.sel.size + '</strong> ' + (R.sel.size === 1 ? 'طالب' : 'طلاب') + '، بإضافة <strong class="num">' + esc(beh.pts) + '</strong> ' + (Number(beh.pts) === 1 ? 'درجة' : 'درجات') + ' لكل طالب.' : '<span class="sub">حدّد طالباً واحداً على الأقل وسلوكاً واحداً لتفعيل الحفظ.</span>') + '</div>' +
+    '<button class="btn pri lg" data-act="rec-save"' + (beh && R.sel.size && S.canWrite ? '' : ' disabled') + '>' + I.check + 'حفظ الرصد</button></div></div>';
+  h += '</section>';
+  // Side
+  const r24 = recent24();
+  h += '<aside class="panel"><div class="panel-h"><h2>' + I.clock + 'آخر 24 ساعة</h2><span class="tag num">' + r24.length + '</span></div>' +
+    (r24.length ? '<div class="feed">' + r24.slice(0, 12).map(r => feedItem(r, canDelRec(r))).join('') + '</div>' : emptyBox('لا رصود حديثة', 'ما تحفظه يظهر هنا ويمكنك حذفه إن أخطأت.')) + '</aside>';
+  h += '</div></div>';
+  return h;
+}
+async function saveRecord() {
+  const c = cfg(), R = S.rec;
+  const beh = c.behaviors.find(b => b.id === R.bid);
+  if (!beh || !R.sel.size || !S.canWrite) return;
+  if (R.date > todayISO()) { toast('لا يمكن الرصد بتاريخ مستقبلي.', { err: true }); return; }
+  const groups = new Map();
+  for (const id of R.sel) { const s = stuById(id); if (!s) continue; const k = s.cls || ''; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(id); }
+  const btn = document.querySelector('[data-act="rec-save"]'); if (btn) btn.disabled = true;
+  try {
+    const ids = [];
+    for (const [cls, sids] of groups) {
+      const rec = { sem: c.active, date: R.date, ts: Date.now(), bid: beh.id, bname: beh.name, pts: Number(beh.pts) || 0, sids, grade: R.grade, cls, note: R.note.trim(), by: S.me?.id || '' };
+      ids.push(await addDoc('records', rec));
+    }
+    const n = R.sel.size;
+    R.sel = new Set(); R.note = ''; R.bid = '';
+    render(true);
+    toast('تم رصد السلوك لـ ' + plural(n, 'طالب واحد', 'طالبين', 'طلاب', 'طالباً'), { undo: async () => { for (const id of ids) await delDoc('records', id); toast('تم التراجع عن الرصد'); } });
+  } catch (e) { toast(errMsg(e), { err: true }); if (btn) btn.disabled = false; }
+}
+
+/* ---------- View: Students ---------- */
+function vStudents() {
+  const c = cfg(), F = S.st;
+  if (F.grade && !gradeOf(F.grade)) F.grade = '';
+  if (F.cls && !classesOf(F.grade).includes(F.cls)) F.cls = '';
+  const tot = totals(semRecords());
+  let h = '<div class="view-in stack" style="gap:18px">';
+  // Grades & classes
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.school + 'الصفوف والفصول</h2><span class="sub">' + (S.canAdmin ? 'أضف فصول كل صف ثم أضف طلابها' : 'تعديل الصفوف متاح للمشرفين') + '</span></div><div class="grid-2">';
+  h += c.grades.map(g => {
+    const n = S.students.filter(s => s.grade === g.id).length;
+    return '<div class="list-row" style="align-items:flex-start"><div class="grow stack" style="gap:8px"><div class="row"><strong>' + esc(g.name) + '</strong><span class="tag muted num">' + n + ' طالب</span><span class="spacer"></span>' + (S.canAdmin ? '<button class="btn ghost sm" data-act="grade-del" data-id="' + esc(g.id) + '" title="حذف الصف">' + I.trash + '</button>' : '') + '</div>' +
+      '<div class="chips">' + (g.classes.length ? g.classes.map(x => '<span class="chip">فصل ' + esc(x) + (S.canAdmin ? '<button class="x" data-act="cls-del" data-g="' + esc(g.id) + '" data-id="' + esc(x) + '" aria-label="حذف فصل ' + esc(x) + '">×</button>' : '') + '</span>').join('') : '<span class="sub">لا فصول بعد</span>') + '</div>' +
+      (S.canAdmin ? '<div class="row"><input class="in grow" id="cls-in-' + esc(g.id) + '" placeholder="اسم الفصل، مثال: أ أو 1" maxlength="12"><button class="btn sm" data-act="cls-add" data-g="' + esc(g.id) + '">' + I.plus + 'إضافة فصل</button></div>' : '') + '</div></div>';
+  }).join('');
+  if (S.canAdmin) h += '<div class="list-row"><input class="in grow" id="grade-in" placeholder="صف جديد، مثال: الأول الثانوي" maxlength="40"><button class="btn pri sm" data-act="grade-add">' + I.plus + 'إضافة صف</button></div>';
+  h += '</div></section>';
+  // Students
+  const pool = S.students.filter(s => (!F.grade || s.grade === F.grade) && (!F.cls || s.cls === F.cls)).sort(byName);
+  const q = F.q.trim();
+  const list = q ? pool.filter(s => s.name.includes(q) || (s.nid || '').includes(q)) : pool;
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.users + 'سجل الطلاب <span class="tag num">' + S.students.length + '</span></h2><div class="row">' +
+    (S.canWrite ? '<button class="btn" data-act="stu-import">' + I.up + 'استيراد قائمة</button><button class="btn pri" data-act="stu-new">' + I.plus + 'إضافة طالب</button>' : '') + '</div></div>';
+  h += '<div class="row" style="margin-bottom:12px"><select class="in" style="flex:0 1 200px" data-bind="st.grade" id="st-grade">' + gradeOpts(F.grade, 'كل الصفوف') + '</select>' +
+    '<select class="in" style="flex:0 1 160px" data-bind="st.cls" id="st-cls"' + (F.grade ? '' : ' disabled') + '>' + classOpts(F.grade, F.cls, 'كل الفصول') + '</select>' +
+    '<input class="in grow" id="st-q" data-bind="st.q" placeholder="بحث بالاسم أو رقم الهوية" value="' + esc(F.q) + '"></div>';
+  if (!S.students.length) h += emptyBox('لم تُضف أي طالب بعد', 'أضف الطلاب واحداً واحداً، أو الصق قائمة الأسماء كاملة من ملف Excel أو من تقرير نظام نور.', S.canWrite ? '<button class="btn pri" data-act="stu-import">' + I.up + 'استيراد قائمة الطلاب</button>' : '');
+  else if (!list.length) h += '<p class="sub">لا طلاب مطابقون لهذا التصفية.</p>';
+  else {
+    h += '<div class="tbl-w"><table><thead><tr><th class="n">م</th><th>اسم الطالب</th><th>رقم الهوية</th><th>الصف</th><th class="n">الفصل</th><th class="n">درجات الفصل الحالي</th><th></th></tr></thead><tbody>' +
+      list.map((s, i) => '<tr><td class="n">' + (i + 1) + '</td><td><button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-act="stu-open" data-id="' + esc(s.id) + '">' + esc(s.name) + '</button></td><td class="num">' + esc(s.nid || '—') + '</td><td>' + esc(gradeName(s.grade)) + '</td><td class="n">' + esc(s.cls || '—') + '</td><td class="n">' + (tot.get(s.id) ? '<span class="tot">' + tot.get(s.id).pts + '</span>' : '0') + '</td><td>' +
+        (S.canWrite ? '<button class="btn ghost sm" data-act="stu-edit" data-id="' + esc(s.id) + '" title="تعديل">' + I.edit + '</button><button class="btn ghost sm" data-act="stu-del" data-id="' + esc(s.id) + '" title="حذف">' + I.trash + '</button>' : '') + '</td></tr>').join('') + '</tbody></table></div>';
+  }
+  h += '</section></div>';
+  return h;
+}
+function studentForm(s) {
+  const g = s?.grade || S.st.grade || cfg().grades[0]?.id || '';
+  return '<h3>' + (s ? 'تعديل بيانات الطالب' : 'إضافة طالب') + '</h3>' +
+    '<label class="f">اسم الطالب رباعياً<input class="in" id="sf-name" maxlength="80" value="' + esc(s?.name || '') + '"></label>' +
+    '<label class="f">رقم الهوية / الإقامة (اختياري)<input class="in num" id="sf-nid" inputmode="numeric" maxlength="12" value="' + esc(s?.nid || '') + '"></label>' +
+    '<div class="row"><label class="f grow">الصف<select class="in" id="sf-grade" data-act-change="sf-grade">' + gradeOpts(g) + '</select></label>' +
+    '<label class="f grow">الفصل<select class="in" id="sf-cls">' + classOpts(g, s?.cls || S.st.cls, classesOf(g).length ? '' : 'لا فصول — أضفها أولاً') + '</select></label></div>' +
+    '<div class="row"><span class="spacer"></span><button class="btn" data-act="modal-close">إلغاء</button><button class="btn pri" data-act="stu-save" data-id="' + esc(s?.id || '') + '">حفظ</button></div>';
+}
+function importForm() {
+  const g = S.st.grade || cfg().grades.find(x => x.classes.length)?.id || cfg().grades[0]?.id || '';
+  return '<h3>استيراد قائمة طلاب</h3><p class="sub">الصق الأسماء من Excel أو من تقرير نظام نور: اسم واحد في كل سطر. إذا كان السطر يحتوي رقم هوية من 10 أرقام فسيُحفظ تلقائياً. يمكنك أيضاً اختيار ملف CSV أو TXT.</p>' +
+    '<div class="row"><label class="f grow">الصف<select class="in" id="im-grade" data-act-change="im-grade">' + gradeOpts(g) + '</select></label>' +
+    '<label class="f grow">الفصل<select class="in" id="im-cls">' + classOpts(g, '', classesOf(g).length ? '' : 'لا فصول — أضفها أولاً') + '</select></label></div>' +
+    '<label class="f">قائمة الطلاب<textarea class="in" id="im-text" rows="8" placeholder="محمد أحمد علي الشهري&#10;1123456789	خالد سعد عبدالله العنزي&#10;…"></textarea></label>' +
+    '<div class="row"><label class="btn sm" style="cursor:pointer">' + I.up + 'اختيار ملف<input type="file" id="im-file" accept=".csv,.txt,text/csv,text/plain" hidden></label><span class="sub" id="im-count">0 اسم</span><span class="spacer"></span><button class="btn" data-act="modal-close">إلغاء</button><button class="btn pri" data-act="im-run">استيراد</button></div>';
+}
+function parseImport(text) {
+  const out = [];
+  const seen = new Set();
+  for (let line of String(text).split(/\r?\n/)) {
+    line = line.replace(/^﻿/, '').trim();
+    if (!line) continue;
+    const parts = line.split(/[\t,;|]+/).map(p => p.replace(/^"|"$/g, '').trim()).filter(Boolean);
+    let nid = '';
+    const names = [];
+    for (const p of parts) {
+      const digits = p.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+      if (/^\d{10}$/.test(digits)) nid = digits;
+      else if (/^\d{1,4}$/.test(digits)) continue; // row numbers
+      else if (/[؀-ۿa-zA-Z]/.test(p)) names.push(p);
+    }
+    const name = names.sort((a, b) => b.split(' ').length - a.split(' ').length)[0];
+    if (!name || /^(اسم|الاسم|اسم الطالب|م)$/.test(name)) continue;
+    const key = nid || name;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name: name.replace(/\s+/g, ' '), nid });
+  }
+  return out;
+}
+async function runImport() {
+  const g = document.getElementById('im-grade').value, cls = document.getElementById('im-cls').value;
+  const rows = parseImport(document.getElementById('im-text').value);
+  if (!rows.length) { toast('لم أجد أسماء في النص. ضع اسماً واحداً في كل سطر.', { err: true }); return; }
+  if (!cls) { toast('اختر الفصل أولاً. أضف الفصول من قسم الصفوف والفصول.', { err: true }); return; }
+  const existing = new Set(S.students.filter(s => s.grade === g && s.cls === cls).map(s => s.nid || s.name));
+  const fresh = rows.filter(r => !existing.has(r.nid || r.name));
+  closeModal();
+  let done = 0;
+  try {
+    for (const r of fresh) { await addDoc('students', { name: r.name, nid: r.nid, grade: g, cls, ts: Date.now() }); done++; if (done % 10 === 0) toast('جارٍ الاستيراد… ' + done + ' من ' + fresh.length); }
+    toast('تم استيراد ' + done + ' طالب' + (rows.length - fresh.length ? '، وتجاهل ' + (rows.length - fresh.length) + ' مكرر' : ''));
+  } catch (e) { toast('توقف الاستيراد بعد ' + done + ' طالب. ' + errMsg(e), { err: true }); }
+}
+function studentProfile(id) {
+  const s = stuById(id); if (!s) return;
+  const c = cfg();
+  const recs = S.records.filter(r => (r.sids || []).includes(id)).sort((a, b) => (b.date + b.ts).localeCompare(a.date + a.ts));
+  const cur = recs.filter(r => r.sem === c.active);
+  const pts = cur.reduce((a, r) => a + (Number(r.pts) || 0), 0);
+  const all = recs.reduce((a, r) => a + (Number(r.pts) || 0), 0);
+  let h = '<div class="row"><h3 class="grow">' + esc(s.name) + '</h3><button class="btn ghost sm" data-act="modal-close" aria-label="إغلاق">✕</button></div>' +
+    '<p class="sub num">' + esc(gradeName(s.grade)) + (s.cls ? ' / فصل ' + esc(s.cls) : '') + (s.nid ? ' · ' + esc(s.nid) : '') + '</p>' +
+    '<div class="stats"><div class="stat hl"><span class="k">درجات الفصل الحالي</span><span class="v num">' + pts + '</span></div><div class="stat"><span class="k">إجمالي كل الفصول</span><span class="v num">' + all + '</span></div></div>';
+  h += recs.length ? '<div class="tbl-w"><table><thead><tr><th>التاريخ</th><th>السلوك</th><th class="n">الدرجة</th><th>الراصد</th></tr></thead><tbody>' +
+    recs.map(r => '<tr><td class="num">' + esc(hijri(r.date)) + '</td><td style="white-space:normal">' + esc(r.bname) + (r.note ? '<div class="sub">' + esc(r.note) + '</div>' : '') + '</td><td class="n">+' + esc(r.pts) + '</td><td>' + esc(recName(r.by)) + '</td></tr>').join('') + '</tbody></table></div>'
+    : '<p class="sub">لا يوجد رصد لهذا الطالب بعد.</p>';
+  h += '<div class="row"><span class="spacer"></span>' + (pts > 0 ? '<button class="btn gold" data-act="cert" data-id="' + esc(id) + '">' + I.award + 'شهادة شكر وتقدير</button>' : '') + (S.canWrite ? '<button class="btn pri" data-act="rec-for" data-id="' + esc(id) + '">' + I.plus + 'رصد سلوك له</button>' : '') + '</div>';
+  openModal(h);
+}
+
+/* ---------- View: Reports ---------- */
+function reportData() {
+  const c = cfg(), P = S.rp;
+  const sem = P.sem || c.active;
+  let recs = S.records.filter(r => r.sem === sem);
+  if (P.from) recs = recs.filter(r => r.date >= P.from);
+  if (P.to) recs = recs.filter(r => r.date <= P.to);
+  const studs = S.students.filter(s => (!P.grade || s.grade === P.grade) && (!P.cls || s.cls === P.cls)).sort((a, b) => (gradeName(a.grade) + a.cls).localeCompare(gradeName(b.grade) + b.cls, 'ar') || byName(a, b));
+  const tot = totals(recs);
+  const usedB = c.behaviors.filter(b => recs.some(r => r.bid === b.id && (r.sids || []).some(id => studs.some(s => s.id === id))));
+  const rows = studs.map(s => ({ s, e: tot.get(s.id) || { pts: 0, n: 0, by: {} } }));
+  if (P.sort === 'pts') rows.sort((a, b) => b.e.pts - a.e.pts || byName(a.s, b.s));
+  return { sem, recs, studs, rows, usedB };
+}
+function vReports() {
+  const c = cfg(), P = S.rp;
+  if (P.grade && !gradeOf(P.grade)) P.grade = '';
+  const { sem, recs, rows, usedB } = reportData();
+  const totPts = rows.reduce((a, r) => a + r.e.pts, 0);
+  const reached = rows.filter(r => r.e.pts > 0).length;
+  let h = '<div class="view-in stack" style="gap:18px">';
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.doc + 'تقرير السلوك المتميز</h2><div class="row">' +
+    '<button class="btn" data-act="exp-csv">' + I.dl + 'تصدير Excel (CSV)</button><button class="btn pri" data-act="exp-form">' + I.doc + 'نموذج الرصد للطباعة</button></div></div>';
+  h += '<div class="row" style="margin-bottom:14px">' +
+    '<label class="f" style="flex:1 1 200px">الفصل الدراسي<select class="in" id="rp-sem" data-bind="rp.sem">' + c.semesters.map(s => '<option value="' + esc(s.id) + '"' + (s.id === sem ? ' selected' : '') + '>' + esc(s.name + ' ' + s.year) + '</option>').join('') + '</select></label>' +
+    '<label class="f" style="flex:1 1 160px">الصف<select class="in" id="rp-grade" data-bind="rp.grade">' + gradeOpts(P.grade, 'كل الصفوف') + '</select></label>' +
+    '<label class="f" style="flex:1 1 120px">الفصل<select class="in" id="rp-cls" data-bind="rp.cls"' + (P.grade ? '' : ' disabled') + '>' + classOpts(P.grade, P.cls, 'كل الفصول') + '</select></label>' +
+    '<label class="f" style="flex:1 1 150px">من تاريخ<input type="date" class="in num" id="rp-from" data-bind="rp.from" value="' + esc(P.from) + '"></label>' +
+    '<label class="f" style="flex:1 1 150px">إلى تاريخ<input type="date" class="in num" id="rp-to" data-bind="rp.to" value="' + esc(P.to) + '"></label>' +
+    '<label class="f" style="flex:1 1 150px">الترتيب<select class="in" id="rp-sort" data-bind="rp.sort"><option value="pts"' + (P.sort === 'pts' ? ' selected' : '') + '>الأعلى درجات</option><option value="name"' + (P.sort === 'name' ? ' selected' : '') + '>الصف ثم الاسم</option></select></label></div>';
+  h += '<div class="stats" style="margin-bottom:14px"><div class="stat"><span class="k">طلاب في التقرير</span><span class="v num">' + rows.length + '</span></div><div class="stat"><span class="k">حصلوا على رصد</span><span class="v num">' + reached + '</span></div><div class="stat hl"><span class="k">مجموع الدرجات</span><span class="v num">' + totPts + '</span></div></div>';
+  if (!rows.length) h += emptyBox('لا طلاب في هذا الاختيار', 'غيّر الصف أو الفصل، أو أضف الطلاب أولاً.');
+  else {
+    h += '<div class="tbl-w" style="max-height:560px"><table><thead><tr><th class="n">م</th><th>اسم الطالب</th><th>الصف / الفصل</th>' + usedB.map(b => '<th class="n" title="' + esc(b.name) + '" style="white-space:normal;min-width:84px;max-width:120px">' + esc(b.name) + '</th>').join('') + '<th class="n">عدد الرصد</th><th class="n">المجموع</th></tr></thead><tbody>' +
+      rows.map((r, i) => '<tr><td class="n">' + (i + 1) + '</td><td><button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-act="stu-open" data-id="' + esc(r.s.id) + '">' + esc(r.s.name) + '</button></td><td>' + esc(gradeName(r.s.grade)) + ' / ' + esc(r.s.cls || '—') + '</td>' + usedB.map(b => '<td class="n">' + (r.e.by[b.id] || '') + '</td>').join('') + '<td class="n">' + r.e.n + '</td><td class="n tot">' + r.e.pts + '</td></tr>').join('') + '</tbody></table></div>';
+  }
+  h += '</section>';
+  // Teachers activity
+  const t = new Map();
+  for (const r of recs) { const k = r.by || ''; const e = t.get(k) || { n: 0, last: 0 }; e.n += r.sids?.length || 0; e.last = Math.max(e.last, r.ts || 0); t.set(k, e); }
+  const tl = [...t.entries()].sort((a, b) => b[1].n - a[1].n);
+  h += '<div class="grid-2"><section class="panel"><div class="panel-h"><h2>' + I.users + 'مشاركة المعلمين في الرصد</h2></div>' +
+    (tl.length ? '<div class="rank">' + tl.map(([id, e], i) => '<div class="rank-i"><span class="pos num">' + (i + 1) + '</span><span class="nm">' + esc(recName(id)) + ' <span class="sub">آخر رصد ' + esc(ago(e.last)) + '</span></span><span class="tag num">' + e.n + ' رصد</span></div>').join('') + '</div>' : emptyBox('لا مشاركات', 'يظهر هنا عدد رصود كل معلم.')) + '</section>';
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.medal + 'توزيع السلوكيات</h2></div>' + behaviorBars(recs) + '</section></div>';
+  if (!S.dl && !STANDALONE) h += '<p class="ro-note">التنزيل غير متاح في هذا العرض. افتح المنصة من رابطها في Claude لتنزيل الملفات.</p>';
+  return h + '</div>';
+}
+function csvCell(v) { v = String(v ?? ''); return /[",\n\r;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+async function download(filename, data, label) {
+  if (!S.dl && STANDALONE) {
+    const mime = /\.csv$/.test(filename) ? 'text/csv;charset=utf-8' : /\.json$/.test(filename) ? 'application/json' : 'text/html;charset=utf-8';
+    const url = URL.createObjectURL(new Blob([data], { type: mime }));
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('تم تنزيل ' + label); return;
+  }
+  if (!S.dl) { toast('التنزيل غير متاح في هذا العرض.', { err: true }); return; }
+  try { await S.dl.save({ filename, data }); toast('تم تجهيز ' + label); }
+  catch (e) { if (e && e.code === 'declined') return; toast(e && e.code === 'rate_limited' ? 'انتظر لحظة ثم أعد التنزيل.' : 'تعذّر التنزيل. أعد المحاولة.', { err: true }); }
+}
+function exportCSV() {
+  const c = cfg(); const { sem, rows } = reportData();
+  const head = ['م', 'اسم الطالب', 'رقم الهوية', 'الصف', 'الفصل', ...c.behaviors.map(b => b.name), 'عدد مرات الرصد', 'مجموع الدرجات'];
+  const lines = [head.map(csvCell).join(',')];
+  rows.forEach((r, i) => lines.push([i + 1, r.s.name, r.s.nid || '', gradeName(r.s.grade), r.s.cls || '', ...c.behaviors.map(b => r.e.by[b.id] || 0), r.e.n, r.e.pts].map(csvCell).join(',')));
+  const s = semOf(sem);
+  download('السلوك-المتميز-' + (s ? s.name.replace(/\s+/g, '-') + '-' + s.year : '') + '.csv', '﻿' + lines.join('\r\n'), 'ملف Excel');
+}
+function printableShell(title, body, extraCss) {
+  return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(title) + '</title>' +
+        '<style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#15221c;margin:0;padding:24px;background:#fff}h1,h2{font-family:Arial,Helvetica,sans-serif;margin:0}' +
+    '.bar{position:sticky;top:0;display:flex;gap:8px;justify-content:center;padding:10px;background:#e9efe9;margin:-24px -24px 20px}.bar button{font:inherit;font-weight:700;padding:8px 22px;border-radius:8px;border:0;background:#0f6b4f;color:#fff;cursor:pointer}' +
+    '@media print{.bar{display:none}body{padding:0}}' + (extraCss || '') + '</style></head><body><div class="bar"><button onclick="window.print()">طباعة / حفظ PDF</button></div>' + body + '</body></html>';
+}
+function exportForm() {
+  const c = cfg(); const { sem, rows, usedB } = reportData();
+  const P = S.rp;
+  const s = semOf(sem);
+  const scope = (P.grade ? gradeName(P.grade) : 'جميع الصفوف') + (P.cls ? ' / فصل ' + P.cls : '');
+  const body = '<header class="hd"><div class="r">' + [c.head1, c.head2, c.admin].filter(Boolean).map(esc).join('<br>') + '</div><div class="c"><h1>نموذج رصد درجات السلوك المتميز</h1><p>' + esc(s ? s.name + ' ' + s.year + 'هـ' : '') + '</p><p>' + esc(scope) + (P.from || P.to ? ' · من ' + esc(P.from ? hijri(P.from) : 'بداية الفصل') + ' إلى ' + esc(P.to ? hijri(P.to) : hijri(todayISO())) : '') + '</p></div><div class="l">' + esc(c.school) + '<br>تاريخ الطباعة: ' + esc(hijri(todayISO())) + '</div></header>' +
+    '<table><thead><tr><th>م</th><th>اسم الطالب</th><th>رقم الهوية</th><th>الصف / الفصل</th>' + usedB.map(b => '<th class="v">' + esc(b.name) + '<br><small>(' + esc(b.pts) + ')</small></th>').join('') + '<th>المجموع</th></tr></thead><tbody>' +
+    rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><td class="nm">' + esc(r.s.name) + '</td><td>' + esc(r.s.nid || '') + '</td><td>' + esc(gradeName(r.s.grade)) + ' / ' + esc(r.s.cls || '') + '</td>' + usedB.map(b => '<td>' + (r.e.by[b.id] || '') + '</td>').join('') + '<td><b>' + r.e.pts + '</b></td></tr>').join('') + '</tbody></table>' +
+    '<footer class="sg"><div>رائد النشاط / الموجّه الطلابي<br><span></span></div><div>وكيل شؤون الطلاب<br>' + esc(c.deputy || '') + '<span></span></div><div>مدير المدرسة<br>' + esc(c.principal || '') + '<span></span></div></footer>';
+  const css = '.hd{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;border:2px solid #0b4a37;border-radius:10px;padding:14px 18px;margin-bottom:16px}.hd .r{font-size:13px;line-height:1.8}.hd .l{font-size:13px;text-align:left;line-height:1.8}.hd .c{text-align:center}.hd h1{font-size:20px;color:#0b4a37}.hd p{margin:2px 0;font-size:13px;color:#4a5a52}' +
+    'table{width:100%;border-collapse:collapse;font-size:12.5px}th,td{border:1px solid #9fb3a8;padding:5px 6px;text-align:center}th{background:#e3eee7}th.v{font-size:11px;font-weight:600;max-width:90px}td.nm{text-align:right;white-space:nowrap}tbody tr:nth-child(even) td{background:#f6f9f7}' +
+    '.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:36px;text-align:center;font-size:13px;font-weight:600}.sg span{display:block;border-bottom:1px dotted #333;height:34px;margin:0 18px}@page{size:A4 landscape;margin:12mm}thead{display:table-header-group}tr{page-break-inside:avoid}';
+  download('نموذج-رصد-السلوك-المتميز.html', printableShell('نموذج رصد درجات السلوك المتميز', body, css), 'نموذج الرصد. افتحه في المتصفح واضغط طباعة');
+}
+function exportCert(id) {
+  const c = cfg(); const s = stuById(id); if (!s) return;
+  const pts = semRecords().filter(r => (r.sids || []).includes(id)).reduce((a, r) => a + (Number(r.pts) || 0), 0);
+  const body = '<div class="cert"><div class="in"><p class="top">' + [c.head1, c.head2, c.admin, c.school].filter(Boolean).map(esc).join(' · ') + '</p><h1>شهادة شكر وتقدير</h1>' +
+    '<p class="txt">تتقدّم إدارة ' + esc(c.school || 'المدرسة') + ' بخالص الشكر والتقدير للطالب</p><h2>' + esc(s.name) + '</h2>' +
+    '<p class="txt">' + esc(gradeName(s.grade)) + (s.cls ? ' / فصل ' + esc(s.cls) : '') + '، لتميّزه السلوكي وحصوله على <b>' + pts + '</b> درجة في السلوك المتميز خلال ' + esc(semLabel(c.active)) + '، سائلين الله له دوام التوفيق والنجاح.</p>' +
+    '<div class="sg"><div>وكيل شؤون الطلاب<br><b>' + esc(c.deputy || '') + '</b></div><div class="seal">★</div><div>مدير المدرسة<br><b>' + esc(c.principal || '') + '</b></div></div><p class="dt">' + esc(hijri(todayISO())) + '</p></div></div>';
+  const css = '@page{size:A4 landscape;margin:0}.cert{max-width:1050px;margin:0 auto;aspect-ratio:1.414;padding:18px;background:#0b4a37;border-radius:6px}.cert .in{height:100%;background:#fffdf7;border:3px double #a87a1f;padding:34px 50px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;background-image:radial-gradient(circle at 50% 50%,#fffdf7 60%,#f6ebd3)}' +
+    '.top{font-size:14px;color:#5a6a62;margin:0}h1{font-size:46px;color:#0b4a37}h2{font-size:36px;color:#a87a1f;border-bottom:2px solid #a87a1f;padding:0 30px 6px}.txt{font-size:19px;line-height:1.9;max-width:760px;margin:0}.sg{display:grid;grid-template-columns:1fr auto 1fr;width:100%;align-items:center;margin-top:18px;font-size:15px}.seal{width:84px;height:84px;border-radius:50%;border:3px solid #a87a1f;color:#a87a1f;display:grid;place-items:center;font-size:36px}.dt{font-size:13px;color:#5a6a62;margin:0}' +
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.cert{border-radius:0;height:100vh;max-width:none}}';
+  download('شهادة-' + s.name.split(' ').slice(0, 2).join('-') + '.html', printableShell('شهادة شكر وتقدير', body, css), 'الشهادة. افتحها في المتصفح واطبعها');
+}
+
+/* ---------- View: Settings ---------- */
+function vSettings() {
+  const c = cfg();
+  const ro = !S.canAdmin;
+  const dis = ro ? ' disabled' : '';
+  let h = '<div class="view-in stack" style="gap:18px">';
+  if (ro) h += '<p class="ro-note">الإعدادات يعدّلها مالك المنصة أو من لديه صلاحية «محرّر». يمكنك الاطلاع عليها فقط.</p>';
+  h += '<div class="grid-2"><section class="panel"><div class="panel-h"><h2>' + I.school + 'بيانات المدرسة والترويسة</h2></div><div class="stack">' +
+    '<label class="f">اسم المدرسة<input class="in" id="set-school" maxlength="80" value="' + esc(c.school) + '"' + dis + ' placeholder="مثال: المتوسطة الثالثة بأملج"></label>' +
+    '<label class="f">الإدارة العامة للتعليم بـ<input class="in" id="set-admin" maxlength="80" value="' + esc(c.admin) + '"' + dis + ' placeholder="مثال: الإدارة العامة للتعليم بمنطقة تبوك"></label>' +
+    '<div class="row"><label class="f grow">سطر الترويسة الأول<input class="in" id="set-head1" maxlength="60" value="' + esc(c.head1) + '"' + dis + '></label><label class="f grow">سطر الترويسة الثاني<input class="in" id="set-head2" maxlength="60" value="' + esc(c.head2) + '"' + dis + '></label></div>' +
+    '<div class="row"><label class="f grow">اسم مدير المدرسة<input class="in" id="set-principal" maxlength="60" value="' + esc(c.principal) + '"' + dis + '></label><label class="f grow">اسم وكيل شؤون الطلاب<input class="in" id="set-deputy" maxlength="60" value="' + esc(c.deputy) + '"' + dis + '></label></div>' +
+    '<p class="sub">تظهر هذه البيانات في رأس نموذج الرصد وفي التقارير والشهادات المطبوعة.</p>' +
+    (ro ? '' : '<button class="btn pri" data-act="set-save">حفظ بيانات المدرسة</button>') + '</div></section>';
+  // Semesters
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.cal + 'الفصول الدراسية</h2></div><div class="stack">' +
+    (ro ? '' : '<div class="row"><select class="in grow" id="sem-name">' + SEM_NAMES.map(n => '<option>' + n + '</option>').join('') + '</select><input class="in num" style="flex:0 1 120px" id="sem-year" inputmode="numeric" maxlength="4" placeholder="1448"><button class="btn pri" data-act="sem-add">' + I.plus + 'إضافة</button></div>') +
+    c.semesters.map(s => {
+      const n = S.records.filter(r => r.sem === s.id).length;
+      const act = s.id === c.active;
+      return '<div class="list-row" style="' + (act ? 'background:var(--brand-soft);outline:1.5px solid var(--brand)' : '') + '"><div class="grow"><strong>' + esc(s.name) + '</strong> <span class="sub num">' + esc(s.year) + 'هـ · ' + n + ' سجل رصد</span></div>' +
+        (act ? '<span class="tag">' + I.check.replace('width', 'w') + 'نشط حالياً</span>' : (ro ? '' : '<button class="btn sm" data-act="sem-act" data-id="' + esc(s.id) + '">تفعيل</button>')) +
+        (ro || act ? '' : '<button class="btn ghost sm" data-act="sem-del" data-id="' + esc(s.id) + '" title="حذف">' + I.trash + '</button>') + '</div>';
+    }).join('') + '<p class="sub">الرصد الجديد يُسجّل دائماً في الفصل النشط. التقارير تعرض أي فصل سابق.</p></div></section></div>';
+  // Behaviors
+  h += '<section class="panel"><div class="panel-h"><h2>' + I.medal + 'قائمة السلوك المتميز ودرجاته</h2><span class="sub">تعديل الدرجة لا يغيّر الرصود السابقة</span></div><div class="stack">' +
+    c.behaviors.map(b => '<div class="list-row"><input class="in grow" id="beh-n-' + esc(b.id) + '" value="' + esc(b.name) + '" maxlength="80"' + dis + ' data-beh="name" data-id="' + esc(b.id) + '"><label class="row" style="gap:6px;flex:none"><span class="sub">الدرجة</span><input class="in num" type="number" min="1" max="20" style="width:76px" id="beh-p-' + esc(b.id) + '" value="' + esc(b.pts) + '"' + dis + ' data-beh="pts" data-id="' + esc(b.id) + '"></label>' + (ro ? '' : '<button class="btn ghost sm" data-act="beh-del" data-id="' + esc(b.id) + '" title="حذف">' + I.trash + '</button>') + '</div>').join('') +
+    (ro ? '' : '<div class="list-row" style="background:none;border:1px dashed var(--line)"><input class="in grow" id="beh-new" maxlength="80" placeholder="سلوك متميز جديد"><input class="in num" type="number" min="1" max="20" style="width:76px" id="beh-new-p" value="1"><button class="btn pri sm" data-act="beh-add">' + I.plus + 'إضافة</button></div><div class="row"><span class="spacer"></span><button class="btn pri" data-act="beh-save">حفظ التعديلات على القائمة</button></div>') +
+    '</div></section>';
+  if (STANDALONE) h += '<section class="panel"><div class="panel-h"><h2>' + I.dl + 'النسخ الاحتياطي ونقل البيانات</h2></div><div class="row"><p class="sub grow">نزّل ملف نسخة احتياطية لكل البيانات، واستعده على هذا الجهاز أو على جهاز آخر لنقل المنصة.</p><button class="btn pri" data-act="bk-export">' + I.dl + 'تنزيل نسخة احتياطية</button><label class="btn" style="cursor:pointer">' + I.up + 'استعادة نسخة<input type="file" id="bk-file" accept=".json,application/json" hidden></label></div></section>';
+  if (S.canAdmin) h += '<section class="panel"><div class="panel-h"><h2>' + I.trash + 'إدارة البيانات</h2></div><div class="row"><p class="sub grow">حذف كل رصود الفصل النشط نهائياً، مثلاً بعد إدخالها في نظام نور ونقلها للأرشيف. صدّر التقرير قبل الحذف.</p><button class="btn dng" data-act="wipe-sem">حذف رصود الفصل النشط</button></div></section>';
+  return h + '</div>';
+}
+
+/* ---------- Events ---------- */
+function go(v) { S.view = v; try { history.replaceState(null, '', '#' + v); } catch (e) {} render(true); window.scrollTo(0, 0); }
+document.querySelector('.tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) go(t.dataset.v); });
+
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  const c = cfg();
+  const clone = () => JSON.parse(JSON.stringify(c));
+  switch (act) {
+    case 'modal-bg': if (e.target === el) closeModal(); break;
+    case 'modal-close': closeModal(); break;
+    case 'confirm-ok': { const fn = S.confirmFn; closeModal(); if (fn) await fn(); break; }
+    case 'toast-undo': { const fn = S.toastUndo; document.getElementById('toast').innerHTML = ''; S.toastUndo = null; if (fn) try { await fn(); } catch (er) { toast(errMsg(er), { err: true }); } break; }
+    case 'go': closeModal(); go(el.dataset.v); break;
+    // record
+    case 'rec-grade': S.rec.grade = id; S.rec.cls = ''; S.rec.sel = new Set(); S.rec.q = ''; render(true); break;
+    case 'rec-cls': S.rec.cls = id; S.rec.sel = new Set(); render(true); break;
+    case 'rec-stu': S.rec.sel.has(id) ? S.rec.sel.delete(id) : S.rec.sel.add(id); render(true); break;
+    case 'rec-all': { const q = S.rec.q.trim(); S.students.filter(s => s.grade === S.rec.grade && (!S.rec.cls || s.cls === S.rec.cls) && (!q || s.name.includes(q) || (s.nid || '').includes(q))).forEach(s => S.rec.sel.add(s.id)); render(true); break; }
+    case 'rec-none': S.rec.sel = new Set(); render(true); break;
+    case 'rec-beh': S.rec.bid = S.rec.bid === id ? '' : id; render(true); break;
+    case 'rec-save': saveRecord(); break;
+    case 'rec-for': { const s = stuById(id); if (!s) break; closeModal(); S.rec.grade = s.grade; S.rec.cls = s.cls || ''; S.rec.sel = new Set([id]); S.rec.q = ''; go('record'); break; }
+    case 'rec-del': {
+      const r = S.records.find(x => x.id === id); if (!r) break;
+      ask('حذف هذا الرصد؟', 'سيُحذف رصد «' + r.bname + '» لـ ' + (r.sids?.length || 0) + ' من الطلاب وتُخصم درجاته.', 'حذف الرصد', async () => {
+        try { await delDoc('records', id); toast('تم حذف الرصد', { undo: () => setDoc('records', id, strip(r)) }); } catch (er) { toast(errMsg(er), { err: true }); }
+      });
+      break;
+    }
+    // classes / grades
+    case 'cls-add': {
+      const inp = document.getElementById('cls-in-' + el.dataset.g); const v = (inp?.value || '').trim();
+      if (!v) { inp?.focus(); break; }
+      const n = clone(); const g = n.grades.find(x => x.id === el.dataset.g);
+      if (g.classes.includes(v)) { toast('هذا الفصل موجود.', { err: true }); break; }
+      g.classes.push(v); saveCfg(n, 'أُضيف فصل ' + v); break;
+    }
+    case 'cls-del': {
+      const g = el.dataset.g; const n0 = S.students.filter(s => s.grade === g && s.cls === id).length;
+      ask('حذف فصل ' + id + '؟', n0 ? 'في هذا الفصل ' + n0 + ' طالب. سيبقون في السجل بدون فصل حتى تنقلهم.' : 'لا يوجد طلاب في هذا الفصل.', 'حذف الفصل', () => { const n = clone(); const gg = n.grades.find(x => x.id === g); gg.classes = gg.classes.filter(x => x !== id); saveCfg(n, 'حُذف الفصل'); });
+      break;
+    }
+    case 'grade-add': { const inp = document.getElementById('grade-in'); const v = (inp?.value || '').trim(); if (!v) { inp?.focus(); break; } const n = clone(); n.grades.push({ id: 'g' + uid(), name: v, classes: [] }); saveCfg(n, 'أُضيف الصف'); break; }
+    case 'grade-del': {
+      const g = gradeOf(id); const n0 = S.students.filter(s => s.grade === id).length;
+      if (n0) { toast('لا يمكن حذف صف فيه ' + n0 + ' طالب. انقلهم أو احذفهم أولاً.', { err: true }); break; }
+      ask('حذف ' + g.name + '؟', 'سيُحذف الصف وفصوله من القائمة.', 'حذف الصف', () => { const n = clone(); n.grades = n.grades.filter(x => x.id !== id); saveCfg(n, 'حُذف الصف'); });
+      break;
+    }
+    // students
+    case 'stu-new': S.modalCtx = 'sf'; openModal(studentForm(null), true); break;
+    case 'stu-edit': S.modalCtx = 'sf'; openModal(studentForm(stuById(id)), true); break;
+    case 'stu-open': closeModal(); studentProfile(id); break;
+    case 'stu-save': {
+      const name = document.getElementById('sf-name').value.trim().replace(/\s+/g, ' ');
+      const nid = document.getElementById('sf-nid').value.trim().replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+      const grade = document.getElementById('sf-grade').value, cls = document.getElementById('sf-cls').value;
+      if (name.split(' ').length < 2) { toast('اكتب اسم الطالب كاملاً (اسمين على الأقل).', { err: true }); break; }
+      if (nid && !/^\d{10}$/.test(nid)) { toast('رقم الهوية يتكون من 10 أرقام.', { err: true }); break; }
+      if (!cls) { toast('اختر الفصل. أضف الفصول أولاً إن لم توجد.', { err: true }); break; }
+      const dup = S.students.find(s => s.id !== id && ((nid && s.nid === nid) || (s.name === name && s.grade === grade && s.cls === cls)));
+      if (dup) { toast('هذا الطالب مسجّل مسبقاً.', { err: true }); break; }
+      closeModal();
+      try {
+        if (id) { const old = stuById(id); await setDoc('students', id, { ...strip(old), name, nid, grade, cls }); toast('حُفظت بيانات الطالب'); }
+        else { await addDoc('students', { name, nid, grade, cls, ts: Date.now() }); toast('أُضيف ' + name.split(' ')[0]); }
+      } catch (er) { toast(errMsg(er), { err: true }); }
+      break;
+    }
+    case 'stu-del': {
+      const s = stuById(id); if (!s) break;
+      ask('حذف ' + s.name + '؟', 'يُحذف الطالب من السجل ولا تظهر رصوده في التقارير.', 'حذف الطالب', async () => {
+        try { await delDoc('students', id); toast('حُذف الطالب', { undo: () => setDoc('students', id, strip(s)) }); } catch (er) { toast(errMsg(er), { err: true }); }
+      });
+      break;
+    }
+    case 'stu-import': S.modalCtx = 'im'; openModal(importForm()); break;
+    case 'im-run': runImport(); break;
+    // reports
+    case 'exp-csv': exportCSV(); break;
+    case 'exp-form': exportForm(); break;
+    case 'cert': exportCert(id); break;
+    // settings
+    case 'set-save': {
+      const n = clone();
+      for (const k of ['school', 'admin', 'head1', 'head2', 'principal', 'deputy']) n[k] = document.getElementById('set-' + k).value.trim();
+      saveCfg(n, 'حُفظت بيانات المدرسة'); break;
+    }
+    case 'sem-add': {
+      const name = document.getElementById('sem-name').value; const year = document.getElementById('sem-year').value.trim();
+      if (!/^1[45]\d\d$/.test(year)) { toast('اكتب السنة الهجرية بأربعة أرقام، مثل 1448.', { err: true }); break; }
+      if (c.semesters.some(s => s.name === name && s.year === year)) { toast('هذا الفصل الدراسي موجود.', { err: true }); break; }
+      const n = clone(); n.semesters.push({ id: 's' + uid(), name, year }); saveCfg(n, 'أُضيف ' + name); break;
+    }
+    case 'sem-act': { const n = clone(); n.active = id; saveCfg(n, 'تم تفعيل ' + semLabel(id)); break; }
+    case 'sem-del': {
+      const cnt = S.records.filter(r => r.sem === id).length;
+      if (cnt) { toast('في هذا الفصل ' + cnt + ' سجل رصد. لا يمكن حذفه.', { err: true }); break; }
+      ask('حذف ' + semLabel(id) + '؟', 'لا توجد رصود مرتبطة به.', 'حذف', () => { const n = clone(); n.semesters = n.semesters.filter(s => s.id !== id); saveCfg(n, 'حُذف الفصل الدراسي'); });
+      break;
+    }
+    case 'beh-add': {
+      const name = document.getElementById('beh-new').value.trim(); const pts = Math.min(20, Math.max(1, parseInt(document.getElementById('beh-new-p').value, 10) || 1));
+      if (!name) { document.getElementById('beh-new').focus(); break; }
+      const n = collectBehaviors(); n.behaviors.push({ id: 'b' + uid(), name, pts }); saveCfg(n, 'أُضيف السلوك'); break;
+    }
+    case 'beh-save': saveCfg(collectBehaviors(), 'حُفظت قائمة السلوكيات'); break;
+    case 'beh-del': { const b = c.behaviors.find(x => x.id === id); ask('حذف «' + b.name + '»؟', 'الرصود السابقة لهذا السلوك تبقى محفوظة في التقارير.', 'حذف', () => { const n = collectBehaviors(); n.behaviors = n.behaviors.filter(x => x.id !== id); saveCfg(n, 'حُذف السلوك'); }); break; }
+    case 'bk-export': download('نسخة-احتياطية-السلوك-المتميز-' + todayISO() + '.json', JSON.stringify({ app: 'sulook', v: 1, cfg: cfg(), students: S.students, records: S.records }), 'النسخة الاحتياطية'); break;
+    case 'wipe-sem': {
+      const recs = semRecords();
+      if (!recs.length) { toast('لا توجد رصود في الفصل النشط.'); break; }
+      ask('حذف ' + recs.length + ' سجل رصد؟', 'ستُحذف كل رصود ' + semLabel(c.active) + ' نهائياً ولا يمكن التراجع. صدّر التقرير أولاً.', 'حذف نهائياً', async () => {
+        let d = 0; try { for (const r of recs) { await delDoc('records', r.id); d++; } toast('حُذف ' + d + ' سجل'); } catch (er) { toast('حُذف ' + d + ' فقط. ' + errMsg(er), { err: true }); }
+      });
+      break;
+    }
+  }
+});
+function collectBehaviors() {
+  const n = JSON.parse(JSON.stringify(cfg()));
+  for (const b of n.behaviors) {
+    const ni = document.getElementById('beh-n-' + b.id), pi = document.getElementById('beh-p-' + b.id);
+    if (ni && ni.value.trim()) b.name = ni.value.trim();
+    if (pi) b.pts = Math.min(20, Math.max(1, parseInt(pi.value, 10) || b.pts));
+  }
+  return n;
+}
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.id === 'im-text') { document.getElementById('im-count').textContent = parseImport(el.value).length + ' اسم'; return; }
+  const b = el.dataset.bind; if (!b) return;
+  const [grp, key] = b.split('.');
+  S[grp][key] = el.value;
+  if (el.tagName === 'INPUT' && (key === 'q' || key === 'note')) {
+    if (key === 'q') { clearTimeout(S.qT); S.qT = setTimeout(() => { const pos = el.selectionStart; render(true); const ne = document.getElementById(el.id); if (ne) { ne.focus(); try { ne.setSelectionRange(pos, pos); } catch (er) {} } }, 160); }
+    return;
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'bk-file' && el.files && el.files[0]) {
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const d = JSON.parse(String(rd.result || ''));
+        if (d.app !== 'sulook' || !d.cfg) throw 0;
+        ask('استعادة النسخة الاحتياطية؟', 'ستُستبدل بيانات هذا الجهاز ببيانات الملف: ' + (d.students || []).length + ' طالب و' + (d.records || []).length + ' سجل رصد.', 'استعادة', () => {
+          S.cfg = d.cfg; S.cfgExists = true; S.students = d.students || []; S.records = d.records || []; persist(); render(true); toast('تمت استعادة البيانات');
+        });
+      } catch (er) { toast('الملف ليس نسخة احتياطية صالحة لهذه المنصة.', { err: true }); }
+    };
+    rd.readAsText(el.files[0], 'utf-8');
+    el.value = '';
+    return;
+  }
+  if (el.id === 'im-file' && el.files && el.files[0]) {
+    const f = el.files[0];
+    if (f.size > 2e6) { toast('الملف كبير جداً. الحد 2 ميغابايت.', { err: true }); return; }
+    const rd = new FileReader();
+    rd.onload = () => { const ta = document.getElementById('im-text'); ta.value = String(rd.result || ''); document.getElementById('im-count').textContent = parseImport(ta.value).length + ' اسم'; };
+    rd.readAsText(f, 'utf-8');
+    return;
+  }
+  if (el.dataset.actChange === 'sf-grade' || el.dataset.actChange === 'im-grade') {
+    const tgt = document.getElementById(el.dataset.actChange === 'sf-grade' ? 'sf-cls' : 'im-cls');
+    tgt.innerHTML = classOpts(el.value, '', classesOf(el.value).length ? '' : 'لا فصول — أضفها أولاً');
+    return;
+  }
+  const b = el.dataset.bind; if (!b) return;
+  const [grp, key] = b.split('.');
+  S[grp][key] = el.value;
+  if (grp === 'st' && key === 'grade') S.st.cls = '';
+  if (grp === 'rp' && key === 'grade') S.rp.cls = '';
+  if (key !== 'q' && key !== 'note') render(true);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modal').innerHTML) closeModal();
+  if (e.key === 'Enter' && e.target.id) {
+    const m = { 'grade-in': '[data-act="grade-add"]', 'beh-new': '[data-act="beh-add"]' };
+    if (m[e.target.id]) { e.preventDefault(); document.querySelector(m[e.target.id])?.click(); }
+    if (e.target.id.startsWith('cls-in-')) { e.preventDefault(); document.querySelector('[data-act="cls-add"][data-g="' + e.target.id.slice(7) + '"]')?.click(); }
+  }
+});
+
+/* ---------- Boot ---------- */
+const hv = (location.hash || '').slice(1);
+if (['home', 'record', 'students', 'reports', 'settings'].includes(hv)) S.view = hv;
+if (STANDALONE) loadLocal();
+render(true);
+
+async function connect() {
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  const [db, user, dl] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('downloads')]);
+  S.dl = dl; S.user = user;
+  if (user) {
+    try {
+      const [me, canEdit, can] = await Promise.all([user.me(), user.canEdit(), user.can('data.write')]);
+      S.me = me; S.canAdmin = !!canEdit; S.canWrite = can === null ? true : !!can || !!canEdit;
+    } catch (e) {}
+  }
+  if (!db) { render(true); return; }
+  S.db = db; S.live = true;
+  S.students = []; S.records = [];
+  render(true);
+  db.doc('config/school').onSnapshot(snap => {
+    S.loaded.cfg = true;
+    if (snap.exists) { S.cfg = JSON.parse(JSON.stringify(snap.data())); S.cfgExists = true; }
+    render();
+  }, e => toast(errMsg(e), { err: true }));
+  db.collection('students').onSnapshot(snap => {
+    S.loaded.students = true;
+    S.students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, e => toast(errMsg(e), { err: true }));
+  db.collection('records').onSnapshot(snap => {
+    S.loaded.records = true;
+    S.records = snap.docs.map(d => ({ id: d.id, ...d.data(), sids: [...(d.data().sids || [])] }));
+    render();
+  }, e => toast(errMsg(e), { err: true }));
+}
+connect();
+setInterval(() => { if (S.view === 'home' || S.view === 'record') render(); }, 60000);
+})();
+</script>
+
+</body>
+</html>
