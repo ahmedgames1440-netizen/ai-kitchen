@@ -232,6 +232,45 @@ tbody tr:hover td { background: var(--surface-2); }
 }
 </style>
 <style>body{margin:0}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=Tajawal:wght@400;500;700&display=swap">
+<style>
+/* Theme: تقدير (certificate look) */
+:root{--bg:#eef2ee;--surface:#fdfdfb;--surface-2:#f0f3ea;--ink:#192a22;--muted:#5b6a62;--line:#cbd5c8;--brand:#0e5a43;--brand-ink:#ffffff;--brand-soft:#dcece3;--gold:#9b7416;--gold-soft:#f4ead0;--danger:#a9302a;--danger-soft:#f8e1de;--hero:#0a3d2f;--hero-ink:#f7f2df;--hero-muted:#d7c47e;--shadow:0 2px 10px rgb(10 61 47/.08);--r:4px;--r-sm:3px;--frame:color-mix(in srgb,#9b7416 55%,transparent);--f-display:"El Messiri","Amiri",Tahoma,serif;--f-body:"Tajawal",Tahoma,Arial,sans-serif;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0a1410;--surface:#121f18;--surface-2:#182b21;--ink:#ece8d6;--muted:#a0afa1;--line:#2a3f33;--brand:#5fcf9f;--brand-ink:#052117;--brand-soft:#153827;--gold:#e0bb5c;--gold-soft:#3a3016;--danger:#f28b82;--danger-soft:#3d1e1b;--hero:#07221a;--hero-ink:#f3eed8;--hero-muted:#cdb86f;--shadow:0 2px 10px rgb(0 0 0/.35);--frame:color-mix(in srgb,#e0bb5c 45%,transparent);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a1410;--surface:#121f18;--surface-2:#182b21;--ink:#ece8d6;--muted:#a0afa1;--line:#2a3f33;--brand:#5fcf9f;--brand-ink:#052117;--brand-soft:#153827;--gold:#e0bb5c;--gold-soft:#3a3016;--danger:#f28b82;--danger-soft:#3d1e1b;--hero:#07221a;--hero-ink:#f3eed8;--hero-muted:#cdb86f;--shadow:0 2px 10px rgb(0 0 0/.35);--frame:color-mix(in srgb,#e0bb5c 45%,transparent);color-scheme:dark}
+
+body{font-size:16px}
+.top{border-bottom:3px solid var(--gold)}
+.top-in{flex-direction:column;justify-content:center;text-align:center;padding:26px 16px 6px;gap:14px}
+.brand{flex-direction:column;gap:10px}
+.seal{width:68px;height:68px;border:2px solid var(--gold);background:rgb(255 255 255/.06);box-shadow:0 0 0 5px rgb(255 255 255/.06)}
+.seal svg{width:34px;height:34px;color:var(--hero-muted)}
+.brand h1{font-size:2.1rem;font-weight:700;letter-spacing:0}
+.brand p{font-size:.95rem}
+.top-meta{justify-content:center}
+.pill-h{border-radius:2px;border-color:var(--gold);color:var(--hero-muted)}
+.tabs{justify-content:center;padding:6px 12px 14px;gap:8px;flex-wrap:wrap;overflow:visible}
+.tab{border:1px solid transparent;border-radius:2px;padding:8px 16px;font-family:var(--f-display);font-size:1.02rem;font-weight:600}
+.tab:hover{border-color:var(--gold)}
+.tab[aria-selected="true"]{background:var(--gold);color:#1b1503;border-color:var(--gold)}
+.panel{padding:24px;border:1px solid var(--frame);box-shadow:inset 0 0 0 5px var(--surface),inset 0 0 0 6px var(--frame),var(--shadow)}
+.panel-h{padding-bottom:10px;border-bottom:1px dotted var(--frame);margin-bottom:16px}
+.panel-h h2{font-size:1.3rem;font-weight:700}
+.panel-h h2 svg{color:var(--gold)}
+.stat{border:1px solid var(--frame);box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 5px var(--frame);padding:20px}
+.stat .v{font-size:2.3rem;font-weight:700;color:var(--brand)}
+.stat.hl{box-shadow:inset 0 0 0 4px var(--hero),inset 0 0 0 5px var(--gold)}
+.stat.hl .v{color:var(--hero-ink)}
+.btn{border-radius:2px;font-family:var(--f-display);font-weight:600;font-size:1rem}
+.btn.pri{background:var(--brand);border-color:var(--brand)}
+.chip{border-radius:2px}
+.tag{border-radius:2px}
+.rank-i.lead{background:var(--gold-soft)}
+.form-head{border:3px double var(--gold)}
+th{font-family:var(--f-display);font-size:.9rem}
+</style>
 </head>
 <body>
 
