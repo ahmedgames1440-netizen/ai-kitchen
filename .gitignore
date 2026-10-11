@@ -5,3 +5,4 @@ ai-kitchen-unity-export.zip
 UNITY_GAME_DESIGN_REFERENCE.md
 .claude/*
 !.claude/settings.json
+!.claude/skills/
