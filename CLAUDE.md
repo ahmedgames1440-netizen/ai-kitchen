@@ -13,7 +13,7 @@
 
 ## عند طلب برنامج أو موقع أو تطبيق
 1. استخدم Superpowers: `brainstorming` ثم `writing-plans` ثم `test-driven-development` عند الحاجة، و`verification-before-completion` قبل الإنهاء.
-2. للواجهات: طبّق `design-taste-frontend` و`high-end-visual-design`، وأيقونات Phosphor فقط، وخط Cairo للعربي، ودعم RTL وتجاوب الجوال.
+2. للواجهات: طبّق `design-taste-frontend` و`high-end-visual-design`، واستخدم إضافة `impeccable` (أوامر مثل `/impeccable` للتدقيق والتلميع) بعد البناء، وأيقونات Phosphor فقط، وخط Cairo للعربي، ودعم RTL وتجاوب الجوال.
 3. تحقق بصريًا بخادم Playwright MCP (لقطة شاشة للصفحة) قبل أن تقول إن العمل جاهز.
 4. لا تختصر الكود ولا تترك أماكن فارغة (`full-output-enforcement`).
 
